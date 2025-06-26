@@ -7,7 +7,9 @@ import Chatbot from "@/components/common/Chatbot.vue";
 <template>
   <div class="layout-default">
     <Sidebar/>
-    <main class="main-content" />
+    <main class="main-content">
+      <router-view/>
+    </main>
   </div>
     <Chatbot/>
 </template>
