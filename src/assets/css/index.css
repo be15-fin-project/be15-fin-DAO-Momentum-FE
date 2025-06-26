@@ -12,3 +12,22 @@
     width: 100%;
     justify-content: space-evenly;
 }
+
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+::-webkit-scrollbar:horizontal {
+    height: 5px;
+}
+
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--icon-gradient);
+    border-radius: 10px;
+}

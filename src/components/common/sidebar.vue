@@ -20,30 +20,46 @@
 
     <nav class="sidebar-nav">
       <div v-for="(menu, index) in menuItems" :key="index">
-        <a href="#" class="sidebar-item" @click.prevent="toggleSubmenu(index)">
-          <span class="material-symbols-rounded">{{ menu.icon }}</span>
-          <span class="sidebar-label">{{ menu.label }}</span>
-          <span class="material-symbols-rounded sidebar-sub-toggle"
-                :class="{ open: openSubmenu === index }">chevron_right</span>
-        </a>
-        <div class="sidebar-indent" :class="{ open: openSubmenu === index }">
-          <a v-for="(sub, i) in menu.subItems" :key="i" :href="sub.href" class="sidebar-item">{{ sub.label }}</a>
-        </div>
+
+        <!-- 메뉴에 subItems가 있을 경우 (드롭다운) -->
+        <template v-if="menu.subItems">
+          <a
+              href="#"
+              class="sidebar-item"
+              @click.prevent="toggleSubmenu(index)"
+              :class="{ active: openSubmenu === index || isSubmenuActive(menu.subItems) }"
+          >
+            <span class="material-symbols-rounded">{{ menu.icon }}</span>
+            <span class="sidebar-label">{{ menu.label }}</span>
+            <span class="material-symbols-rounded sidebar-sub-toggle"
+                  :class="{ open: openSubmenu === index || isSubmenuActive(menu.subItems) }">chevron_right</span>
+          </a>
+          <div class="sidebar-indent" :class="{ open: openSubmenu === index || isSubmenuActive(menu.subItems) }">
+            <a
+                v-for="(sub, i) in menu.subItems"
+                :key="i"
+                :href="sub.hrefs[0]"
+                class="sidebar-item"
+                :class="{ active: isActive(sub.hrefs) }"
+            >
+              {{ sub.label }}
+            </a>
+          </div>
+        </template>
+
+        <!-- 메뉴에 subItems가 없는 경우 (단일 링크 메뉴) -->
+        <template v-else>
+          <a
+              :href="menu.hrefs[0]"
+              class="sidebar-item"
+              :class="{ active: isActive(menu.hrefs) }"
+          >
+            <span class="material-symbols-rounded">{{ menu.icon }}</span>
+            <span class="sidebar-label">{{ menu.label }}</span>
+          </a>
+        </template>
       </div>
 
-      <div>
-        <a href="../attendance/attendance.html" class="sidebar-item">
-          <span class="material-symbols-rounded">schedule</span>
-          <span class="sidebar-label">근태 관리</span>
-        </a>
-      </div>
-
-      <div>
-        <a href="../notice/notice.html" class="sidebar-item">
-          <span class="material-symbols-rounded">campaign</span>
-          <span class="sidebar-label">공지 관리</span>
-        </a>
-      </div>
     </nav>
 
     <div class="sidebar-footer">
@@ -71,57 +87,68 @@ export default {
           label: '회사 정보',
           icon: 'apartment',
           subItems: [
-            { label: '회사 정보', href: '../company/company-info.html' },
-            { label: '조직도', href: '../company/org-chart.html' }
+            { label: '회사 정보', hrefs: ['../company/company-info.html'] },
+            { label: '조직도', hrefs: ['../company/org-chart.html'] }
           ]
         },
         {
           label: '사원 관리',
           icon: 'group',
           subItems: [
-            { label: '사원 목록 조회', href: '../employee/employees.html' },
-            { label: '인사 발령 내역', href: '../employee/appointment.html' },
-            { label: '계약서 내역', href: '../employee/contracts-admin.html' }
+            { label: '사원 목록 조회', hrefs: ['../employee/employees.html'] },
+            { label: '인사 발령 내역', hrefs: ['../employee/appointment.html'] },
+            { label: '계약서 내역', hrefs: ['../employee/contracts-admin.html'] }
           ]
+        },
+        {
+          label: '근태 관리',
+          icon: 'schedule',
+          hrefs: ['../attendance/attendance.html']
         },
         {
           label: '내 정보',
           icon: 'person',
           subItems: [
-            { label: '대시보드', href: '../mypage/dashboard.html' },
-            { label: '내 정보 조회', href: '../mypage/profile.html' },
-            { label: '계약서 내역 조회', href: '../mypage/contracts.html' }
+            { label: '대시보드', hrefs: ['../mypage/dashboard.html'] },
+            { label: '내 정보 조회', hrefs: ['../mypage/profile.html'] },
+            { label: '계약서 내역 조회', hrefs: ['../mypage/contracts.html'] }
           ]
         },
         {
           label: '결재 관리',
           icon: 'task',
           subItems: [
-            { label: '전체 결재 내역', href: '../approval/history.html' },
-            { label: '문서함', href: '../approval/inbox.html' }
+            { label: '전체 결재 내역', hrefs: ['../approval/history.html'] },
+            { label: '문서함', hrefs: ['../approval/inbox.html'] }
           ]
         },
         {
           label: '평가 관리',
           icon: 'bar_chart',
           subItems: [
-            { label: 'KPI 분석', href: '../performance/kpi-overview.html' },
-            { label: 'KPI 조회', href: '../performance/kpi-list.html' },
-            { label: 'KPI 요청 관리', href: '../performance/kpi-requests.html' },
-            { label: '평가 관리', href: '../performance/eval-manage.html' },
-            { label: '다면 평가 제출', href: '../performance/eval-submit.html' },
-            { label: '인사 평가 조회', href: '../performance/eval-me.html' },
-            { label: '이의 제기 조회', href: '../performance/eval-objection.html' }
+            { label: 'KPI 분석', hrefs: ['../performance/kpi-overview.html'] },
+            { label: 'KPI 조회', hrefs: ['../performance/kpi-list.html'] },
+            { label: 'KPI 요청 관리', hrefs: ['../performance/kpi-requests.html'] },
+            { label: '평가 관리', hrefs: ['../performance/eval-manage.html'] },
+            { label: '다면 평가 제출', hrefs: ['../performance/eval-submit.html'] },
+            { label: '인사 평가 조회', hrefs: ['../performance/eval-me.html'] },
+            { label: '이의 제기 조회', hrefs: ['../performance/eval-objection.html'] }
           ]
         },
         {
           label: '근속 지원',
           icon: 'support_agent',
           subItems: [
-            { label: '근속 전망', href: '../retention/risk-dash.html' },
-            { label: '면담 기록', href: '../retention/risk-contact.html' }
+            { label: '근속 전망', hrefs: ['../retention/risk-dash.html'] },
+            { label: '면담 기록', hrefs: ['../retention/risk-contact.html'] }
           ]
+        },
+        {
+          label: '공지 관리',
+          icon: 'campaign',
+          hrefs: ['../notice/notice.html']
         }
+
       ]
     };
   },
@@ -132,8 +159,17 @@ export default {
     },
     toggleSubmenu(index) {
       this.openSubmenu = this.openSubmenu === index ? null : index;
+    },
+    isActive(hrefs) {
+      const current = window.location.pathname;
+      if (!Array.isArray(hrefs)) hrefs = [hrefs];
+      return hrefs.some(href => current.endsWith(href.replace('../', '/')));
+    },
+    isSubmenuActive(subItems) {
+      return subItems.some(item => this.isActive(item.hrefs));
     }
   }
+
 };
 </script>
 
