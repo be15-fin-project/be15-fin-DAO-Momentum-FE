@@ -179,7 +179,6 @@ export default {
 
 .sidebar {
   width: 22rem;
-  min-width: 15rem;
   max-width: 25rem;
   background: var(--side-background);
   color: var(--basic);
