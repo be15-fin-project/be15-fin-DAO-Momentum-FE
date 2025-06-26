@@ -1,23 +1,30 @@
 <script setup>
-import Sidebar from "@/components/common/sidebar.vue";
-import Chatbot from "@/components/common/chatbot.vue";
+import Sidebar from "@/components/common/Sidebar.vue";
+import Chatbot from "@/components/common/Chatbot.vue";
 
 </script>
 
 <template>
   <div class="layout-default">
     <Sidebar/>
-    <Chatbot/>
+    <main class="main-content" />
   </div>
+    <Chatbot/>
 </template>
 
 <style scoped>
 .layout-default {
   display: flex;
-  flex-direction: column;
-  height: 100vh;
+  align-items: flex-start;
   width: 100%;
-  background-color: #f9f9f9;
-  overflow: hidden;
+  justify-content: space-evenly;
+}
+
+.main-content {
+  flex-grow: 1;
+  min-height: 100vh;
+  padding: 40px 0;
+  background: var(--blue-50);
+  transition: padding-left 0.3s ease; /* ← 여기에 트랜지션 추가 */
 }
 </style>

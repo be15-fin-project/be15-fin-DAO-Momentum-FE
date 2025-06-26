@@ -159,14 +159,14 @@ const scrollToBottom = () => {
 .chat-button {
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 9999px;
+  background: var(--chatbot-gradient);
+  color: var(--basic);
+  border-radius: var(--round-radius);
   font-size: 1.25rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8px 25px rgba(79, 70, 229, 0.3);
+  box-shadow: var(--chatbot-shadow);
   transition: all 0.3s ease;
   border: none;
   cursor: pointer;
@@ -192,15 +192,15 @@ const scrollToBottom = () => {
   height: 40rem;
   display: flex;
   flex-direction: column;
-  background: white;
-  border-radius: 16px 16px 0 0;
+  background: var(--basic);
+  border-radius: var(--chatbot-radius);
   box-shadow: 0 4px 30px rgba(0,0,0,0.15);
 }
 .chat-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--chatbot-gradient);
+  color: var(--basic);
   padding: 16px;
-  border-radius: 16px 16px 0 0;
+  border-radius: var(--chatbot-radius);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -220,11 +220,11 @@ const scrollToBottom = () => {
 }
 #closeChat {
   background: transparent;
-  color: white;
+  color: var(--basic);
   border: none;
   width: 32px;
   height: 32px;
-  border-radius: 9999px;
+  border-radius: var(--round-radius);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -232,25 +232,25 @@ const scrollToBottom = () => {
   cursor: pointer;
 }
 #closeChat:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--hover-gray);
 }
 .chat-faq {
   padding: 12px 16px;
   border-bottom: 1px solid #E5E7EB;
 }
 .chat-faq button {
-  background: #f3f4f6;
+  background: var(--gray-50);
   border: 1px solid transparent;
-  color: #374151;
+  color: var(--gray-700);
   padding: 6px 14px;
-  border-radius: 9999px;
+  border-radius: var(--round-radius);
   margin-right: 6px;
   cursor: pointer;
 }
 .chat-faq button.active {
-  background: #eef2ff;
-  border: 2px solid #6366f1;
-  color: #4338ca;
+  background: var(--gray-50);
+  border: 2px solid var(--purple-100);
+  color: var(--purple-500);
   font-weight: 600;
 }
 .chat-messages {
@@ -262,6 +262,9 @@ const scrollToBottom = () => {
   gap: 14px;
   scroll-behavior: smooth;
 }
+.chat-messages::-webkit-scrollbar {
+  width: 4px;
+}
 .message {
   display: flex;
   gap: 10px;
@@ -271,15 +274,15 @@ const scrollToBottom = () => {
   justify-content: flex-end;
 }
 .chat-bubble-user {
-  background: #4F46E5;
-  color: white;
+  background: var(--purple-100);
+  color: var(--basic);
   padding: 10px 14px;
   border-radius: 16px;
   max-width: 75%;
 }
 .chat-bubble-bot {
-  background: #F3F4F6;
-  color: #1F2937;
+  background: var(--gray-50);
+  color: var(--gray-800);
   padding: 10px 14px;
   border-radius: 16px;
   max-width: 75%;
@@ -291,26 +294,26 @@ const scrollToBottom = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #E0E7FF;
+  background-color: var(--gray-100);
   flex-shrink: 0;
 }
 .chat-input-area {
   padding: 16px;
-  border-top: 1px solid #E5E7EB;
+  border-top: 1px solid var(--gray-200);
   display: flex;
   gap: 8px;
 }
 .chat-input-area input {
   flex: 1;
-  border: 1px solid #E5E7EB;
+  border: 1px solid var(--gray-200);
   border-radius: 9999px;
   padding: 8px 16px;
 }
 .chat-input-area button {
   width: 40px;
   height: 40px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--chatbot-gradient);
+  color: var(--basic);
   border-radius: 50%;
   border: none;
   cursor: pointer;
@@ -320,7 +323,7 @@ const scrollToBottom = () => {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background-color: #9CA3AF;
+  background-color: var(--gray-400);
   animation: typing 1.4s infinite ease-in-out;
 }
 .typing-indicator:nth-child(1) { animation-delay: -0.32s; }
@@ -329,4 +332,77 @@ const scrollToBottom = () => {
   0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
   40% { transform: scale(1); opacity: 1; }
 }
+
+/* 메시지 애니메이션 (왼쪽/오른쪽 슬라이드 인) */
+.message.bot {
+  animation: slideInLeft 0.3s ease;
+}
+.message.user {
+  animation: slideInRight 0.3s ease;
+}
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slideInRight {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* 챗봇 창 열릴 때 페이드 인 + 업 애니메이션 */
+.chat-modal-wrapper {
+  animation: fadeInUp 0.35s ease;
+}
+@keyframes fadeInUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* FAQ 버튼 클릭 시 반짝 효과 */
+.faq-btn.active {
+  animation: pulse 0.4s;
+}
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+  100% { transform: scale(1); }
+}
+
+/* 전송 버튼 눌렀을 때 팝 효과 */
+.chat-input-area button:active {
+  animation: buttonPop 0.2s;
+}
+@keyframes buttonPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* 타이핑 인디케이터: 튕김 애니메이션 */
+.typing-indicator {
+  animation: bounce 1s infinite ease-in-out;
+}
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
 </style>
