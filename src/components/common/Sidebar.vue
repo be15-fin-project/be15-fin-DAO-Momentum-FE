@@ -179,15 +179,16 @@ export default {
 
 .sidebar {
   width: 22rem;
-  background: linear-gradient(180deg, #1f2937 0%, #374151 100%);
-  color: white;
+  min-width: 15rem;
+  max-width: 25rem;
+  background: var(--side-background);
+  color: var(--basic);
   height: 100vh;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease;
   overflow: hidden;
-  position: fixed;
 }
 
 /* 기존 CSS 그대로 유지 */
@@ -195,7 +196,7 @@ export default {
 
 .side-btn {
   background: var(--main-color);
-  color: white;
+  color: var(--basic);
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
@@ -228,7 +229,7 @@ export default {
 .sidebar-logo {
   width: 2.5rem;
   height: 2.5rem;
-  background-color: #3b82f6;
+  background-color: var(--blue-450);
   border-radius: 0.5rem;
   display: flex;
   align-items: center;
@@ -244,7 +245,7 @@ export default {
 .sidebar-toggle {
   background: none;
   border: none;
-  color: white;
+  color: var(--basic);
   cursor: pointer;
   font-size: 1rem;
 }
@@ -268,30 +269,30 @@ export default {
   gap: 0.75rem;
   padding: 0.75rem;
   border-radius: 0.5rem;
-  color: #d1d5db;
+  color: var(--gray-300);
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
 }
 
 .sidebar-item:hover {
-  background-color: #4b5563;
-  color: #fff;
+  background-color: var(--gray-600);
+  color: var(--basic);
 }
 
 .sidebar-item.active {
-  background-color: #4b5563;
-  color: #fff;
+  background-color: var(--gray-600);
+  color: var(--basic);
 }
 
 .sidebar-item.highlighted {
-  background-color: #2563eb;
-  color: #fff;
+  background-color: var(--blue-300);
+  color: var(--basic);
 }
 
 /* 서브 메뉴의 active (더 연하게) */
 .sidebar-indent .sidebar-item.active {
-  background-color: #374151; /* 좀 더 연한 회색 */
-  color: #f3f4f6; /* 연한 흰색 계열 */
+  background-color: var(--gray-700); /* 좀 더 연한 회색 */
+  color: var(--gray-50); /* 연한 흰색 계열 */
 }
 .sidebar-indent {
   padding-left: 1rem;
