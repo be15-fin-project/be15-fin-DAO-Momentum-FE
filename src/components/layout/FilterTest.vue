@@ -11,6 +11,7 @@
 </template>
 
 <script setup>
+import { ref } from 'vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 
 const filterValues = ref({});
@@ -44,6 +45,12 @@ const filterOptions = [
     type: 'input',
     placeholder: '사번 입력',
   },
+  {
+    key: 'date',
+    label: '등록일',
+    icon: 'fa-calendar-day',
+    type: 'date-range',
+  }
 ];
 
 function handleSearch(values) {

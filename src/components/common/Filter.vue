@@ -23,6 +23,24 @@
               style="width: 100%; padding: 8px 12px; border: none;"
           />
         </template>
+        <template v-if="filter.type === 'date-range'">
+          <div class="date-range">
+            <label>시작일</label>
+            <input
+                type="date"
+                class="filter-input"
+                v-model="localValues[filter.key + '_start']"
+                @input="emitChange"
+            />
+            <label style="margin-top: 8px;">종료일</label>
+            <input
+                type="date"
+                class="filter-input"
+                v-model="localValues[filter.key + '_end']"
+                @input="emitChange"
+            />
+          </div>
+        </template>
         <template v-else>
           <button
               v-for="option in filter.options"
@@ -169,6 +187,12 @@ watch(() => props.modelValue, (newVal) => {
 .filter-box input[type="date"].filter-input {
   width: 130px;
   margin: 0 4px;
+}
+.date-range {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 12px;
 }
 
 /* 셀렉트 드롭다운용 화살표 아이콘 유지 */
