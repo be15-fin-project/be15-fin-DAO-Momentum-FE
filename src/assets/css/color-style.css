@@ -1,0 +1,67 @@
+:root {
+    /* Primary Blue Tone (Main theme color) */
+    --blue-50: #f0f3fa;     /* 아주 연한 블루 (배경용) */
+    --blue-100: #d5deef;    /* 연한 블루 (섹션 배경/버튼 hover) */
+    --blue-200: #b1c9ef;    /* 기본 강조 컬러 (버튼/카드 등) */
+    --blue-400: #628ecb;    /* 진한 강조 컬러 (선택, 강조) */
+    --blue-500: #395886;
+    --main-color: #395886;  /* 메인 컬러 (로고, 헤더 등) */
+
+    /* Gray Tone (배경, 보조 텍스트 등) */
+    --gray-50: #f9fafb;     /* 가장 연한 회색 (페이지 배경) */
+    --gray-100: #f7f9fc;    /* 연회색 */
+    --gray-200: #e5e7eb;    /* 라인/보더용 */
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;    /* 본문 보조 텍스트 */
+    --gray-600: #4b5563;
+    --gray-700: #374151;    /* 제목 */
+    --gray-900: #111827;    /* 거의 검정에 가까운 폰트 컬러 */
+
+    /* Semantic Colors (상태 라벨/배경 등) */
+    --label-approved: #d0ebe2;           /* 승인 - 파스텔 청록 */
+    --text-on-label-approved: #246c5a;   /* 승인 텍스트 - 딥 청록 */
+
+    --label-pending: #fff3c4;            /* 대기 - 베이지/연노랑 */
+    --text-on-label-pending: #866a15;    /* 대기 텍스트 - 황토 */
+
+    --label-rejected: #f8d1d1;           /* 거절 - 파스텔 핑크 */
+    --text-on-label-rejected: #913737;   /* 거절 텍스트 - 핑크 브라운 */
+
+    /* 상태 컬러 (버튼/아이콘/그래프용) */
+    --success-50: #f0fdf4;               /* 성공 배경 */
+    --success: #4ea685;                  /* 성공 기본 */
+    --success-500: #22c55e;              /* 성공 강조 */
+
+    --warning-50: #fffbeb;               /* 경고 배경 */
+    --warning: #ffb43a;                   /* 경고 강조 (연한 오렌지) */
+    --warning-500: #f59e0b;              /* 강한 경고 */
+
+    --error-50: #fef2f2;                 /* 오류 배경 */
+    --error: #e8594a;                   /* 오류 기본 */
+    --error-500: #ef4444;                /* 오류 강조 */
+
+    /* Typography Color */
+    --font-color: #222;         /* 일반 텍스트 */
+    --font-main: #171b24;       /* 제목/강조 텍스트 */
+    --font-sub: #5c6a7d;        /* 보조 텍스트 */
+    --font-none: #cacccd;
+    --label-color: #555;        /* 라벨 텍스트 */
+
+    /* Layout / Border / Shadow */
+    --border-subtle: #e0e4eb;
+    --card-radius: 20px;
+    --shadow: 0 8px 32px 0 rgba(50, 60, 90, 0.11);
+    --shadow-soft: 0 2px 14px 0 rgba(69, 111, 230, 0.08);
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    /* Special Background */
+    --bg-gradient: linear-gradient(105deg, #e9f1fe 0%, #f8fafc 100%);
+    --icon-gradient: linear-gradient(135deg, #3E6FD8, #665FC8);
+    --header-height: 66px;
+}
+
