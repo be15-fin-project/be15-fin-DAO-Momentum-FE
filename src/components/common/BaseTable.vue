@@ -3,6 +3,8 @@ defineProps({
   columns: { type: Array, required: true },
   rows: { type: Array, default: () => [] }
 })
+
+const emit = defineEmits(['click-detail']);
 </script>
 
 <template>
@@ -22,11 +24,20 @@ defineProps({
         <tbody>
         <tr v-for="(row, idx) in rows" :key="idx">
           <td
-            v-for="col in columns"
-            :key="col.key"
-            :class="{ 'text-left': col.align === 'left' }"
+              v-for="col in columns"
+              :key="col.key"
+              :class="{ 'text-left': col.align === 'left' }"
           >
-            <span>{{ row[col.key] }}</span>
+            <span v-if="col.key !== 'action'">{{ row[col.key] }}</span>
+
+            <!-- 상세 보기 버튼: 이모지 > 사용 -->
+            <button
+                v-else
+                class="action-button"
+                @click="emit('click-detail', row)"
+            >
+              &gt;
+            </button>
           </td>
         </tr>
         </tbody>
@@ -37,9 +48,9 @@ defineProps({
 
 <style scoped>
 .list-table-area {
-  background: #fff;
+  background: var(--basic);
   border-radius: 14px;
-  box-shadow: 0 6px 30px -10px rgba(36,48,71,0.08);
+  box-shadow: var(--table-shadow);
 }
 
 .list-table {
@@ -58,10 +69,10 @@ defineProps({
   white-space: nowrap;
 }
 .list-table th {
-  background: #f7fafd;
-  color: #334155;
+  background: var(--gray-100);
+  color: var(--color-text-sub);
   font-weight: 600;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--color-muted);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -70,10 +81,10 @@ defineProps({
   transition: background 0.16s;
 }
 .list-table tbody tr:hover {
-  background: #f0f6ff;
+  background: var(--blue-50);
 }
 .list-table td {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-muted);
 }
 .text-left {
   text-align: left;
@@ -83,6 +94,21 @@ defineProps({
 .list-table td:first-child { padding-left: 4rem; }
 .list-table th:last-child,
 .list-table td:last-child  { padding-right: 4rem; }
+
+
+.action-button {
+  background-color: var(--blue-400);
+  color: var(--basic);
+  border: none;
+  border-radius: var(--radius-ss);
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+}
+.action-button:hover {
+  background-color: var(--blue-500);
+}
 
 @media (max-width: 1100px) { .list-table { min-width: 600px; } }
 @media (max-width: 700px)  { .list-table th, .list-table td { padding: 10px; } }

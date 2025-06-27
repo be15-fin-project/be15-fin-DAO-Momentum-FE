@@ -18,15 +18,39 @@
             :key="idx"
             :title="section.title"
             :icon="section.icon"
+            :layout="section.layout"
+            :outer-class="section.outerClass"
         >
-          <slot :name="section.slot" />
+          <div v-for="(field, fieldIdx) in section.fields" :key="fieldIdx" class="form-group">
+            <label class="form-label">{{ field.label }}</label>
+            <input type="text" class="form-input" :value="field.value" disabled />
+          </div>
         </FormSection>
+
+
       </div>
 
       <div class="modal-footer" v-if="showFooter">
-        <BaseButton type="cancel" icon="times" @click="onClose">취소</BaseButton>
-        <BaseButton type="submit" icon="paper-plane" @click="$emit('submit')">{{ submitText }}</BaseButton>
+        <BaseButton
+            v-if="showReject"
+            type="reject"
+            icon="warning"
+            @click="onClose"
+        >
+          {{ rejectText }}
+        </BaseButton>
+
+        <BaseButton
+            v-if="showSubmit"
+            type="submit"
+            icon="paper-plane"
+            @click="$emit('submit')"
+        >
+          {{ submitText }}
+        </BaseButton>
       </div>
+
+
     </div>
   </div>
 </template>
@@ -40,18 +64,22 @@ defineProps({
   title: String,
   icon: String,
   showFooter: { type: Boolean, default: true },
-  submitText: { type: String, default: '등록' },
+  showReject: { type: Boolean, default: true },
+  showSubmit: { type: Boolean, default: true },
+  rejectText: { type: String, default: '반려' },
+  submitText: { type: String, default: '승인' },
   sections: {
     type: Array,
     default: () => [] // [{ title, icon, slot }]
   }
 })
 
-const emit = defineEmits(['close', 'submit'])
+const emit = defineEmits(['close', 'reject', 'submit'])
 
 function onClose() {
   emit('close')
 }
+
 </script>
 
 
@@ -63,7 +91,7 @@ function onClose() {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(0, 0, 0, 0.3), rgba(45, 55, 72, 0.7));
+  background: var(--gradient-overlay);
   backdrop-filter: blur(3px);
   opacity: 0;
   visibility: hidden;
@@ -83,11 +111,11 @@ function onClose() {
   height: 100vh;
   width: 40rem;
   max-width: 100%;
-  background: #ffffff;
+  background: var(--color-surface);
   z-index: 2001;
   transform: translateX(100%);
   transition: transform 0.3s ease;
-  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--shadow-modal);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
@@ -97,10 +125,9 @@ function onClose() {
   transform: translateX(0);
 }
 
-/* 헤더 */
 .modal-header {
   background: var(--icon-gradient);
-  color: #fff;
+  color: var(--color-surface);
   padding: 28px 32px;
   display: flex;
   justify-content: space-between;
@@ -122,31 +149,28 @@ function onClose() {
 }
 
 .modal-close {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--modal-background);
   border: none;
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  color: white;
+  border-radius: var(--radius-full);
+  color: var(--color-surface);
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.3s ease;
 }
 
-
 .modal-close:hover {
-  background: rgba(255, 255, 255, 0.25);
+  background: var(--close-background);
   transform: rotate(90deg);
 }
 
-/* 본문 */
 .modal-content {
   padding: 36px 32px 24px;
   flex: 1;
   overflow-y: auto;
 }
 
-/* 섹션 스타일 */
 .form-section {
   margin-bottom: 40px;
 }
@@ -156,7 +180,7 @@ function onClose() {
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 2px solid #f1f5f9;
+  border-bottom: 2px solid var(--color-muted);
   position: relative;
 }
 
@@ -167,22 +191,22 @@ function onClose() {
   left: 0;
   width: 60px;
   height: 2px;
-  background: var(--icon-gradient);
-  border-radius: 1px;
+  background: var(--gradient-icon);
+  border-radius: var(--radius-xs);
 }
 
 .section-icon {
   width: 44px;
   height: 44px;
-  background: var(--icon-gradient);
-  color: white;
-  border-radius: 12px;
+  background: var(--gradient-icon);
+  color: var(--color-surface);
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 16px;
   font-size: 1.1rem;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--shadow-lg);
 }
 
 .section-title {
@@ -192,7 +216,6 @@ function onClose() {
   margin: 0;
 }
 
-/* 폼 */
 .form-grid {
   display: grid;
   gap: 24px;
@@ -220,7 +243,7 @@ function onClose() {
 .form-label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-sub);
   margin-bottom: 8px;
   display: flex;
   align-items: center;
@@ -236,12 +259,12 @@ function onClose() {
 .form-select,
 .form-textarea {
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
-  border-radius: 10px;
+  border: 2px solid var(--color-muted);
+  border-radius: var(--radius-md);
   font-size: 0.95rem;
   transition: all 0.3s ease;
-  background: white;
-  color: #1f2937;
+  background: var(--color-surface);
+  color: var(--color-text-main);
   font-family: inherit;
 }
 
@@ -254,7 +277,7 @@ function onClose() {
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--purple-50);
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
   transform: translateY(-1px);
 }
@@ -264,11 +287,10 @@ function onClose() {
   font-style: italic;
 }
 
-/* 버튼 */
 .btn-add-section {
   margin-bottom: 16px;
   background: none;
-  color: #4f46e5;
+  color: var(--blue-400);
   border: none;
   font-weight: 500;
   font-size: 0.95rem;
@@ -279,10 +301,9 @@ function onClose() {
 }
 
 .btn-add-section:hover {
-  color: #3730a3;
+  color: var(--blue-500);
 }
 
-/* 리스트 */
 .detail-list {
   display: flex;
   flex-direction: column;
@@ -296,33 +317,32 @@ function onClose() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f9fafb;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  background: var(--color-background);
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius-md);
   padding: 14px 20px;
   font-size: 0.95rem;
   transition: all 0.2s ease;
+  box-shadow: var(--shadow-md);
 }
 
 .detail-list li:hover {
-  background-color: #f3f4f6;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  background-color: var(--color-muted-light);
 }
 
 .detail-list .label {
-  color: #4b5563;
+  color: var(--color-text-sub);
   font-weight: 600;
 }
 
 .detail-list .value {
-  color: #1f2937;
+  color: var(--color-text-main);
   font-weight: 500;
 }
 
-/* 첨부 */
 .upload-box {
-  border: 2px dashed #e5e7eb;
-  border-radius: 10px;
+  border: 2px dashed var(--color-muted);
+  border-radius: var(--radius-md);
   padding: 32px;
   text-align: center;
   cursor: pointer;
@@ -331,7 +351,7 @@ function onClose() {
 }
 
 .upload-box:hover {
-  border-color: #a5b4fc;
+  border-color: var(--purple-50);
 }
 
 .upload-box i {
@@ -341,11 +361,10 @@ function onClose() {
   display: block;
 }
 
-/* 하단 버튼 */
 .modal-footer {
   padding: 24px 32px;
-  border-top: 1px solid #f1f5f9;
-  background: #f8fafc;
+  border-top: 1px solid var(--color-muted);
+  background: var(--color-background);
   display: flex;
   justify-content: flex-end;
   gap: 16px;
@@ -353,7 +372,7 @@ function onClose() {
 
 .modal-footer button {
   padding: 14px 28px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -371,9 +390,9 @@ function onClose() {
 
 .score-item {
   background: #f9f9fb;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 16px 20px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  box-shadow: var(--shadow-sm);
 }
 
 .score-label {
@@ -395,32 +414,32 @@ function onClose() {
 }
 
 .score-label strong {
-  color: #5561f0;
+  color: var(--purple-100);
 }
 
 .score-bar-wrap {
   height: 6px;
-  background: #e0e0f0;
-  border-radius: 3px;
+  background: var(--color-border);
+  border-radius: var(--radius-xs);
   margin-bottom: 6px;
   overflow: hidden;
 }
 
 .score-bar {
   height: 100%;
-  background: linear-gradient(to right, #7f9cf5, #5561f0);
-  border-radius: 3px;
+  background: var(--gradient-score-bar);
+  border-radius: var(--radius-xs);
 }
 
 .score-desc {
   font-size: 13px;
-  color: #666;
+  color: var(--color-text-muted);
 }
 
 .type-single {
-  background: #f0f7ff;
+  background: var(--color-muted);
   padding: 12px 16px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   gap: 12px;
@@ -429,10 +448,10 @@ function onClose() {
 
 .type-badge {
   font-weight: 700;
-  color: #3b82f6;
-  background: #e0f2ff;
+  color: var(--color-badge-text);
+  background: var(--color-badge-bg);
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
 }
 
 </style>

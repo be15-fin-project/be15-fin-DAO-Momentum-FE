@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   filters: Array,
@@ -88,6 +88,21 @@ function emitChange() {
 watch(() => props.modelValue, (newVal) => {
   localValues.value = { ...newVal };
 });
+
+function handleClickOutside(e) {
+  if (!e.target.closest('.filter-box')) {
+    activeDropdown.value = null;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
 </script>
 
 <style scoped>
@@ -112,15 +127,15 @@ watch(() => props.modelValue, (newVal) => {
   padding: 8px 16px;
   font-size: 14px;
   font-weight: 500;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background-color: white;
-  color: #374151;
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius-sm);
+  background-color: var(--basic);
+  color: var(--color-text-sub);
   cursor: pointer;
 }
 
 .filter-btn:hover {
-  background-color: #f9fafb;
+  background-color: var(--color-background);
 }
 
 .dropdown {
@@ -129,10 +144,10 @@ watch(() => props.modelValue, (newVal) => {
   left: 0;
   z-index: 1000;
   min-width: 160px;
-  background: white;
-  border: 1px solid #e5e7eb;
+  background: var(--basic);
+  border: 1px solid var(--color-muted);
   border-radius: 6px;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--dropdown-shadow);
   margin-top: 4px;
 }
 
@@ -148,16 +163,16 @@ watch(() => props.modelValue, (newVal) => {
   font-size: 14px;
   border: none;
   background: none;
-  color: #374151;
+  color: var(--color-text-sub);
   cursor: pointer;
 }
 
 .dropdown button:hover {
-  background-color: #f3f4f6;
+  background-color: var(--color-muted-light);
 }
 
 .icon {
-  color: #6b7280;
+  color: var(--gray-500);
 }
 
 /* 입력형 필터 (사번, 이름, 날짜) */
@@ -166,10 +181,10 @@ watch(() => props.modelValue, (newVal) => {
   padding: 8px 12px;
   font-size: 14px;
   font-weight: 400;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  background-color: white;
-  color: #374151;
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius-sm);
+  background-color: var(--basic);
+  color: var(--gray-700);
   min-width: 140px;
   height: 38px;
   box-sizing: border-box;
@@ -179,8 +194,8 @@ watch(() => props.modelValue, (newVal) => {
 .filter-box input.filter-input:focus,
 .filter-box select.filter-input:focus {
   outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+  border-color: var(--blue-300);
+  box-shadow: var(--filter-shadow);
 }
 
 /* 날짜 필터 간 간격 조정 */

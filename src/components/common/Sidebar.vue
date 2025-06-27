@@ -126,13 +126,13 @@ export default {
           label: '평가 관리',
           icon: 'bar_chart',
           subItems: [
-            { label: 'KPI 분석', hrefs: ['../performance/kpi-overview.html'] },
-            { label: 'KPI 조회', hrefs: ['../performance/kpi-list.html'] },
-            { label: 'KPI 요청 관리', hrefs: ['../performance/kpi-requests.html'] },
-            { label: '평가 관리', hrefs: ['../performance/eval-manage.html'] },
-            { label: '다면 평가 제출', hrefs: ['../performance/eval-submit.html'] },
-            { label: '인사 평가 조회', hrefs: ['../performance/eval-me.html'] },
-            { label: '이의 제기 조회', hrefs: ['../performance/eval-objection.html'] }
+            { label: 'KPI 분석', hrefs: ['../kpi/statics'] },
+            { label: 'KPI 조회', hrefs: ['../kpi/list'] },
+            { label: 'KPI 요청 관리', hrefs: ['../kpi/requests'] },
+            { label: '평가 관리', hrefs: ['../eval/manage'] },
+            { label: '다면 평가 제출', hrefs: ['../eval/submit'] },
+            { label: '인사 평가 조회', hrefs: ['../hr/list'] },
+            { label: '이의 제기 조회', hrefs: ['../hr/objections'] }
           ]
         },
         {
@@ -178,7 +178,8 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded');
 
 .sidebar {
-  width: 22rem;
+  width: 23rem;
+  min-width: 23rem;
   max-width: 25rem;
   background: var(--side-background);
   color: var(--basic);
@@ -191,7 +192,7 @@ export default {
 }
 
 /* 기존 CSS 그대로 유지 */
-.sidebar.collapsed { width: 5rem; }
+.sidebar.collapsed { width: 4rem; min-width: 4rem }
 
 .side-btn {
   background: var(--main-color);

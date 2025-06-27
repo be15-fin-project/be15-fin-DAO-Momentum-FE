@@ -85,7 +85,7 @@ onMounted(() => {
 
 .slider-pagination {
   position: relative;
-  border-radius: 40px;
+  border-radius: var(--radius-xl);
   padding: 12px 20px;
   display: flex;
   gap: 10px;
@@ -96,7 +96,7 @@ onMounted(() => {
   border: none;
   padding: 10px 16px;
   font-size: 1rem;
-  border-radius: 25px;
+  border-radius: var(--radius-xl);
   cursor: pointer;
   z-index: 2;
   position: relative;
