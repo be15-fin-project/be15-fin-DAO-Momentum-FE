@@ -178,7 +178,8 @@ export default {
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded');
 
 .sidebar {
-  width: 22rem;
+  width: 23rem;
+  min-width: 23rem;
   max-width: 25rem;
   background: var(--side-background);
   color: var(--basic);
@@ -191,7 +192,7 @@ export default {
 }
 
 /* 기존 CSS 그대로 유지 */
-.sidebar.collapsed { width: 5rem; }
+.sidebar.collapsed { width: 4rem; min-width: 4rem }
 
 .side-btn {
   background: var(--main-color);
