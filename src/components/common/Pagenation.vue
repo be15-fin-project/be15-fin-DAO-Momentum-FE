@@ -7,7 +7,7 @@
           v-for="(page, index) in pages"
           :key="page"
           class="page-btn"
-          :class="{ active: currentPage === page }"
+          :class="{ active: modelValue === page }"
           @click="goToPage(index)"
       >
         {{ page }}
@@ -18,17 +18,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
+import { ref, watch, nextTick, onMounted } from 'vue';
 
-const pages = [1, 2, 3, 4, 5];
-const currentPage = ref(3);
+const props = defineProps({
+  pages: {
+    type: Array,
+    required: true,
+  },
+  modelValue: {
+    type: Number,
+    default: 1,
+  },
+});
+
+const emit = defineEmits(['update:modelValue']);
+
 const trackLeft = ref(0);
 const pagination = ref(null);
 
 const updateSliderPosition = () => {
   nextTick(() => {
-    const buttons = pagination.value.querySelectorAll('.page-btn');
-    const activeBtn = buttons[currentPage.value - 1];
+    const buttons = pagination.value?.querySelectorAll('.page-btn') || [];
+    const activeIndex = props.pages.findIndex((p) => p === props.modelValue);
+    const activeBtn = buttons[activeIndex];
+    if (!activeBtn) return;
+
     const containerRect = pagination.value.getBoundingClientRect();
     const activeRect = activeBtn.getBoundingClientRect();
     const left = activeRect.left - containerRect.left + activeRect.width / 2 - 25;
@@ -37,23 +51,21 @@ const updateSliderPosition = () => {
 };
 
 const goToPage = (index) => {
-  currentPage.value = pages[index];
-  updateSliderPosition();
+  emit('update:modelValue', props.pages[index]);
 };
 
 const prevPage = () => {
-  if (currentPage.value > 1) {
-    currentPage.value--;
-    updateSliderPosition();
-  }
+  const idx = props.pages.findIndex((p) => p === props.modelValue);
+  if (idx > 0) emit('update:modelValue', props.pages[idx - 1]);
 };
 
 const nextPage = () => {
-  if (currentPage.value < pages.length) {
-    currentPage.value++;
-    updateSliderPosition();
-  }
+  const idx = props.pages.findIndex((p) => p === props.modelValue);
+  if (idx < props.pages.length - 1) emit('update:modelValue', props.pages[idx + 1]);
 };
+
+watch(() => props.modelValue, updateSliderPosition);
+watch(() => props.pages, updateSliderPosition);
 
 onMounted(() => {
   updateSliderPosition();
@@ -62,6 +74,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* 기존 스타일 그대로 유지 */
 .pagination-wrapper {
   display: flex;
   justify-content: center;
@@ -121,5 +134,4 @@ onMounted(() => {
   background: var(--blue-50);
   box-shadow: var(--shadow-lg);
 }
-
 </style>

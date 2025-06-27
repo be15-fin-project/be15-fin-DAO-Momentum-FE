@@ -1,4 +1,6 @@
 <script setup>
+import { ref } from 'vue';
+
 import Sidebar from "@/components/common/Sidebar.vue";
 import Chatbot from "@/components/common/Chatbot.vue";
 
@@ -9,6 +11,7 @@ import Chatbot from "@/components/common/Chatbot.vue";
     <Sidebar/>
     <main class="main-content">
       <router-view/>
+
     </main>
   </div>
     <Chatbot/>
