@@ -1,7 +1,7 @@
 <script setup>
 import BaseTable from '@/components/common/BaseTable.vue'
 import { ref, onMounted } from 'vue'
-import Pagenation from "@/components/common/Pagenation.vue";
+import Pagination from "@/components/common/Pagination.vue";
 
 const approvals = ref([])
 
@@ -50,7 +50,7 @@ onMounted(() => {
   <section>
     <h1 class="main-title">전체 결재 목록</h1>
     <BaseTable :columns="columns" :rows="approvals" :classMap="statusClassMap" />
-    <Pagenation/>
+    <Pagination/>
   </section>
 </template>
 

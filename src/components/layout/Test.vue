@@ -8,7 +8,7 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import SideModal from '@/components/common/SideModal.vue'
 import BaseButton from "@/components/common/BaseButton.vue";
-import Pagenation from "@/components/common/Pagenation.vue";
+import Pagination from "@/components/common/Pagination.vue";
 
 const filterValues = ref({});
 
@@ -101,7 +101,7 @@ function handleSubmit() {
           v-model="filterValues"
           @search="handleSearch"
       />
-      <Pagenation
+      <Pagination
           :pages="[1, 2, 3, 4, 5, 6]"
           v-model="currentPage"
       />

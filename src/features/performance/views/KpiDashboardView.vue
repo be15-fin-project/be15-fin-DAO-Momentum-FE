@@ -4,7 +4,7 @@ import { getKpiStatistics, getKpiTimeseries, getKpiList } from '@/features/perfo
 import Chatbot from '@/components/common/Chatbot.vue';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
-import Pagenation from '@/components/common/Pagenation.vue';
+import Pagination from '@/components/common/Pagination.vue';
 import SideModal from '@/components/common/SideModal.vue';
 import Chart from 'chart.js/auto';
 import BaseTable from "@/components/common/BaseTable.vue";
@@ -224,7 +224,7 @@ const tableColumns = [
         :rows="tableData"
         @click-detail="openModalHandler"
     />
-    <Pagenation :pages="[1,2,3,4]" v-model="currentPage" />
+    <Pagination :pages="[1,2,3,4]" v-model="currentPage" />
 
     <SideModal
         :visible="isOpen"
