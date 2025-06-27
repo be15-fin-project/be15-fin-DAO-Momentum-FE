@@ -15,6 +15,8 @@
     --purple-50: #7f9cf5;
     --purple-100: #6366f1;
     --purple-500: #4338ca;
+    --green-100: #16a34a;
+    --green-200: #15803d;
 
     /* Neutral / Gray Scale */
     --gray-50: #f9fafb;       /* 페이지 배경 */
@@ -102,6 +104,8 @@
     --dropdown-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     --filter-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
     --table-shadow: 0 6px 30px -10px rgba(36,48,71,0.08);
+    --chart-shadow: 4px 20px rgba(0, 0, 0, 0.08);
+    --tab-shadow: 0 5px 0 rgba(0, 0, 0, 0.05);
 
     /* ───────────── Gradients ───────────── */
     --bg-gradient: linear-gradient(105deg, #e9f1fe 0%, #f8fafc 100%);

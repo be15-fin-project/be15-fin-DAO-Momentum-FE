@@ -268,8 +268,8 @@ function handleResize() {
 .chart-box {
   background: var(--basic);
   padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--chart-shadow);
 }
 
 .chart-title {
@@ -299,7 +299,7 @@ function handleResize() {
   font-size: 12px;
   font-weight: 300;
   border: 1px solid var(--gray-300);
-  border-radius: 8px;
+  border-radius: var(--radius-ss);
   background-color: var(--basic);
   color: var(--font-main);
   cursor: pointer;

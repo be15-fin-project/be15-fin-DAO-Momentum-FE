@@ -123,10 +123,10 @@ function resolveButtonClass(variant) {
   display: flex;
   align-items: center;
   padding: 8px 16px;
-  border-radius: 8px;
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #374151;
+  border-radius: var(--radius-ss);
+  border: 1px solid var(--gray-300);
+  background: var(--basic);
+  color: var(--gray-700);
   cursor: pointer;
   font-size: 1rem;
   font-weight: 500;
@@ -136,23 +136,23 @@ function resolveButtonClass(variant) {
   margin-right: 8px;
 }
 .header-buttons button.bg-green-600 {
-  background: #16a34a;
+  background: var(--green-100);
   border: none;
-  color: #fff;
+  color: var(--basic);
 }
 .header-buttons button.bg-green-600:hover {
-  background: #15803d;
+  background: var(--green-200);
 }
 .header-buttons button.bg-blue-600 {
-  background: #2563eb;
+  background: var(--blue-300);
   border: none;
-  color: #fff;
+  color: var(--basic);
 }
 .header-buttons button.bg-blue-600:hover {
-  background: #1d4ed8;
+  background: var(--blue-450);
 }
 .header-buttons button:hover:not(.bg-blue-600):not(.bg-green-600) {
-  background: #f3f4f6;
+  background: var(--color-muted-light);
 }
 
 .button-area {
@@ -163,7 +163,7 @@ function resolveButtonClass(variant) {
 }
 
 .tab-nav {
-  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.05);
+  box-shadow: var(--tab-shadow);
   margin-bottom: 2rem;
 }
 
@@ -181,7 +181,7 @@ function resolveButtonClass(variant) {
   padding: 16px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--gray-500);
   background: none;
   border: none;
   display: flex;
@@ -193,7 +193,7 @@ function resolveButtonClass(variant) {
 }
 
 .tab-button:hover {
-  color: #374151;
+  color: var(--gray-700);
 }
 
 .tab-button i {
@@ -201,7 +201,7 @@ function resolveButtonClass(variant) {
 }
 
 .tab-button.active {
-  color: #2563eb;
-  border-bottom: 2px solid #2563eb;
+  color: var(--blue-300);
+  border-bottom: 2px solid var(--blue-300);
 }
 </style>
