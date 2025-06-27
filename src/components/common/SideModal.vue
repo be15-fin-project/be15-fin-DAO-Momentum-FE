@@ -18,15 +18,39 @@
             :key="idx"
             :title="section.title"
             :icon="section.icon"
+            :layout="section.layout"
+            :outer-class="section.outerClass"
         >
-          <slot :name="section.slot" />
+          <div v-for="(field, fieldIdx) in section.fields" :key="fieldIdx" class="form-group">
+            <label class="form-label">{{ field.label }}</label>
+            <input type="text" class="form-input" :value="field.value" disabled />
+          </div>
         </FormSection>
+
+
       </div>
 
       <div class="modal-footer" v-if="showFooter">
-        <BaseButton type="cancel" icon="times" @click="onClose">취소</BaseButton>
-        <BaseButton type="submit" icon="paper-plane" @click="$emit('submit')">{{ submitText }}</BaseButton>
+        <BaseButton
+            v-if="showReject"
+            type="reject"
+            icon="warning"
+            @click="onClose"
+        >
+          {{ rejectText }}
+        </BaseButton>
+
+        <BaseButton
+            v-if="showSubmit"
+            type="submit"
+            icon="paper-plane"
+            @click="$emit('submit')"
+        >
+          {{ submitText }}
+        </BaseButton>
       </div>
+
+
     </div>
   </div>
 </template>
@@ -40,18 +64,22 @@ defineProps({
   title: String,
   icon: String,
   showFooter: { type: Boolean, default: true },
-  submitText: { type: String, default: '등록' },
+  showReject: { type: Boolean, default: true },
+  showSubmit: { type: Boolean, default: true },
+  rejectText: { type: String, default: '반려' },
+  submitText: { type: String, default: '승인' },
   sections: {
     type: Array,
     default: () => [] // [{ title, icon, slot }]
   }
 })
 
-const emit = defineEmits(['close', 'submit'])
+const emit = defineEmits(['close', 'reject', 'submit'])
 
 function onClose() {
   emit('close')
 }
+
 </script>
 
 

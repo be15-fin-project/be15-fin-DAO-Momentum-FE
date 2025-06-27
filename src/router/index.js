@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LayoutDefault from "@/components/layout/LayoutDefault.vue";
+import evalRoutes from "@/features/performance/router.js"
 
 const router = createRouter({
     history: createWebHistory(),
@@ -9,6 +10,7 @@ const router = createRouter({
             path: '/',
             component: LayoutDefault,
             children: [
+                ...evalRoutes,
             ]
         },
 

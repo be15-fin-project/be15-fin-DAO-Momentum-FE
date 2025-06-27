@@ -61,7 +61,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   filters: Array,
@@ -88,6 +88,21 @@ function emitChange() {
 watch(() => props.modelValue, (newVal) => {
   localValues.value = { ...newVal };
 });
+
+function handleClickOutside(e) {
+  if (!e.target.closest('.filter-box')) {
+    activeDropdown.value = null;
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
+
 </script>
 
 <style scoped>

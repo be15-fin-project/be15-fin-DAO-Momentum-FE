@@ -126,13 +126,13 @@ export default {
           label: '평가 관리',
           icon: 'bar_chart',
           subItems: [
-            { label: 'KPI 분석', hrefs: ['../performance/kpi-overview.html'] },
-            { label: 'KPI 조회', hrefs: ['../performance/kpi-list.html'] },
-            { label: 'KPI 요청 관리', hrefs: ['../performance/kpi-requests.html'] },
-            { label: '평가 관리', hrefs: ['../performance/eval-manage.html'] },
-            { label: '다면 평가 제출', hrefs: ['../performance/eval-submit.html'] },
-            { label: '인사 평가 조회', hrefs: ['../performance/eval-me.html'] },
-            { label: '이의 제기 조회', hrefs: ['../performance/eval-objection.html'] }
+            { label: 'KPI 분석', hrefs: ['../kpi/statics'] },
+            { label: 'KPI 조회', hrefs: ['../kpi/list'] },
+            { label: 'KPI 요청 관리', hrefs: ['../kpi/requests'] },
+            { label: '평가 관리', hrefs: ['../eval/manage'] },
+            { label: '다면 평가 제출', hrefs: ['../eval/submit'] },
+            { label: '인사 평가 조회', hrefs: ['../hr/list'] },
+            { label: '이의 제기 조회', hrefs: ['../hr/objections'] }
           ]
         },
         {

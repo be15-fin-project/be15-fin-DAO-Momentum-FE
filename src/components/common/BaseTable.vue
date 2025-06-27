@@ -3,6 +3,8 @@ defineProps({
   columns: { type: Array, required: true },
   rows: { type: Array, default: () => [] }
 })
+
+const emit = defineEmits(['click-detail']);
 </script>
 
 <template>
@@ -22,11 +24,20 @@ defineProps({
         <tbody>
         <tr v-for="(row, idx) in rows" :key="idx">
           <td
-            v-for="col in columns"
-            :key="col.key"
-            :class="{ 'text-left': col.align === 'left' }"
+              v-for="col in columns"
+              :key="col.key"
+              :class="{ 'text-left': col.align === 'left' }"
           >
-            <span>{{ row[col.key] }}</span>
+            <span v-if="col.key !== 'action'">{{ row[col.key] }}</span>
+
+            <!-- 상세 보기 버튼: 이모지 > 사용 -->
+            <button
+                v-else
+                class="action-button"
+                @click="emit('click-detail', row)"
+            >
+              &gt;
+            </button>
           </td>
         </tr>
         </tbody>
@@ -83,6 +94,21 @@ defineProps({
 .list-table td:first-child { padding-left: 4rem; }
 .list-table th:last-child,
 .list-table td:last-child  { padding-right: 4rem; }
+
+
+.action-button {
+  background-color: var(--blue-400);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  line-height: 1;
+}
+.action-button:hover {
+  background-color: var(--blue-500);
+}
 
 @media (max-width: 1100px) { .list-table { min-width: 600px; } }
 @media (max-width: 700px)  { .list-table th, .list-table td { padding: 10px; } }
