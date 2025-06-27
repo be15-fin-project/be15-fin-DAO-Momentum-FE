@@ -48,9 +48,9 @@ const emit = defineEmits(['click-detail']);
 
 <style scoped>
 .list-table-area {
-  background: #fff;
+  background: var(--basic);
   border-radius: 14px;
-  box-shadow: 0 6px 30px -10px rgba(36,48,71,0.08);
+  box-shadow: var(--table-shadow);
 }
 
 .list-table {
@@ -69,10 +69,10 @@ const emit = defineEmits(['click-detail']);
   white-space: nowrap;
 }
 .list-table th {
-  background: #f7fafd;
-  color: #334155;
+  background: var(--gray-100);
+  color: var(--color-text-sub);
   font-weight: 600;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid var(--color-muted);
   position: sticky;
   top: 0;
   z-index: 1;
@@ -81,10 +81,10 @@ const emit = defineEmits(['click-detail']);
   transition: background 0.16s;
 }
 .list-table tbody tr:hover {
-  background: #f0f6ff;
+  background: var(--blue-50);
 }
 .list-table td {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-muted);
 }
 .text-left {
   text-align: left;
@@ -98,9 +98,9 @@ const emit = defineEmits(['click-detail']);
 
 .action-button {
   background-color: var(--blue-400);
-  color: white;
+  color: var(--basic);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-ss);
   padding: 6px 12px;
   font-size: 14px;
   cursor: pointer;

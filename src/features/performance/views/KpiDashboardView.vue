@@ -1,11 +1,10 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import Chatbot from '@/components/common/Chatbot.vue';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagenation from '@/components/common/Pagenation.vue';
 import SideModal from '@/components/common/SideModal.vue';
-import BaseButton from '@/components/common/BaseButton.vue';
 import Chart from 'chart.js/auto';
 import BaseTable from "@/components/common/BaseTable.vue";
 
@@ -128,6 +127,7 @@ function renderMonthlyTrendChart() {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: { display: true, position: 'top' }
       },
@@ -180,10 +180,22 @@ const tableData = ref([
   }
 ]);
 
+let chartInstance = null
 
 onMounted(() => {
   renderCharts();
+  window.addEventListener('resize', handleResize)
 });
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', handleResize)
+})
+
+function handleResize() {
+  if (chartInstance) {
+    chartInstance.resize()
+  }
+}
 </script>
 
 <template>
@@ -254,7 +266,7 @@ onMounted(() => {
 }
 
 .chart-box {
-  background: white;
+  background: var(--basic);
   padding: 24px;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -268,8 +280,29 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
 }
-
 .chart-content.donut {
-  padding: 0 25%;
+  margin: 0 auto;
+  padding: 0;
+  width: 55%;
+  display: flex;
+  justify-content: center;
 }
+.chart-content canvas {
+  width: 100% !important;
+  height: auto !important;
+}
+.year-selector select{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 300;
+  border: 1px solid var(--gray-300);
+  border-radius: 8px;
+  background-color: var(--basic);
+  color: var(--font-main);
+  cursor: pointer;
+}
+
 </style>

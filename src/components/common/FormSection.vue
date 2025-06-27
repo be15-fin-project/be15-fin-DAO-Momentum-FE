@@ -35,7 +35,7 @@ const layoutClass = props.layout || '';
   align-items: center;
   margin-bottom: 24px;
   padding-bottom: 12px;
-  border-bottom: 2px solid #f1f5f9;
+  border-bottom: 2px solid var(--gray-100);
   position: relative;
 }
 
@@ -54,20 +54,20 @@ const layoutClass = props.layout || '';
   width: 44px;
   height: 44px;
   background: var(--icon-gradient);
-  color: white;
-  border-radius: 12px;
+  color: var(--basic);
+  border-radius: var(--form-radius);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 16px;
   font-size: 1.1rem;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: var(--form-shadow);
 }
 
 .section-title {
   font-size: 1.2rem;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--font-main);
   margin: 0;
 }
 
