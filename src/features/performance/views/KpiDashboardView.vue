@@ -1,5 +1,6 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { getKpiStatistics, getKpiTimeseries, getKpiList } from '@/features/performance/api.js';
 import Chatbot from '@/components/common/Chatbot.vue';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
@@ -15,11 +16,12 @@ const currentPage = ref(1);
 const isOpen = ref(false);
 const filterValues = ref({});
 const kpiList = ref([]);
+const tableData = ref([]);
 let monthlyChart = null;
 
 const filterOptions = [
-  { key: 'dept', label: '부서', icon: 'fa-building', type: 'select', options: ['전체', '개발팀', '디자인팀', '영업팀', '인사팀'] },
-  { key: 'position', label: '직위', icon: 'fa-user-tie', type: 'select', options: ['전체', '사원', '대리', '과장', '차장', '부장'] },
+  { key: 'deptId', label: '부서', icon: 'fa-building', type: 'select', options: ['전체', '개발팀', '디자인팀', '영업팀', '인사팀'] },
+  { key: 'positionId', label: '직위', icon: 'fa-user-tie', type: 'select', options: ['전체', '사원', '대리', '과장', '차장', '부장'] },
   { key: 'empId', label: '사번', icon: 'fa-id-badge', type: 'input', placeholder: '사번 입력' },
   { key: 'date', label: '등록일', icon: 'fa-calendar-day', type: 'date-range' }
 ];
@@ -47,12 +49,6 @@ const formSections = [
   }
 ];
 
-
-
-function handleSearch(values) {
-  console.log('검색 요청:', values);
-}
-
 function handleSubmit() {
   alert('해당 KPI가 승인되었습니다');
 }
@@ -69,19 +65,25 @@ function rejectHandler() {
   alert('반려 처리');
 }
 
-function renderCharts() {
+
+async function renderCharts() {
   const rootStyle = getComputedStyle(document.documentElement);
   const blue100 = rootStyle.getPropertyValue('--blue-100').trim();
   const blue400 = rootStyle.getPropertyValue('--blue-400').trim();
   const mainColor = rootStyle.getPropertyValue('--main-color').trim();
 
+  const stats = await getKpiStatistics({ year: year.value });
+
   new Chart(donutChartRef.value, {
     type: 'doughnut',
     data: {
-      labels: ['진행중', '완료', '마감'],
+      labels: ['진행중', '완료'],
       datasets: [{
-        data: [65.2, 22.5, 12.3],
-        backgroundColor: [blue100, blue400, mainColor],
+        data: [
+          stats.totalKpiCount - stats.completedKpiCount,
+          stats.completedKpiCount
+        ],
+        backgroundColor: [blue100, mainColor],
         borderWidth: 0
       }]
     },
@@ -96,11 +98,10 @@ function renderCharts() {
   renderMonthlyTrendChart();
 }
 
-function renderMonthlyTrendChart() {
-  const dataMap = {
-    '2024': [75.2, 76.8, 78.1, 79.3, 78.5, 77.9, 78.8, 79.5, 80.1, 78.7, 79.2, 78.5],
-    '2023': [72.1, 73.5, 74.8, 75.2, 76.1, 75.8, 76.4, 77.2, 76.9, 77.5, 76.8, 75.9]
-  };
+async function renderMonthlyTrendChart() {
+  const data = await getKpiTimeseries({ year: year.value });
+  const monthlyStats = data.monthlyStats;
+
   const rootStyle = getComputedStyle(document.documentElement);
   const blue200 = rootStyle.getPropertyValue('--blue-200').trim();
   const blue100 = rootStyle.getPropertyValue('--blue-100').trim();
@@ -113,8 +114,8 @@ function renderMonthlyTrendChart() {
     data: {
       labels: Array.from({ length: 12 }, (_, i) => `${i + 1}월`),
       datasets: [{
-        label: `${year.value}년 KPI 추이`,
-        data: dataMap[year.value],
+        label: `${data.year}년 KPI 추이`,
+        data: monthlyStats.map(item => item.averageProgress),
         borderColor: blue200,
         backgroundColor: rgba,
         borderWidth: 3,
@@ -132,71 +133,57 @@ function renderMonthlyTrendChart() {
         legend: { display: true, position: 'top' }
       },
       scales: {
-        y: { min: 60, max: 85, grid: { color: '#f3f4f6' } },
+        y: { min: 0, max: 100, grid: { color: '#f3f4f6' } },
         x: { grid: { color: '#f3f4f6' } }
       }
     }
   });
 }
 
-const tableColumns = [
-  { key: 'id', label: '#' },
-  { key: 'writer', label: '작성자' },
-  { key: 'goal', label: '목표' },
-  { key: 'target', label: '목표 수치' },
-  { key: 'progress', label: '진척도 (%)' },
-  { key: 'status', label: '달성 여부' },
-  { key: 'date', label: '작성일' },
-  { key: 'action', label: '상세' }
-];
+async function handleSearch(values) {
+  const params = {
+    ...values,
+    page: currentPage.value,
+    size: 10
+  };
 
-const tableData = ref([
-  {
-    id: 1,
-    writer: '김태훈',
-    goal: '월간 리드 확보',
-    target: 100,
-    progress: 85,
-    status: '달성',
-    date: '2024-06-10'
-  },
-  {
-    id: 2,
-    writer: '이하나',
-    goal: '디자인 QA 피드백 완료',
-    target: 20,
-    progress: 20,
-    status: '달성',
-    date: '2024-06-12'
-  },
-  {
-    id: 3,
-    writer: '박지민',
-    goal: '영업 미팅 건수',
-    target: 50,
-    progress: 32,
-    status: '미달성',
-    date: '2024-06-05'
-  }
-]);
+  const response = await getKpiList(params);
+  tableData.value = response.content;
+}
 
-let chartInstance = null
+watch(currentPage, () => {
+  handleSearch(filterValues.value);
+});
 
 onMounted(() => {
   renderCharts();
-  window.addEventListener('resize', handleResize)
+  handleSearch({});
+  window.addEventListener('resize', handleResize);
 });
 
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize)
-})
+  window.removeEventListener('resize', handleResize);
+});
 
+let chartInstance = null;
 function handleResize() {
   if (chartInstance) {
-    chartInstance.resize()
+    chartInstance.resize();
   }
 }
+
+const tableColumns = [
+  { key: 'kpiId', label: '#' },
+  { key: 'employeeName', label: '작성자' },
+  { key: 'goal', label: '목표' },
+  { key: 'goalValue', label: '목표 수치' },
+  { key: 'kpiProgress', label: '진척도 (%)' },
+  { key: 'statusName', label: '달성 여부' },
+  { key: 'createdAt', label: '작성일' },
+  { key: 'action', label: '상세' }
+];
 </script>
+
 
 <template>
   <main>
