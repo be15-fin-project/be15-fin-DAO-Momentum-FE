@@ -121,6 +121,7 @@ watch(currentPage, () => {
     <!-- 테이블 -->
     <BaseTable
         :columns="[
+        { key: 'profile', label: '#' },
         { key: 'empNo', label: '사번' },
         { key: 'employeeName', label: '이름' },
         { key: 'departmentName', label: '부서' },

@@ -228,8 +228,6 @@ function handleResize() {
 
 // 테이블 컬럼 정의
 const tableColumns = [
-  { key: 'profile', label: '#' },
-  { key: 'employeeName', label: '작성자' },
   { key: 'goal', label: '목표' },
   { key: 'goalValue', label: '목표 수치' },
   { key: 'kpiProgress', label: '진척도 (%)' },
