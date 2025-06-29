@@ -1,5 +1,6 @@
 <template>
   <aside :class="['sidebar', { collapsed }]">
+    <!-- Header -->
     <div class="sidebar-header">
       <div class="sidebar-brand">
         <div class="sidebar-logo">
@@ -18,50 +19,59 @@
       </button>
     </div>
 
+    <!-- Navigation -->
     <nav class="sidebar-nav">
       <div v-for="(menu, index) in menuItems" :key="index">
-
-        <!-- 메뉴에 subItems가 있을 경우 (드롭다운) -->
-        <template v-if="menu.subItems">
-          <a
-              href="#"
-              class="sidebar-item"
-              @click.prevent="toggleSubmenu(index)"
-              :class="{ active: openSubmenu === index || isSubmenuActive(menu.subItems) }"
-          >
-            <span class="material-symbols-rounded">{{ menu.icon }}</span>
-            <span class="sidebar-label">{{ menu.label }}</span>
-            <span class="material-symbols-rounded sidebar-sub-toggle"
-                  :class="{ open: openSubmenu === index || isSubmenuActive(menu.subItems) }">chevron_right</span>
-          </a>
-          <div class="sidebar-indent" :class="{ open: openSubmenu === index || isSubmenuActive(menu.subItems) }">
+        <template v-if="isAllowed(menu)">
+          <template v-if="menu.subItems && hasVisibleSubItems(menu)">
             <a
-                v-for="(sub, i) in menu.subItems"
-                :key="i"
-                :href="sub.hrefs[0]"
+                href="#"
                 class="sidebar-item"
-                :class="{ active: isActive(sub.hrefs) }"
+                @click.prevent="toggleSubmenu(index)"
+                :class="{ active: openSubmenu === index || isSubmenuActive(menu.subItems) }"
             >
-              {{ sub.label }}
+              <span class="material-symbols-rounded">{{ menu.icon }}</span>
+              <span class="sidebar-label">{{ menu.label }}</span>
+              <span
+                  class="material-symbols-rounded sidebar-sub-toggle"
+                  :class="{ open: openSubmenu === index || isSubmenuActive(menu.subItems) }"
+              >
+                chevron_right
+              </span>
             </a>
-          </div>
-        </template>
 
-        <!-- 메뉴에 subItems가 없는 경우 (단일 링크 메뉴) -->
-        <template v-else>
-          <a
-              :href="menu.hrefs[0]"
-              class="sidebar-item"
-              :class="{ active: isActive(menu.hrefs) }"
-          >
-            <span class="material-symbols-rounded">{{ menu.icon }}</span>
-            <span class="sidebar-label">{{ menu.label }}</span>
-          </a>
+            <div
+                class="sidebar-indent"
+                :class="{ open: openSubmenu === index || isSubmenuActive(menu.subItems) }"
+            >
+              <template v-for="(sub, i) in menu.subItems" :key="i">
+                <a
+                    v-if="isAllowed(sub)"
+                    :href="resolveHref(sub.hrefs)"
+                    class="sidebar-item"
+                    :class="{ active: isActive(resolveHrefList(sub.hrefs)) }"
+                >
+                  {{ sub.label }}
+                </a>
+              </template>
+            </div>
+          </template>
+
+          <template v-else-if="!menu.subItems">
+            <a
+                :href="resolveHref(menu.hrefs)"
+                class="sidebar-item"
+                :class="{ active: isActive(resolveHrefList(menu.hrefs)) }"
+            >
+              <span class="material-symbols-rounded">{{ menu.icon }}</span>
+              <span class="sidebar-label">{{ menu.label }}</span>
+            </a>
+          </template>
         </template>
       </div>
-
     </nav>
 
+    <!-- Footer -->
     <div class="sidebar-footer">
       <a href="../setting/setting.html" class="sidebar-item">
         <span class="material-symbols-rounded">settings</span>
@@ -82,73 +92,108 @@ export default {
     return {
       collapsed: false,
       openSubmenu: null,
+      currentUserRoles: ['HR_MANAGER', 'MANAGER'],
       menuItems: [
         {
           label: '회사 정보',
           icon: 'apartment',
           subItems: [
-            { label: '회사 정보', hrefs: ['../company/company-info.html'] },
-            { label: '조직도', hrefs: ['../company/org-chart.html'] }
+            {label: '회사 정보', hrefs: ['../company/company-info']},
+            {label: '조직도', hrefs: ['../company/org-chart']}
           ]
         },
         {
           label: '사원 관리',
           icon: 'group',
           subItems: [
-            { label: '사원 목록 조회', hrefs: ['../employee/employees.html'] },
-            { label: '인사 발령 내역', hrefs: ['../employee/appointment.html'] },
-            { label: '계약서 내역', hrefs: ['../employee/contracts-admin.html'] }
-          ]
+            {label: '사원 목록 조회', hrefs: ['../employee/employees']},
+            {label: '인사 발령 내역', hrefs: ['../employee/appointment']},
+            {label: '계약서 내역', hrefs: ['../employee/contracts-admin']}
+          ],
+          requireRole: ['MASTER', 'HR_MANAGER']
         },
         {
           label: '근태 관리',
           icon: 'schedule',
-          hrefs: ['../attendance/attendance.html']
+          hrefs: ['../attendance/attendance']
         },
         {
           label: '내 정보',
           icon: 'person',
           subItems: [
-            { label: '대시보드', hrefs: ['../mypage/dashboard.html'] },
-            { label: '내 정보 조회', hrefs: ['../mypage/profile.html'] },
-            { label: '계약서 내역 조회', hrefs: ['../mypage/contracts.html'] }
+            {label: '대시보드', hrefs: ['../mypage/dashboard']},
+            {label: '내 정보 조회', hrefs: ['../mypage/profile']},
+            {label: '계약서 내역 조회', hrefs: ['../mypage/contracts']}
           ]
         },
         {
           label: '결재 관리',
           icon: 'task',
           subItems: [
-            { label: '전체 결재 내역', hrefs: ['../approval/history.html'] },
-            { label: '문서함', hrefs: ['../approval/inbox.html'] }
+            {
+              label: '전체 결재 내역',
+              hrefs: ['../approval/history.html'],
+              requireRole: ['MASTER', 'HR_MANAGER']
+            },
+            {label: '문서함', hrefs: ['../approval/inbox']}
           ]
         },
         {
           label: '평가 관리',
           icon: 'bar_chart',
           subItems: [
-            { label: 'KPI 분석', hrefs: ['../kpi/statics'] },
-            { label: 'KPI 조회', hrefs: ['../kpi/list'] },
-            { label: 'KPI 요청 관리', hrefs: ['../kpi/requests'] },
-            { label: '평가 관리', hrefs: ['../eval/manage'] },
-            { label: '다면 평가 제출', hrefs: ['../eval/submit'] },
-            { label: '인사 평가 조회', hrefs: ['../hr/list'] },
-            { label: '이의 제기 조회', hrefs: ['../hr/objections'] }
+            {
+              label: 'KPI 분석',
+              hrefs: ['../kpi/statics'],
+              requireRole: ['MASTER', 'HR_MANAGER']
+            },
+            {label: 'KPI 조회', hrefs: ['../kpi/list']},
+            {
+              label: 'KPI 요청 관리',
+              hrefs: ['../kpi/requests'],
+              requireRole: ['MANAGER']
+            },
+            {
+              label: '평가 관리',
+              hrefs: ['../eval/manage'],
+              requireRole: ['MASTER', 'HR_MANAGER']
+            },
+            {label: '다면 평가 제출', hrefs: ['../eval/submit']},
+            {label: '인사 평가 조회', hrefs: ['../hr/list']},
+            {
+              label: '이의 제기 관리',
+              hrefs: ['../hr/objections'],
+              requireRole: ['MANAGER']
+            }
           ]
         },
         {
           label: '근속 지원',
           icon: 'support_agent',
           subItems: [
-            { label: '근속 전망', hrefs: ['../retention/risk-dash.html'] },
-            { label: '면담 기록', hrefs: ['../retention/risk-contact.html'] }
-          ]
+            {
+              label: '근속 전망',
+              hrefs: ['../retention/risk-dash'],
+              requireRole: ['MASTER', 'HR_MANAGER']
+            },
+            {
+              label: '면담 기록',
+              hrefs: (role) =>
+                  ['MASTER', 'HR_MANAGER'].includes(role)
+                      ? ['../retention/admin-contact']
+                      : ['MANAGER'].includes(role)
+                          ? ['../retention/user-contact']
+                          : [],
+              requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
+            }
+          ],
+          requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
         },
         {
           label: '공지 관리',
           icon: 'campaign',
-          hrefs: ['../notice/notice.html']
+          hrefs: ['../notice/notice']
         }
-
       ]
     };
   },
@@ -160,18 +205,56 @@ export default {
     toggleSubmenu(index) {
       this.openSubmenu = this.openSubmenu === index ? null : index;
     },
+    resolveHref(hrefs) {
+      if (typeof hrefs === 'function') {
+        for (const role of this.currentUserRoles) {
+          try {
+            const resolved = hrefs(role);
+            if (resolved?.length > 0) return resolved[0];
+          } catch (e) {
+            console.warn('resolveHref error:', e);
+          }
+        }
+        return '#';
+      }
+      return Array.isArray(hrefs) && hrefs.length > 0 ? hrefs[0] : '#';
+    },
+    resolveHrefList(hrefs) {
+      if (typeof hrefs === 'function') {
+        for (const role of this.currentUserRoles) {
+          try {
+            const resolved = hrefs(role);
+            if (resolved?.length > 0) return resolved;
+          } catch (e) {
+            console.warn('resolveHrefList error:', e);
+          }
+        }
+        return [];
+      }
+      return Array.isArray(hrefs) ? hrefs.filter(Boolean) : [];
+    },
     isActive(hrefs) {
       const current = window.location.pathname;
       if (!Array.isArray(hrefs)) hrefs = [hrefs];
       return hrefs.some(href => current.endsWith(href.replace('../', '/')));
     },
     isSubmenuActive(subItems) {
-      return subItems.some(item => this.isActive(item.hrefs));
+      return subItems.some(item => this.isAllowed(item) && this.isActive(this.resolveHrefList(item.hrefs)));
+    },
+    isAllowed(item) {
+      if (!item) return false;
+      const required = item.requireRole || [];
+      return required.length === 0 || required.some(role => this.currentUserRoles.includes(role));
+    },
+    hasVisibleSubItems(menu) {
+      if (!menu?.subItems) return false;
+      return menu.subItems.some(sub => this.isAllowed(sub));
     }
   }
-
 };
 </script>
+
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Pretendard&display=swap');
@@ -192,7 +275,10 @@ export default {
 }
 
 /* 기존 CSS 그대로 유지 */
-.sidebar.collapsed { width: 4rem; min-width: 4rem }
+.sidebar.collapsed {
+  width: 4.8rem;
+  min-width: 4.8rem
+}
 
 .side-btn {
   background: var(--main-color);
@@ -207,11 +293,6 @@ export default {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-
-.sidebar.collapsed {
-  width: 5rem;
 }
 
 .sidebar-header {
@@ -294,6 +375,7 @@ export default {
   background-color: var(--gray-700); /* 좀 더 연한 회색 */
   color: var(--gray-50); /* 연한 흰색 계열 */
 }
+
 .sidebar-indent {
   padding-left: 1rem;
   display: none;
@@ -313,7 +395,11 @@ export default {
 /* Collapsed 상태 처리 */
 .sidebar.collapsed .sidebar-label,
 .sidebar.collapsed .sidebar-title,
-.sidebar.collapsed .sidebar-indent {
+.sidebar.collapsed .sidebar-indent,
+.sidebar.collapsed .sidebar-sub-toggle,
+.sidebar.collapsed .sidebar-logo,
+.sidebar.collapsed .side-btn,
+.sidebar.collapsed .notification-icon {
   display: none;
 }
 
@@ -323,19 +409,6 @@ export default {
 
 .sidebar.collapsed .sidebar-item i {
   margin-right: 0;
-}
-/* 사이드바가 접혔을 때, 우측 화살표 아이콘만 숨김 */
-.sidebar.collapsed .sidebar-sub-toggle {
-  display: none;
-}
-.sidebar.collapsed .sidebar-logo {
-  display: none;
-}
-.sidebar.collapsed .side-btn {
-  display: none;
-}
-.sidebar.collapsed .notification-icon {
-  display: none;
 }
 
 .sidebar-toggle .material-symbols-rounded {

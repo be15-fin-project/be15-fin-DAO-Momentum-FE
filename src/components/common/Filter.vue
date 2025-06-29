@@ -53,7 +53,7 @@
       </div>
     </div>
 
-    <button class="filter-btn" @click="$emit('search', localValues)">
+    <button class="filter-btn" @click="handleSearchClick">
       <i class="fas fa-search icon"></i>
       <span>검색</span>
     </button>
@@ -78,7 +78,9 @@ function toggleDropdown(index) {
 
 function selectOption(key, value) {
   localValues.value[key] = value;
+  emit('update:modelValue', { ...localValues.value });
   emitChange();
+  activeDropdown.value = null;
 }
 
 function emitChange() {
@@ -93,6 +95,11 @@ function handleClickOutside(e) {
   if (!e.target.closest('.filter-box')) {
     activeDropdown.value = null;
   }
+}
+
+function handleSearchClick() {
+  emit('update:modelValue', { ...localValues.value }); // modelValue 강제 동기화
+  emit('search', { ...localValues.value });
 }
 
 onMounted(() => {
