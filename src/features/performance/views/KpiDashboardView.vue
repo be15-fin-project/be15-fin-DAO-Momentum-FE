@@ -1,13 +1,13 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getKpiStatistics, getKpiTimeseries, getKpiList } from '@/features/performance/api.js';
-import Chatbot from '@/components/common/Chatbot.vue';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import SideModal from '@/components/common/SideModal.vue';
 import Chart from 'chart.js/auto';
 import BaseTable from "@/components/common/BaseTable.vue";
+import { getKpiDetail } from '@/features/performance/api.js';
 
 // Refs
 const donutChartRef = ref(null);
@@ -17,6 +17,9 @@ const isOpen = ref(false);
 const filterValues = ref({});
 const tableData = ref([]);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
+const selectedKpiId = ref(null); // 선택된 KPI ID
+const formSections = ref([]); // 동적으로 변경될 모달 폼 내용
+
 
 // Chart instance container
 const chartRefs = {
@@ -52,31 +55,6 @@ const filterOptions = [
     label: '등록일',
     icon: 'fa-calendar-day',
     type: 'date-range'
-  }
-];
-
-
-// KPI 상세 폼 (예시)
-const formSections = [
-  {
-    title: 'KPI 정보',
-    icon: 'fa-bullseye',
-    layout: 'two-column',
-    outerClass: 'kpi-detail-section',
-    fields: [
-      { label: '목표', value: '월간 리드 확보' },
-      { label: '목표 수치', value: '100건' }
-    ]
-  },
-  {
-    title: '작성 정보',
-    icon: 'fa-user-edit',
-    layout: 'two-column',
-    outerClass: 'kpi-detail-section',
-    fields: [
-      { label: '작성자', value: '김태훈' },
-      { label: '작성일', value: '2024-06-10' }
-    ]
   }
 ];
 
@@ -275,12 +253,57 @@ const tableColumns = [
 function handleDownload() {
   alert('다운로드');
 }
-function openModalHandler() {
+async function openModalHandler(kpiId) {
   isOpen.value = true;
+  selectedKpiId.value = kpiId;
+
+  try {
+    const detail = await getKpiDetail(kpiId);
+
+    formSections.value = [
+      {
+        title: 'KPI 정보',
+        icon: 'fa-bullseye',
+        layout: 'two-column',
+        outerClass: 'kpi-detail-section',
+        fields: [
+          { label: '목표', value: detail.goal },
+          { label: '목표 수치', value: `${detail.goalValue}건` },
+          { label: '진척도', value: `${detail.kpiProgress}%` },
+          { label: '마감일', value: detail.deadline }
+        ]
+      },
+      {
+        title: '진척 기준',
+        icon: 'fa-chart-bar',
+        layout: 'two-column',
+        outerClass: 'kpi-detail-section',
+        fields: [
+          { label: '25% 달성', value: detail.progress25 },
+          { label: '50% 달성', value: detail.progress50 },
+          { label: '75% 달성', value: detail.progress75 },
+          { label: '100% 달성', value: detail.progress100 }
+        ]
+      },
+      {
+        title: '작성 정보',
+        icon: 'fa-user-edit',
+        layout: 'two-column',
+        outerClass: 'kpi-detail-section',
+        fields: [
+          { label: '작성자', value: detail.employeeName },
+          { label: '작성일', value: detail.createdAt },
+          { label: '부서', value: detail.departmentName },
+          { label: '직위', value: detail.positionName }
+        ]
+      }
+    ];
+  } catch (err) {
+    console.error('KPI 상세 조회 실패:', err);
+    isOpen.value = false;
+  }
 }
-function handleSubmit() {
-  alert('KPI가 승인되었습니다');
-}
+
 </script>
 
 
@@ -325,7 +348,7 @@ function handleSubmit() {
     <BaseTable
         :columns="tableColumns"
         :rows="tableData"
-        @click-detail="openModalHandler"
+        @click-detail="(row) => openModalHandler(row.kpiId)"
     />
 
     <!-- 페이지네이션 -->
@@ -340,16 +363,14 @@ function handleSubmit() {
     <!-- KPI 상세 모달 -->
     <SideModal
         :visible="isOpen"
-        title="KPI 상세 정보"
+        :title="`KPI 상세 정보`"
         icon="fa-chart-line"
         :sections="formSections"
-        :showCancel="true"
-        :cancelText="'닫기'"
-        :showSubmit="true"
-        :submitText="'승인'"
+        :showReject="false"
+        :showSubmit="false"
         @close="isOpen = false"
-        @submit="handleSubmit"
     />
+
   </main>
 </template>
 

@@ -171,6 +171,10 @@ function onClose() {
   overflow-y: auto;
 }
 
+.modal-content::-webkit-scrollbar {
+  width: 4px;
+}
+
 .form-section {
   margin-bottom: 40px;
 }
