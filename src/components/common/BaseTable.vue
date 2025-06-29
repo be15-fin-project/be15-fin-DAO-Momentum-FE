@@ -28,19 +28,31 @@ const emit = defineEmits(['click-detail']);
               :key="col.key"
               :class="{ 'text-left': col.align === 'left' }"
           >
-            <span v-if="col.key !== 'action'">{{ row[col.key] }}</span>
+            <!-- 프로필 아이콘 렌더링 -->
+            <template v-if="col.key === 'profile'">
+              <div class="profile-icon-container">
+                <i class="fas fa-user"></i>
+              </div>
+            </template>
 
-            <!-- 상세 보기 버튼: 이모지 > 사용 -->
-            <button
-                v-else
-                class="action-button"
-                @click="emit('click-detail', row)"
-            >
-              &gt;
-            </button>
+            <!-- 일반 텍스트 렌더링 -->
+            <template v-else-if="col.key !== 'action'">
+              {{ row[col.key] }}
+            </template>
+
+            <!-- 상세 보기 버튼 -->
+            <template v-else>
+              <button
+                  class="action-button"
+                  @click="emit('click-detail', row)"
+              >
+                &gt;
+              </button>
+            </template>
           </td>
         </tr>
         </tbody>
+
       </table>
     </div>
   </div>
@@ -94,6 +106,22 @@ const emit = defineEmits(['click-detail']);
 .list-table td:first-child { padding-left: 4rem; }
 .list-table th:last-child,
 .list-table td:last-child  { padding-right: 4rem; }
+
+.profile-icon-container {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: var(--blue-100);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.profile-icon-container i {
+  font-size: 18px;
+  color: var(--blue-400);
+}
 
 
 .action-button {

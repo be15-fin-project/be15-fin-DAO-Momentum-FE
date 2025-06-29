@@ -1,163 +1,230 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import { getKpiStatistics, getKpiTimeseries, getKpiList } from '@/features/performance/api.js';
-import Chatbot from '@/components/common/Chatbot.vue';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import SideModal from '@/components/common/SideModal.vue';
 import Chart from 'chart.js/auto';
 import BaseTable from "@/components/common/BaseTable.vue";
+import { getKpiDetail } from '@/features/performance/api.js';
 
+// Refs
 const donutChartRef = ref(null);
 const trendChartRef = ref(null);
-const year = ref('2024');
 const currentPage = ref(1);
 const isOpen = ref(false);
 const filterValues = ref({});
-const kpiList = ref([]);
 const tableData = ref([]);
-let monthlyChart = null;
+const pagination = ref({ currentPage: 1, totalPage: 1 });
+const selectedKpiId = ref(null); // 선택된 KPI ID
+const formSections = ref([]); // 동적으로 변경될 모달 폼 내용
 
+
+// Chart instance container
+const chartRefs = {
+  donut: null,
+  monthly: null
+};
+
+// 필터 옵션
 const filterOptions = [
-  { key: 'deptId', label: '부서', icon: 'fa-building', type: 'select', options: ['전체', '개발팀', '디자인팀', '영업팀', '인사팀'] },
-  { key: 'positionId', label: '직위', icon: 'fa-user-tie', type: 'select', options: ['전체', '사원', '대리', '과장', '차장', '부장'] },
-  { key: 'empId', label: '사번', icon: 'fa-id-badge', type: 'input', placeholder: '사번 입력' },
-  { key: 'date', label: '등록일', icon: 'fa-calendar-day', type: 'date-range' }
-];
-
-const formSections = [
   {
-    title: 'KPI 정보',
-    icon: 'fa-bullseye',
-    layout: 'two-column',
-    outerClass: 'kpi-detail-section',
-    fields: [
-      { label: '목표', value: '월간 리드 확보' },
-      { label: '목표 수치', value: '100건' }
-    ]
+    key: 'deptId',
+    label: '부서',
+    icon: 'fa-building',
+    type: 'select',
+    options: ['전체', '인사팀', '재무팀', '프론트엔드팀', '백엔드팀', '데이터팀', '영업팀', '디지털마케팅팀']
   },
   {
-    title: '작성 정보',
-    icon: 'fa-user-edit',
-    layout: 'two-column',
-    outerClass: 'kpi-detail-section',
-    fields: [
-      { label: '작성자', value: '김태훈' },
-      { label: '작성일', value: '2024-06-10' }
-    ]
+    key: 'positionId',
+    label: '직위',
+    icon: 'fa-user-tie',
+    type: 'select',
+    options: ['전체', '대표이사', '이사', '부장', '과장', '대리', '사원']
+  },
+  {
+    key: 'empNo',
+    label: '사번',
+    icon: 'fa-id-badge',
+    type: 'input',
+    placeholder: '사번 입력'
+  },
+  {
+    key: 'date',
+    label: '등록일',
+    icon: 'fa-calendar-day',
+    type: 'date-range'
   }
 ];
 
-function handleSubmit() {
-  alert('해당 KPI가 승인되었습니다');
+// ✨ 필터 파라미터 정규화
+function normalizeFilterParams(values) {
+  const normalized = JSON.parse(JSON.stringify(values));
+
+  // 날짜 정규화
+  if (normalized.date_start) {
+    normalized.startDate = normalized.date_start;
+    delete normalized.date_start;
+  }
+  if (normalized.date_end) {
+    normalized.endDate = normalized.date_end;
+    delete normalized.date_end;
+  }
+
+  // 직위 라벨 → ID 매핑
+  const positionMap = {
+    '전체': null,
+    '대표이사': 1,
+    '이사': 2,
+    '부장': 3,
+    '과장': 4,
+    '대리': 5,
+    '사원': 6
+  };
+  if (normalized.positionId) {
+    normalized.positionId = positionMap[normalized.positionId] ?? null;
+  }
+
+  // 부서 라벨 → ID 매핑
+  const deptMap = {
+    '전체': null,
+    '인사팀': 10,
+    '재무팀': 11,
+    '프론트엔드팀': 12,
+    '백엔드팀': 13,
+    '데이터팀': 14,
+    '영업팀': 15,
+    '디지털마케팅팀': 16
+  };
+  if (normalized.deptId) {
+    normalized.deptId = deptMap[normalized.deptId] ?? null;
+  }
+
+  return normalized;
 }
 
-function handleDownload() {
-  alert('다운로드');
-}
 
-function openModalHandler() {
-  isOpen.value = true;
-}
-
-function rejectHandler() {
-  alert('반려 처리');
-}
-
-
+// 📊 KPI 통계 차트 렌더링
 async function renderCharts() {
-  const rootStyle = getComputedStyle(document.documentElement);
-  const blue100 = rootStyle.getPropertyValue('--blue-100').trim();
-  const blue400 = rootStyle.getPropertyValue('--blue-400').trim();
-  const mainColor = rootStyle.getPropertyValue('--main-color').trim();
+  try {
+    const rootStyle = getComputedStyle(document.documentElement);
+    const blue100 = rootStyle.getPropertyValue('--blue-100').trim();
+    const mainColor = rootStyle.getPropertyValue('--main-color').trim();
 
-  const stats = await getKpiStatistics({ year: year.value });
+    const ctx = donutChartRef.value?.getContext('2d');
+    if (!ctx) return;
 
-  new Chart(donutChartRef.value, {
-    type: 'doughnut',
-    data: {
-      labels: ['진행중', '완료'],
-      datasets: [{
-        data: [
-          stats.totalKpiCount - stats.completedKpiCount,
-          stats.completedKpiCount
-        ],
-        backgroundColor: [blue100, mainColor],
-        borderWidth: 0
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom', labels: { padding: 20 } }
-      }
+    if (chartRefs.donut) {
+      chartRefs.donut.destroy();
+      chartRefs.donut = null;
     }
-  });
 
-  renderMonthlyTrendChart();
+    const stats = await getKpiStatistics(normalizeFilterParams(filterValues.value));
+    chartRefs.donut = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['진행중', '완료'],
+        datasets: [{
+          data: [
+            stats.totalKpiCount - stats.completedKpiCount,
+            stats.completedKpiCount
+          ],
+          backgroundColor: [blue100, mainColor],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+
+    await renderMonthlyTrendChart();
+  } catch (e) {
+    console.warn('차트 렌더링 실패:', e);
+  }
 }
 
+
+// 📈 KPI 월별 추이 차트
 async function renderMonthlyTrendChart() {
-  const data = await getKpiTimeseries({ year: year.value });
+  const ctx = trendChartRef.value?.getContext('2d');
+  if (!ctx) return;
+
+  const data = await getKpiTimeseries(normalizeFilterParams(filterValues.value));
   const monthlyStats = data.monthlyStats;
 
-  const rootStyle = getComputedStyle(document.documentElement);
-  const blue200 = rootStyle.getPropertyValue('--blue-200').trim();
-  const blue100 = rootStyle.getPropertyValue('--blue-100').trim();
-  const rgba = 'rgba(147,197,253,0.2)';
+  // Destroy safely
+  if (chartRefs.monthly) {
+    chartRefs.monthly.destroy();
+    chartRefs.monthly = null;
+  }
 
-  if (monthlyChart) monthlyChart.destroy();
-
-  monthlyChart = new Chart(trendChartRef.value, {
+  chartRefs.monthly = new Chart(ctx, {
     type: 'line',
     data: {
       labels: Array.from({ length: 12 }, (_, i) => `${i + 1}월`),
       datasets: [{
-        label: `${data.year}년 KPI 추이`,
+        label: '월별 KPI 추이',
         data: monthlyStats.map(item => item.averageProgress),
-        borderColor: blue200,
-        backgroundColor: rgba,
-        borderWidth: 3,
+        borderColor: 'rgba(59,130,246,1)',
+        backgroundColor: 'rgba(147,197,253,0.2)',
         fill: true,
-        tension: 0.4,
-        pointBackgroundColor: blue100,
-        pointBorderWidth: 1,
-        pointRadius: 6
+        tension: 0.4
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
       plugins: {
-        legend: { display: true, position: 'top' }
-      },
-      scales: {
-        y: { min: 0, max: 100, grid: { color: '#f3f4f6' } },
-        x: { grid: { color: '#f3f4f6' } }
+        legend: { display: true }
       }
     }
   });
 }
 
-async function handleSearch(values) {
-  const params = {
-    ...values,
-    page: currentPage.value,
-    size: 10
-  };
 
-  const response = await getKpiList(params);
-  tableData.value = response.content;
+// 🔍 KPI 목록 + 통계 동시 조회
+async function handleSearch(values) {
+  try {
+    const normalized = normalizeFilterParams(values);
+    const params = {
+      ...normalized,
+      statusId: 2,
+      page: currentPage.value,
+      size: 10
+    };
+    const response = await getKpiList(params);
+    const processed = (response.content ?? []).map((item) => ({
+      ...item,
+      statusName: item.kpiProgress === 100 ? '달성' : '미달성',
+      profile: `/images/profiles/${item.empNo}.png` // 또는 고정 이미지
+    }));
+
+    tableData.value = processed;
+    pagination.value = response.pagination ?? { currentPage: 1, totalPage: 1 };
+
+    await renderCharts();
+  } catch (err) {
+    console.error('KPI 목록 조회 중 오류:', err);
+    tableData.value = [];
+    pagination.value = { currentPage: 1, totalPage: 1 };
+  }
 }
 
+
+// 📌 페이지 변경 감지
 watch(currentPage, () => {
   handleSearch(filterValues.value);
 });
 
+// 초기 진입
 onMounted(() => {
-  renderCharts();
-  handleSearch({});
+  const init = {};
+  filterValues.value = init;
+  handleSearch(init);
   window.addEventListener('resize', handleResize);
 });
 
@@ -165,15 +232,14 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize);
 });
 
-let chartInstance = null;
 function handleResize() {
-  if (chartInstance) {
-    chartInstance.resize();
-  }
+  if (chartRefs.donut) chartRefs.donut.resize();
+  if (chartRefs.monthly) chartRefs.monthly.resize();
 }
 
+// 테이블 컬럼 정의
 const tableColumns = [
-  { key: 'kpiId', label: '#' },
+  { key: 'profile', label: '#' },
   { key: 'employeeName', label: '작성자' },
   { key: 'goal', label: '목표' },
   { key: 'goalValue', label: '목표 수치' },
@@ -182,19 +248,81 @@ const tableColumns = [
   { key: 'createdAt', label: '작성일' },
   { key: 'action', label: '상세' }
 ];
+
+// KPI 상세 모달
+function handleDownload() {
+  alert('다운로드');
+}
+async function openModalHandler(kpiId) {
+  isOpen.value = true;
+  selectedKpiId.value = kpiId;
+
+  try {
+    const detail = await getKpiDetail(kpiId);
+
+    formSections.value = [
+      {
+        title: 'KPI 정보',
+        icon: 'fa-bullseye',
+        layout: 'two-column',
+        outerClass: 'kpi-detail-section',
+        fields: [
+          { label: '목표', value: detail.goal },
+          { label: '목표 수치', value: `${detail.goalValue}건` },
+          { label: '진척도', value: `${detail.kpiProgress}%` },
+          { label: '마감일', value: detail.deadline }
+        ]
+      },
+      {
+        title: '진척 기준',
+        icon: 'fa-chart-bar',
+        layout: 'two-column',
+        outerClass: 'kpi-detail-section',
+        fields: [
+          { label: '25% 달성', value: detail.progress25 },
+          { label: '50% 달성', value: detail.progress50 },
+          { label: '75% 달성', value: detail.progress75 },
+          { label: '100% 달성', value: detail.progress100 }
+        ]
+      },
+      {
+        title: '작성 정보',
+        icon: 'fa-user-edit',
+        layout: 'two-column',
+        outerClass: 'kpi-detail-section',
+        fields: [
+          { label: '작성자', value: detail.employeeName },
+          { label: '작성일', value: detail.createdAt },
+          { label: '부서', value: detail.departmentName },
+          { label: '직위', value: detail.positionName }
+        ]
+      }
+    ];
+  } catch (err) {
+    console.error('KPI 상세 조회 실패:', err);
+    isOpen.value = false;
+  }
+}
+
 </script>
 
 
 <template>
   <main>
+    <!-- 헤더 및 상단 버튼 -->
     <HeaderWithTabs
-        :headerItems="[{ label: 'KPI 대시보드', href: '#', active: true }]"
+        :headerItems="[
+        { label: '대시보드', href: '../kpi/statics', active: true },
+        { label: '사원별 KPI', href: '#', active: false }
+      ]"
         :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
         :showTabs="false"
         @download="handleDownload"
     />
 
+    <!-- KPI 통계 차트 영역 -->
     <section class="chart-row">
+      <!-- 도넛 차트 -->
       <div class="chart-box">
         <h3 class="chart-title"><i class="fas fa-pie-chart icon-blue" /> 월별 KPI 현황</h3>
         <div class="chart-content donut">
@@ -202,15 +330,10 @@ const tableColumns = [
         </div>
       </div>
 
+      <!-- 선형 차트 -->
       <div class="chart-box">
         <div class="chart-header">
           <h3 class="chart-title"><i class="fas fa-chart-line icon-blue" /> 월별 KPI 추이</h3>
-          <div class="year-selector">
-            <select v-model="year" @change="renderMonthlyTrendChart">
-              <option value="2024">2024년</option>
-              <option value="2023">2023년</option>
-            </select>
-          </div>
         </div>
         <div class="chart-content">
           <canvas ref="trendChartRef"></canvas>
@@ -218,30 +341,39 @@ const tableColumns = [
       </div>
     </section>
 
+    <!-- 필터 컴포넌트 -->
     <EmployeeFilter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
-    <base-table
+
+    <!-- KPI 테이블 -->
+    <BaseTable
         :columns="tableColumns"
         :rows="tableData"
-        @click-detail="openModalHandler"
+        @click-detail="(row) => openModalHandler(row.kpiId)"
     />
-    <Pagination :pages="[1,2,3,4]" v-model="currentPage" />
 
+    <!-- 페이지네이션 -->
+    <Pagination
+        v-if="pagination.totalPage"
+        :pages="Array.from({ length: pagination.totalPage }, (_, i) => i + 1)"
+        v-model="currentPage"
+    />
+
+
+
+    <!-- KPI 상세 모달 -->
     <SideModal
         :visible="isOpen"
-        title="KPI 상세 정보"
+        :title="`KPI 상세 정보`"
         icon="fa-chart-line"
         :sections="formSections"
-        :showCancel="true"
-        :cancelText="'닫기'"
-        :showSubmit="true"
-        :submitText="'승인'"
+        :showReject="false"
+        :showSubmit="false"
         @close="isOpen = false"
-        @submit="handleSubmit"
     />
-  </main>
 
-  <Chatbot />
+  </main>
 </template>
+
 
 <style scoped>
 .chart-row {

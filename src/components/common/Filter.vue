@@ -20,6 +20,7 @@
               :placeholder="filter.placeholder"
               v-model="localValues[filter.key]"
               @input="emitChange"
+              @keyup.enter="emitChange"
               style="width: 100%; padding: 8px 12px; border: none;"
           />
         </template>
@@ -53,9 +54,14 @@
       </div>
     </div>
 
-    <button class="filter-btn" @click="$emit('search', localValues)">
+    <button class="filter-btn" @click="handleSearchClick">
       <i class="fas fa-search icon"></i>
       <span>검색</span>
+    </button>
+
+    <button class="filter-btn" @click="handleResetClick">
+      <i class="fas fa-rotate-left icon"></i>
+      <span>초기화</span>
     </button>
   </div>
 </template>
@@ -78,7 +84,9 @@ function toggleDropdown(index) {
 
 function selectOption(key, value) {
   localValues.value[key] = value;
+  emit('update:modelValue', { ...localValues.value });
   emitChange();
+  activeDropdown.value = null;
 }
 
 function emitChange() {
@@ -94,6 +102,19 @@ function handleClickOutside(e) {
     activeDropdown.value = null;
   }
 }
+
+function handleSearchClick() {
+  emit('update:modelValue', { ...localValues.value }); // modelValue 강제 동기화
+  emit('search', { ...localValues.value });
+}
+
+function handleResetClick() {
+  // 초기값 재설정
+  localValues.value = {};
+  emit('update:modelValue', {}); // 부모 컴포넌트에도 반영
+  emit('search', {}); // 바로 검색도 실행 (필요 없다면 이 줄 제거)
+}
+
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
