@@ -144,7 +144,7 @@ export default {
           subItems: [
             {
               label: 'KPI 분석',
-              hrefs: ['../kpi/statics'],
+              hrefs: ['../kpi/statics', '../kpi/employees', '../kpi/employee-detail'],
               requireRole: ['MASTER', 'HR_MANAGER']
             },
             {label: 'KPI 조회', hrefs: ['../kpi/list']},

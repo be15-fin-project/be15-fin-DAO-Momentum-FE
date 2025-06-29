@@ -199,8 +199,7 @@ async function handleSearch(values) {
     const response = await getKpiList(params);
     const processed = (response.content ?? []).map((item) => ({
       ...item,
-      statusName: item.kpiProgress === 100 ? '달성' : '미달성',
-      profile: `/images/profiles/${item.empNo}.png` // 또는 고정 이미지
+      statusName: item.kpiProgress === 100 ? '달성' : '미달성'
     }));
 
     tableData.value = processed;
@@ -312,8 +311,8 @@ async function openModalHandler(kpiId) {
     <!-- 헤더 및 상단 버튼 -->
     <HeaderWithTabs
         :headerItems="[
-        { label: '대시보드', href: '../kpi/statics', active: true },
-        { label: '사원별 KPI', href: '#', active: false }
+        { label: '대시보드', to: '/kpi/statics', active: true },
+        { label: '사원별 KPI', to: '/kpi/employees', active: false }
       ]"
         :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
         :showTabs="false"

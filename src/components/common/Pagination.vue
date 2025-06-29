@@ -4,11 +4,11 @@
     <div class="slider-pagination" ref="pagination">
       <div class="slider-track" :style="{ left: trackLeft + 'px' }"></div>
       <button
-          v-for="(page, index) in pages"
+          v-for="page in pages"
           :key="page"
           class="page-btn"
           :class="{ active: modelValue === page }"
-          @click="goToPage(index)"
+          @click="goToPage(page)"
       >
         {{ page }}
       </button>
@@ -50,9 +50,10 @@ const updateSliderPosition = () => {
   });
 };
 
-const goToPage = (index) => {
-  emit('update:modelValue', props.pages[index]);
+const goToPage = (page) => {
+  emit('update:modelValue', page);
 };
+
 
 const prevPage = () => {
   const idx = props.pages.findIndex((p) => p === props.modelValue);
