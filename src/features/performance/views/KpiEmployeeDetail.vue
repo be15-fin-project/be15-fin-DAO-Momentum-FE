@@ -36,7 +36,8 @@ const filterOptions = [
     key: 'statusName',
     label: '상태',
     icon: 'fa-spinner',
-    type: 'date-range'
+    type: 'select',
+    options: ['전체', '대기', '승인', '반려', '취소']
   },
   {
     key: 'date',
@@ -271,18 +272,6 @@ async function openModalHandler(kpiId) {
           { label: '50% 달성', value: detail.progress50 },
           { label: '75% 달성', value: detail.progress75 },
           { label: '100% 달성', value: detail.progress100 }
-        ]
-      },
-      {
-        title: '작성 정보',
-        icon: 'fa-user-edit',
-        layout: 'two-column',
-        outerClass: 'kpi-detail-section',
-        fields: [
-          { label: '작성자', value: detail.employeeName },
-          { label: '작성일', value: detail.createdAt },
-          { label: '부서', value: detail.departmentName },
-          { label: '직위', value: detail.positionName }
         ]
       }
     ];
