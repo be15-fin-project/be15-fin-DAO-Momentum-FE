@@ -77,182 +77,206 @@
         <span class="material-symbols-rounded">settings</span>
         <span class="sidebar-label">설정</span>
       </a>
-      <a href="../common/login.html" class="sidebar-item">
+      <div class="sidebar-item" @click="handleLogout">
         <span class="material-symbols-rounded">logout</span>
         <span class="sidebar-label">로그아웃</span>
-      </a>
+      </div>
     </div>
   </aside>
 </template>
 
-<script>
-export default {
-  name: 'Sidebar',
-  data() {
-    return {
-      collapsed: false,
-      openSubmenu: null,
-      currentUserRoles: ['HR_MANAGER', 'MANAGER'],
-      menuItems: [
-        {
-          label: '회사 정보',
-          icon: 'apartment',
-          subItems: [
-            {label: '회사 정보', hrefs: ['../company/company-info']},
-            {label: '조직도', hrefs: ['../company/org-chart']}
-          ]
-        },
-        {
-          label: '사원 관리',
-          icon: 'group',
-          subItems: [
-            {label: '사원 목록 조회', hrefs: ['../employee/employees']},
-            {label: '인사 발령 내역', hrefs: ['../employee/appointment']},
-            {label: '계약서 내역', hrefs: ['../employee/contracts-admin']}
-          ],
-          requireRole: ['MASTER', 'HR_MANAGER']
-        },
-        {
-          label: '근태 관리',
-          icon: 'schedule',
-          hrefs: ['../attendance/attendance']
-        },
-        {
-          label: '내 정보',
-          icon: 'person',
-          subItems: [
-            {label: '대시보드', hrefs: ['../mypage/dashboard']},
-            {label: '내 정보 조회', hrefs: ['../mypage/profile']},
-            {label: '계약서 내역 조회', hrefs: ['../mypage/contracts']}
-          ]
-        },
-        {
-          label: '결재 관리',
-          icon: 'task',
-          subItems: [
-            {
-              label: '전체 결재 내역',
-              hrefs: ['../approval/history.html'],
-              requireRole: ['MASTER', 'HR_MANAGER']
-            },
-            {label: '문서함', hrefs: ['../approval/inbox']}
-          ]
-        },
-        {
-          label: '평가 관리',
-          icon: 'bar_chart',
-          subItems: [
-            {
-              label: 'KPI 분석',
-              hrefs: ['../kpi/statics', '../kpi/employees', '../kpi/employee-detail'],
-              requireRole: ['MASTER', 'HR_MANAGER']
-            },
-            {label: 'KPI 조회', hrefs: ['../kpi/list']},
-            {
-              label: 'KPI 요청 관리',
-              hrefs: ['../kpi/requests'],
-              requireRole: ['MANAGER']
-            },
-            {
-              label: '평가 관리',
-              hrefs: ['../eval/manage'],
-              requireRole: ['MASTER', 'HR_MANAGER']
-            },
-            {label: '다면 평가 제출', hrefs: ['../eval/submit']},
-            {label: '인사 평가 조회', hrefs: ['../hr/list']},
-            {
-              label: '이의 제기 관리',
-              hrefs: ['../hr/objections'],
-              requireRole: ['MANAGER']
-            }
-          ]
-        },
-        {
-          label: '근속 지원',
-          icon: 'support_agent',
-          subItems: [
-            {
-              label: '근속 전망',
-              hrefs: ['../retention/risk-dash'],
-              requireRole: ['MASTER', 'HR_MANAGER']
-            },
-            {
-              label: '면담 기록',
-              hrefs: (role) =>
-                  ['MASTER', 'HR_MANAGER'].includes(role)
-                      ? ['../retention/admin-contact']
-                      : ['MANAGER'].includes(role)
-                          ? ['../retention/user-contact']
-                          : [],
-              requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
-            }
-          ],
-          requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
-        },
-        {
-          label: '공지 관리',
-          icon: 'campaign',
-          hrefs: ['../notice/notice']
-        }
-      ]
-    };
+<script setup>
+import { ref, computed } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useAuthStore } from '@/stores/auth.js'
+import { logoutUser } from '@/features/common/api.js'
+import router from '@/router/index.js'
+
+const authStore = useAuthStore()
+const { isAuthenticated } = storeToRefs(authStore)
+
+const collapsed = ref(false)
+const openSubmenu = ref(null)
+const currentUserRoles = ref(['HR_MANAGER', 'MANAGER'])
+
+const menuItems = [
+  {
+    label: '회사 정보',
+    icon: 'apartment',
+    subItems: [
+      { label: '회사 정보', hrefs: ['../company/company-info'] },
+      { label: '조직도', hrefs: ['../company/org-chart'] }
+    ]
   },
-  methods: {
-    toggleSidebar() {
-      this.collapsed = !this.collapsed;
-      this.openSubmenu = null;
-    },
-    toggleSubmenu(index) {
-      this.openSubmenu = this.openSubmenu === index ? null : index;
-    },
-    resolveHref(hrefs) {
-      if (typeof hrefs === 'function') {
-        for (const role of this.currentUserRoles) {
-          try {
-            const resolved = hrefs(role);
-            if (resolved?.length > 0) return resolved[0];
-          } catch (e) {
-            console.warn('resolveHref error:', e);
-          }
-        }
-        return '#';
+  {
+    label: '사원 관리',
+    icon: 'group',
+    subItems: [
+      { label: '사원 목록 조회', hrefs: ['../employee/employees'] },
+      { label: '인사 발령 내역', hrefs: ['../employee/appointment'] },
+      { label: '계약서 내역', hrefs: ['../employee/contracts-admin'] }
+    ],
+    requireRole: ['MASTER', 'HR_MANAGER']
+  },
+  {
+    label: '근태 관리',
+    icon: 'schedule',
+    hrefs: ['../attendance/attendance']
+  },
+  {
+    label: '내 정보',
+    icon: 'person',
+    subItems: [
+      { label: '대시보드', hrefs: ['../mypage/dashboard'] },
+      { label: '내 정보 조회', hrefs: ['../mypage/profile'] },
+      { label: '계약서 내역 조회', hrefs: ['../mypage/contracts'] }
+    ]
+  },
+  {
+    label: '결재 관리',
+    icon: 'task',
+    subItems: [
+      {
+        label: '전체 결재 내역',
+        hrefs: ['../approval/history.html'],
+        requireRole: ['MASTER', 'HR_MANAGER']
+      },
+      { label: '문서함', hrefs: ['../approval/inbox'] }
+    ]
+  },
+  {
+    label: '평가 관리',
+    icon: 'bar_chart',
+    subItems: [
+      {
+        label: 'KPI 분석',
+        hrefs: ['../kpi/statics', '../kpi/employees', '../kpi/employee-detail'],
+        requireRole: ['MASTER', 'HR_MANAGER']
+      },
+      { label: 'KPI 조회', hrefs: ['../kpi/list'] },
+      {
+        label: 'KPI 요청 관리',
+        hrefs: ['../kpi/requests'],
+        requireRole: ['MANAGER']
+      },
+      {
+        label: '평가 관리',
+        hrefs: ['../eval/manage'],
+        requireRole: ['MASTER', 'HR_MANAGER']
+      },
+      { label: '다면 평가 제출', hrefs: ['../eval/submit'] },
+      { label: '인사 평가 조회', hrefs: ['../hr/list'] },
+      {
+        label: '이의 제기 관리',
+        hrefs: ['../hr/objections'],
+        requireRole: ['MANAGER']
       }
-      return Array.isArray(hrefs) && hrefs.length > 0 ? hrefs[0] : '#';
-    },
-    resolveHrefList(hrefs) {
-      if (typeof hrefs === 'function') {
-        for (const role of this.currentUserRoles) {
-          try {
-            const resolved = hrefs(role);
-            if (resolved?.length > 0) return resolved;
-          } catch (e) {
-            console.warn('resolveHrefList error:', e);
-          }
-        }
-        return [];
+    ]
+  },
+  {
+    label: '근속 지원',
+    icon: 'support_agent',
+    subItems: [
+      {
+        label: '근속 전망',
+        hrefs: ['../retention/risk-dash'],
+        requireRole: ['MASTER', 'HR_MANAGER']
+      },
+      {
+        label: '면담 기록',
+        hrefs: (role) =>
+            ['MASTER', 'HR_MANAGER'].includes(role)
+                ? ['../retention/admin-contact']
+                : ['MANAGER'].includes(role)
+                    ? ['../retention/user-contact']
+                    : [],
+        requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
       }
-      return Array.isArray(hrefs) ? hrefs.filter(Boolean) : [];
-    },
-    isActive(hrefs) {
-      const current = window.location.pathname;
-      if (!Array.isArray(hrefs)) hrefs = [hrefs];
-      return hrefs.some(href => current.endsWith(href.replace('../', '/')));
-    },
-    isSubmenuActive(subItems) {
-      return subItems.some(item => this.isAllowed(item) && this.isActive(this.resolveHrefList(item.hrefs)));
-    },
-    isAllowed(item) {
-      if (!item) return false;
-      const required = item.requireRole || [];
-      return required.length === 0 || required.some(role => this.currentUserRoles.includes(role));
-    },
-    hasVisibleSubItems(menu) {
-      if (!menu?.subItems) return false;
-      return menu.subItems.some(sub => this.isAllowed(sub));
-    }
+    ],
+    requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
+  },
+  {
+    label: '공지 관리',
+    icon: 'campaign',
+    hrefs: ['../notice/notice']
   }
-};
+]
+
+// Methods
+
+function toggleSidebar() {
+  collapsed.value = !collapsed.value
+  openSubmenu.value = null
+}
+
+function toggleSubmenu(index) {
+  openSubmenu.value = openSubmenu.value === index ? null : index
+}
+
+function resolveHref(hrefs) {
+  if (typeof hrefs === 'function') {
+    for (const role of currentUserRoles.value) {
+      try {
+        const resolved = hrefs(role)
+        if (resolved?.length > 0) return resolved[0]
+      } catch (e) {
+        console.warn('resolveHref error:', e)
+      }
+    }
+    return '#'
+  }
+  return Array.isArray(hrefs) && hrefs.length > 0 ? hrefs[0] : '#'
+}
+
+function resolveHrefList(hrefs) {
+  if (typeof hrefs === 'function') {
+    for (const role of currentUserRoles.value) {
+      try {
+        const resolved = hrefs(role)
+        if (resolved?.length > 0) return resolved
+      } catch (e) {
+        console.warn('resolveHrefList error:', e)
+      }
+    }
+    return []
+  }
+  return Array.isArray(hrefs) ? hrefs.filter(Boolean) : []
+}
+
+function isActive(hrefs) {
+  const current = window.location.pathname
+  if (!Array.isArray(hrefs)) hrefs = [hrefs]
+  return hrefs.some((href) => current.endsWith(href.replace('../', '/')))
+}
+
+function isSubmenuActive(subItems) {
+  return subItems.some(
+      (item) => isAllowed(item) && isActive(resolveHrefList(item.hrefs))
+  )
+}
+
+function isAllowed(item) {
+  if (!item) return false
+  const required = item.requireRole || []
+  return required.length === 0 || required.some((role) => currentUserRoles.value.includes(role))
+}
+
+function hasVisibleSubItems(menu) {
+  if (!menu?.subItems) return false
+  return menu.subItems.some((sub) => isAllowed(sub))
+}
+
+const handleLogout = async () => {
+  try {
+    await logoutUser()
+  } catch (e) {
+    console.error('로그아웃 API 실패', e)
+  }
+  authStore.clearAuth()
+  router.push('/login')
+}
 </script>
+
 
 
 
@@ -356,6 +380,7 @@ export default {
 }
 
 .sidebar-item:hover {
+  cursor: pointer;
   background-color: var(--gray-600);
   color: var(--basic);
 }
