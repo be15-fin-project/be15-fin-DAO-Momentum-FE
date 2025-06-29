@@ -23,3 +23,9 @@ export async function getKpiDetail(kpiId) {
     const res = await api.get(`/kpi/${kpiId}`);
     return res.data.data;
 }
+
+// 사원별 KPI 요약 조회
+export async function getEmployeeKpiSummary(params) {
+    const res = await api.get('/kpi/employee-summary', { params });
+    return res.data.data;
+}

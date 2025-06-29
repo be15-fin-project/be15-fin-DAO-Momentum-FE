@@ -8,8 +8,11 @@ import SideModal from '@/components/common/SideModal.vue';
 import Chart from 'chart.js/auto';
 import BaseTable from "@/components/common/BaseTable.vue";
 import { getKpiDetail } from '@/features/performance/api.js';
+import {useRoute, useRouter} from 'vue-router';
 
 // Refs
+const route = useRoute();
+const router = useRouter();
 const donutChartRef = ref(null);
 const trendChartRef = ref(null);
 const currentPage = ref(1);
@@ -30,25 +33,11 @@ const chartRefs = {
 // 필터 옵션
 const filterOptions = [
   {
-    key: 'deptId',
-    label: '부서',
-    icon: 'fa-building',
+    key: 'statusName',
+    label: '상태',
+    icon: 'fa-spinner',
     type: 'select',
-    options: ['전체', '인사팀', '재무팀', '프론트엔드팀', '백엔드팀', '데이터팀', '영업팀', '디지털마케팅팀']
-  },
-  {
-    key: 'positionId',
-    label: '직위',
-    icon: 'fa-user-tie',
-    type: 'select',
-    options: ['전체', '대표이사', '이사', '부장', '과장', '대리', '사원']
-  },
-  {
-    key: 'empNo',
-    label: '사번',
-    icon: 'fa-id-badge',
-    type: 'input',
-    placeholder: '사번 입력'
+    options: ['전체', '대기', '승인', '반려', '취소']
   },
   {
     key: 'date',
@@ -192,7 +181,7 @@ async function handleSearch(values) {
     const normalized = normalizeFilterParams(values);
     const params = {
       ...normalized,
-      statusId: 2,
+      empNo: route.query.empNo,
       page: currentPage.value,
       size: 10
     };
@@ -227,6 +216,7 @@ onMounted(() => {
   window.addEventListener('resize', handleResize);
 });
 
+
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize);
 });
@@ -238,8 +228,6 @@ function handleResize() {
 
 // 테이블 컬럼 정의
 const tableColumns = [
-  { key: 'profile', label: '#' },
-  { key: 'employeeName', label: '작성자' },
   { key: 'goal', label: '목표' },
   { key: 'goalValue', label: '목표 수치' },
   { key: 'kpiProgress', label: '진척도 (%)' },
@@ -249,8 +237,8 @@ const tableColumns = [
 ];
 
 // KPI 상세 모달
-function handleDownload() {
-  alert('다운로드');
+function handleBack() {
+  router.push({ path: `../kpi/employees` });
 }
 async function openModalHandler(kpiId) {
   isOpen.value = true;
@@ -283,18 +271,6 @@ async function openModalHandler(kpiId) {
           { label: '75% 달성', value: detail.progress75 },
           { label: '100% 달성', value: detail.progress100 }
         ]
-      },
-      {
-        title: '작성 정보',
-        icon: 'fa-user-edit',
-        layout: 'two-column',
-        outerClass: 'kpi-detail-section',
-        fields: [
-          { label: '작성자', value: detail.employeeName },
-          { label: '작성일', value: detail.createdAt },
-          { label: '부서', value: detail.departmentName },
-          { label: '직위', value: detail.positionName }
-        ]
       }
     ];
   } catch (err) {
@@ -311,12 +287,11 @@ async function openModalHandler(kpiId) {
     <!-- 헤더 및 상단 버튼 -->
     <HeaderWithTabs
         :headerItems="[
-        { label: '대시보드', to: '/kpi/statics', active: true },
-        { label: '사원별 KPI', to: '/kpi/employees', active: false }
+        { label: '사원 KPI 상세 조회', href: '#', active: true },
       ]"
-        :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
+        :submitButtons="[{ label: '뒤로 가기', icon: 'fa-arrow-left', event: 'back', variant: 'white' }]"
         :showTabs="false"
-        @download="handleDownload"
+        @back="handleBack"
     />
 
     <!-- KPI 통계 차트 영역 -->

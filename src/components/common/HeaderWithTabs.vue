@@ -1,17 +1,17 @@
 <template>
   <div>
-    <!-- Header Section (Always Rendered) -->
+    <!-- Header Section -->
     <div class="main-header">
       <div class="header-area">
         <div class="page-header">
-          <h1
+          <router-link
               v-for="(item, idx) in headerItems"
               :key="idx"
-              class="page-title"
-              :class="{ active: item.active }"
+              :to="item.to"
+              class="router-link page-title"
           >
-            <a :href="item.href">{{ item.label }}</a>
-          </h1>
+            <h1 :class="{ active: item.active }">{{ item.label }}</h1>
+          </router-link>
         </div>
         <div class="header-buttons" v-if="submitButtons && submitButtons.length">
           <button
@@ -27,20 +27,20 @@
       </div>
     </div>
 
-    <!-- Navigation Tabs (Optional) -->
+    <!-- Navigation Tabs -->
     <nav class="tab-nav" v-if="showTabs">
       <div class="tab-nav-container">
         <div class="tab-list">
-          <a
+          <router-link
               v-for="tab in tabs"
               :key="tab.label"
               class="tab-button"
               :class="{ active: activeTab === tab.label }"
-              :href="tab.href"
+              :to="tab.to"
           >
             <i :class="['fas', tab.icon]" v-if="tab.icon"></i>
             <span>{{ tab.label }}</span>
-          </a>
+          </router-link>
         </div>
       </div>
     </nav>
@@ -68,6 +68,7 @@ const props = defineProps({
     default: () => []
   }
 });
+
 const emit = defineEmits(['tabSelected', 'openModal']);
 
 const activeTab = ref(props.tabs[0]?.label || '');
@@ -80,6 +81,7 @@ function resolveButtonClass(variant) {
   }
 }
 </script>
+
 
 <style scoped>
 .header-area {
@@ -108,6 +110,13 @@ function resolveButtonClass(variant) {
   display: flex;
   align-items: center;
   gap: 40px;
+}
+.router-link {
+  font-size: 2rem;
+  font-weight: bold;
+  text-decoration: none;
+  color: var(--font-none);
+  cursor: pointer;
 }
 .page-header h1 {
   color: var(--font-none);
@@ -203,5 +212,10 @@ function resolveButtonClass(variant) {
 .tab-button.active {
   color: var(--blue-300);
   border-bottom: 2px solid var(--blue-300);
+}
+
+.router-link {
+  all: unset;
+  cursor: pointer;
 }
 </style>
