@@ -275,7 +275,6 @@ async function openModalHandler(kpiId) {
         :headerItems="[
         { label: '사원 KPI 상세 조회', href: '#', active: true },
       ]"
-        :submitButtons="[{ label: '뒤로 가기', icon: 'fa-arrow-left', event: 'back', variant: 'white' }]"
         :showTabs="false"
         @back="handleBack"
     />
@@ -338,46 +337,6 @@ async function openModalHandler(kpiId) {
   grid-template-columns: 1fr 1fr;
   gap: 32px;
   margin-bottom: 32px;
-}
-
-.chart-box {
-  background: var(--basic);
-  padding: 24px;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--chart-shadow);
-}
-
-.chart-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.chart-content.donut {
-  margin: 0 auto;
-  padding: 0;
-  width: 55%;
-  display: flex;
-  justify-content: center;
-}
-.chart-content canvas {
-  width: 100% !important;
-  height: auto !important;
-}
-.year-selector select{
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 300;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-ss);
-  background-color: var(--basic);
-  color: var(--font-main);
-  cursor: pointer;
 }
 
 </style>
