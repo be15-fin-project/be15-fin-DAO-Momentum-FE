@@ -1,13 +1,16 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { getKpiStatistics, getKpiTimeseries, getKpiList } from '@/features/performance/api.js';
+import {ref, onMounted, onBeforeUnmount, watch} from 'vue';
+import {getKpiStatistics, getKpiTimeseries, getKpiList} from '@/features/performance/api.js';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import SideModal from '@/components/common/SideModal.vue';
 import Chart from 'chart.js/auto';
 import BaseTable from "@/components/common/BaseTable.vue";
-import { getKpiDetail } from '@/features/performance/api.js';
+import {getKpiDetail} from '@/features/performance/api.js';
+import DoughnutChart from '@/features/performance/components/DoughnutChart.vue';
+import LineChart from '@/features/performance/components/LineChart.vue';
+
 
 // Refs
 const donutChartRef = ref(null);
@@ -16,16 +19,23 @@ const currentPage = ref(1);
 const isOpen = ref(false);
 const filterValues = ref({});
 const tableData = ref([]);
-const pagination = ref({ currentPage: 1, totalPage: 1 });
+const pagination = ref({currentPage: 1, totalPage: 1});
 const selectedKpiId = ref(null); // 선택된 KPI ID
 const formSections = ref([]); // 동적으로 변경될 모달 폼 내용
 
 
 // Chart instance container
-const chartRefs = {
-  donut: null,
-  monthly: null
-};
+const donutChartData = ref({
+  labels: [],
+  data: [],
+  colors: [],
+});
+
+const lineChartData = ref({
+  labels: [],
+  datasets: [],
+});
+
 
 // 필터 옵션
 const filterOptions = [
@@ -109,80 +119,54 @@ function normalizeFilterParams(values) {
 async function renderCharts() {
   try {
     const rootStyle = getComputedStyle(document.documentElement);
-    const blue100 = rootStyle.getPropertyValue('--blue-100').trim();
-    const mainColor = rootStyle.getPropertyValue('--main-color').trim();
-
-    const ctx = donutChartRef.value?.getContext('2d');
-    if (!ctx) return;
-
-    if (chartRefs.donut) {
-      chartRefs.donut.destroy();
-      chartRefs.donut = null;
-    }
+    const blue200 = rootStyle.getPropertyValue('--blue-200').trim();
+    const blue400 = rootStyle.getPropertyValue('--blue-400').trim();
+    const blue500 = rootStyle.getPropertyValue('--blue-500').trim();
 
     const stats = await getKpiStatistics(normalizeFilterParams(filterValues.value));
-    chartRefs.donut = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['진행중', '완료'],
-        datasets: [{
-          data: [
-            stats.totalKpiCount - stats.completedKpiCount,
-            stats.completedKpiCount
-          ],
-          backgroundColor: [blue100, mainColor],
-          borderWidth: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'bottom' }
-        }
-      }
-    });
+    donutChartData.value = {
+      labels: ['진행중', '완료'],
+      data: [
+        stats.totalKpiCount - stats.completedKpiCount,
+        stats.completedKpiCount,
+      ],
+      colors: [blue200, blue400],
+    };
 
-    await renderMonthlyTrendChart();
+    const {monthlyStats} = await getKpiTimeseries(normalizeFilterParams(filterValues.value));
+    const fullMonths = Array.from({length: 12}, (_, i) => i + 1); // 1~12
+    const monthlyMap = Object.fromEntries(monthlyStats.map(d => [d.month, d]));
+
+    lineChartData.value = {
+      labels: fullMonths.map(m => `${m}월`),
+      datasets: [
+        {
+          label: '전체 KPI 수',
+          data: fullMonths.map(m => monthlyMap[m]?.totalKpiCount ?? 0),
+          color: blue400,
+          type: 'bar',
+          yAxisID: 'y',
+        },
+        {
+          label: '완료 KPI 수',
+          data: fullMonths.map(m => monthlyMap[m]?.completedKpiCount ?? 0),
+          color: blue500,
+          type: 'bar',
+          yAxisID: 'y',
+        },
+        {
+          label: '평균 진척률 (%)',
+          data: fullMonths.map(m => monthlyMap[m]?.averageProgress ?? 0),
+          type: 'line',
+          color: blue200,
+          borderWidth: 2,
+          yAxisID: 'y2',
+        },
+      ],
+    };
   } catch (e) {
-    console.warn('차트 렌더링 실패:', e);
+    console.warn('차트 데이터 로드 실패:', e);
   }
-}
-
-
-// 📈 KPI 월별 추이 차트
-async function renderMonthlyTrendChart() {
-  const ctx = trendChartRef.value?.getContext('2d');
-  if (!ctx) return;
-
-  const data = await getKpiTimeseries(normalizeFilterParams(filterValues.value));
-  const monthlyStats = data.monthlyStats;
-
-  // Destroy safely
-  if (chartRefs.monthly) {
-    chartRefs.monthly.destroy();
-    chartRefs.monthly = null;
-  }
-
-  chartRefs.monthly = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: Array.from({ length: 12 }, (_, i) => `${i + 1}월`),
-      datasets: [{
-        label: '월별 KPI 추이',
-        data: monthlyStats.map(item => item.averageProgress),
-        borderColor: 'rgba(59,130,246,1)',
-        backgroundColor: 'rgba(147,197,253,0.2)',
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true }
-      }
-    }
-  });
 }
 
 
@@ -203,13 +187,13 @@ async function handleSearch(values) {
     }));
 
     tableData.value = processed;
-    pagination.value = response.pagination ?? { currentPage: 1, totalPage: 1 };
+    pagination.value = response.pagination ?? {currentPage: 1, totalPage: 1};
 
     await renderCharts();
   } catch (err) {
     console.error('KPI 목록 조회 중 오류:', err);
     tableData.value = [];
-    pagination.value = { currentPage: 1, totalPage: 1 };
+    pagination.value = {currentPage: 1, totalPage: 1};
   }
 }
 
@@ -238,20 +222,21 @@ function handleResize() {
 
 // 테이블 컬럼 정의
 const tableColumns = [
-  { key: 'profile', label: '#' },
-  { key: 'employeeName', label: '작성자' },
-  { key: 'goal', label: '목표' },
-  { key: 'goalValue', label: '목표 수치' },
-  { key: 'kpiProgress', label: '진척도 (%)' },
-  { key: 'statusName', label: '달성 여부' },
-  { key: 'createdAt', label: '작성일' },
-  { key: 'action', label: '상세' }
+  {key: 'profile', label: '#'},
+  {key: 'employeeName', label: '작성자'},
+  {key: 'goal', label: '목표'},
+  {key: 'goalValue', label: '목표 수치'},
+  {key: 'kpiProgress', label: '진척도 (%)'},
+  {key: 'statusName', label: '달성 여부'},
+  {key: 'createdAt', label: '작성일'},
+  {key: 'action', label: '상세'}
 ];
 
 // KPI 상세 모달
 function handleDownload() {
   alert('다운로드');
 }
+
 async function openModalHandler(kpiId) {
   isOpen.value = true;
   selectedKpiId.value = kpiId;
@@ -266,10 +251,10 @@ async function openModalHandler(kpiId) {
         layout: 'two-column',
         outerClass: 'kpi-detail-section',
         fields: [
-          { label: '목표', value: detail.goal },
-          { label: '목표 수치', value: `${detail.goalValue}건` },
-          { label: '진척도', value: `${detail.kpiProgress}%` },
-          { label: '마감일', value: detail.deadline }
+          {label: '목표', value: detail.goal},
+          {label: '목표 수치', value: `${detail.goalValue}건`},
+          {label: '진척도', value: `${detail.kpiProgress}%`},
+          {label: '마감일', value: detail.deadline}
         ]
       },
       {
@@ -278,10 +263,10 @@ async function openModalHandler(kpiId) {
         layout: 'two-column',
         outerClass: 'kpi-detail-section',
         fields: [
-          { label: '25% 달성', value: detail.progress25 },
-          { label: '50% 달성', value: detail.progress50 },
-          { label: '75% 달성', value: detail.progress75 },
-          { label: '100% 달성', value: detail.progress100 }
+          {label: '25% 달성', value: detail.progress25},
+          {label: '50% 달성', value: detail.progress50},
+          {label: '75% 달성', value: detail.progress75},
+          {label: '100% 달성', value: detail.progress100}
         ]
       },
       {
@@ -290,10 +275,10 @@ async function openModalHandler(kpiId) {
         layout: 'two-column',
         outerClass: 'kpi-detail-section',
         fields: [
-          { label: '작성자', value: detail.employeeName },
-          { label: '작성일', value: detail.createdAt },
-          { label: '부서', value: detail.departmentName },
-          { label: '직위', value: detail.positionName }
+          {label: '작성자', value: detail.employeeName},
+          {label: '작성일', value: detail.createdAt},
+          {label: '부서', value: detail.departmentName},
+          {label: '직위', value: detail.positionName}
         ]
       }
     ];
@@ -322,26 +307,22 @@ async function openModalHandler(kpiId) {
     <!-- KPI 통계 차트 영역 -->
     <section class="chart-row">
       <!-- 도넛 차트 -->
-      <div class="chart-box">
-        <h3 class="chart-title"><i class="fas fa-pie-chart icon-blue" /> 월별 KPI 현황</h3>
-        <div class="chart-content donut">
-          <canvas ref="donutChartRef"></canvas>
-        </div>
-      </div>
+      <DoughnutChart
+          :labels="donutChartData.labels"
+          :data="donutChartData.data"
+          :colors="donutChartData.colors"
+      />
 
       <!-- 선형 차트 -->
-      <div class="chart-box">
-        <div class="chart-header">
-          <h3 class="chart-title"><i class="fas fa-chart-line icon-blue" /> 월별 KPI 추이</h3>
-        </div>
-        <div class="chart-content">
-          <canvas ref="trendChartRef"></canvas>
-        </div>
-      </div>
+      <LineChart
+          :labels="lineChartData.labels"
+          :datasets="lineChartData.datasets"
+      />
+
     </section>
 
     <!-- 필터 컴포넌트 -->
-    <EmployeeFilter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
+    <EmployeeFilter :filters="filterOptions" v-model="filterValues" @search="handleSearch"/>
 
     <!-- KPI 테이블 -->
     <BaseTable
@@ -356,7 +337,6 @@ async function openModalHandler(kpiId) {
         :pages="Array.from({ length: pagination.totalPage }, (_, i) => i + 1)"
         v-model="currentPage"
     />
-
 
 
     <!-- KPI 상세 모달 -->
@@ -381,46 +361,6 @@ async function openModalHandler(kpiId) {
   grid-template-columns: 1fr 1fr;
   gap: 32px;
   margin-bottom: 32px;
-}
-
-.chart-box {
-  background: var(--basic);
-  padding: 24px;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--chart-shadow);
-}
-
-.chart-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.chart-content.donut {
-  margin: 0 auto;
-  padding: 0;
-  width: 55%;
-  display: flex;
-  justify-content: center;
-}
-.chart-content canvas {
-  width: 100% !important;
-  height: auto !important;
-}
-.year-selector select{
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 300;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-ss);
-  background-color: var(--basic);
-  color: var(--font-main);
-  cursor: pointer;
 }
 
 </style>
