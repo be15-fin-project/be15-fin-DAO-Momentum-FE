@@ -278,8 +278,29 @@ async function openModalHandler(kpiId) {
           { label: '75% 달성', value: detail.progress75 },
           { label: '100% 달성', value: detail.progress100 }
         ]
+      },
+      {
+        title: '처리 사유',
+        icon: 'fa-comment-dots',
+        layout: 'one-column',
+        outerClass: 'kpi-detail-section',
+        fields: [
+          ...(detail.reason ? [{
+            label: '처리 사유',
+            value: detail.reason,
+            editable: false,
+            type: 'input'
+          }] : []),
+
+          ...(detail.cancelReason ? [{
+            label: '취소 사유',
+            value: detail.cancelReason,
+            editable: false,
+            type: 'input'
+          }] : [])
+        ]
       }
-    ];
+    ].filter(section => section.fields.length > 0); // 빈 필드 그룹 제거
   } catch (err) {
     console.error('KPI 상세 조회 실패:', err);
     isOpen.value = false;

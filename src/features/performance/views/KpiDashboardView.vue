@@ -1,12 +1,17 @@
 <script setup>
 import {ref, onMounted, onBeforeUnmount, watch} from 'vue';
-import {getKpiStatistics, getKpiTimeseries, getKpiList, getKpiExcelDownload} from '@/features/performance/api.js';
+import {
+  getKpiStatistics,
+  getKpiTimeseries,
+  getKpiList,
+  getKpiExcelDownload,
+  getKpiDetail
+} from '@/features/performance/api.js';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import SideModal from '@/components/common/SideModal.vue';
 import BaseTable from "@/components/common/BaseTable.vue";
-import {getKpiDetail} from '@/features/performance/api.js';
 import DoughnutChart from '@/features/performance/components/DoughnutChart.vue';
 import LineChart from '@/features/performance/components/LineChart.vue';
 
@@ -297,8 +302,29 @@ async function openModalHandler(kpiId) {
           { label: '부서', key: 'departmentName', value: detail.departmentName, editable: false, type: 'input' },
           { label: '직위', key: 'positionName', value: detail.positionName, editable: false, type: 'input' }
         ]
+      },
+      {
+        title: '처리 사유',
+        icon: 'fa-comment-dots',
+        layout: 'one-column',
+        outerClass: 'kpi-detail-section',
+        fields: [
+          ...(detail.reason ? [{
+            label: '처리 사유',
+            value: detail.reason,
+            editable: false,
+            type: 'input'
+          }] : []),
+
+          ...(detail.cancelReason ? [{
+            label: '취소 사유',
+            value: detail.cancelReason,
+            editable: false,
+            type: 'input'
+          }] : [])
+        ]
       }
-    ];
+    ].filter(section => section.fields.length > 0); // 빈 필드 그룹 제거
 
   } catch (err) {
     console.error('KPI 상세 조회 실패:', err);

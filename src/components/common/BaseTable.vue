@@ -63,6 +63,12 @@ const emit = defineEmits(['click-detail']);
   background: var(--basic);
   border-radius: 14px;
   box-shadow: var(--table-shadow);
+  width: 100%;
+  overflow-x: auto;
+}
+
+.list-table-area::-webkit-scrollbar {
+  height: 1px;
 }
 
 .list-table {
