@@ -16,6 +16,8 @@ export default [
                 component : () => import('@/features/performance/views/KpiEmployeeDetailView.vue')},
             { path: 'list', name: 'MyKpiView',
                 component : () => import('@/features/performance/views/MyKpiView.vue')},
+            { path: 'requests', name: 'KpiRequestsView',
+                component : () => import('@/features/performance/views/KpiRequestsView.vue')},
         ]
     }
 ];

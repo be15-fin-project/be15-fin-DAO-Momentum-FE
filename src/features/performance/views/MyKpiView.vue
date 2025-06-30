@@ -250,7 +250,8 @@ async function openModalHandler(kpiId) {
       statusType: detail.statusType,
       deadline: detail.deadline,
       reason: detail.reason,
-      cancelReason: detail.cancelReason
+      cancelReason: detail.cancelReason,
+      cancelResponse: detail.cancelResponse
     };
     formSections.value = [
       {
@@ -279,7 +280,7 @@ async function openModalHandler(kpiId) {
       },
       {
         title: '처리 사유',
-        icon: 'fa-chart-bar',
+        icon: 'fa-comment-dots',
         layout: 'one-column',
         outerClass: 'kpi-detail-section',
         fields: [
@@ -293,6 +294,13 @@ async function openModalHandler(kpiId) {
           ...(detail.cancelReason ? [{
             label: '취소 사유',
             value: detail.cancelReason,
+            editable: false,
+            type: 'input'
+          }] : []),
+
+          ...(detail.cancelResponse ? [{
+            label: '취소 사유',
+            value: detail.cancelResponse,
             editable: false,
             type: 'input'
           }] : [])
@@ -322,7 +330,7 @@ function handleSubmitModal() {
       ]
     },
     {
-      title: '처리 사유',
+      title: '진척 기준',
       icon: 'fa-chart-line',
       layout: 'one-column',
       fields: [
