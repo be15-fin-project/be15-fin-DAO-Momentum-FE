@@ -16,7 +16,9 @@ const route = useRoute();
 const router = useRouter();
 const currentPage = ref(1);
 const isOpen = ref(false);
-const filterValues = ref({});
+const filterValues = ref({
+  status: '전체'
+});
 const tableData = ref([]);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
 const selectedKpiId = ref(null); // 선택된 KPI ID
@@ -52,6 +54,13 @@ const filterOptions = [
     type: 'date-range'
   }
 ];
+// 필터 탭 옵션
+const tabOpstions = [
+  { key: 'status', label: '전체', value: '전체' },
+  { key: 'status', label: '승인', value: '승인' },
+  { key: 'status', label: '반려', value: '반려' }
+];
+
 
 // ✨ 필터 파라미터 정규화
 function normalizeFilterParams(values) {
@@ -155,9 +164,6 @@ async function renderCharts() {
   }
 }
 
-
-
-
 // 🔍 KPI 목록 + 통계 동시 조회
 async function handleSearch(values) {
   try {
@@ -195,9 +201,7 @@ watch(currentPage, () => {
 
 // 초기 진입
 onMounted(() => {
-  const init = {};
-  filterValues.value = init;
-  handleSearch(init);
+  handleSearch(filterValues.value); // 초기값 그대로 사용
   window.addEventListener('resize', handleResize);
 });
 
@@ -298,7 +302,7 @@ async function openModalHandler(kpiId) {
     </section>
 
     <!-- 필터 컴포넌트 -->
-    <EmployeeFilter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
+    <EmployeeFilter :filters="filterOptions" :tabs="tabOpstions" v-model="filterValues" @search="handleSearch" />
 
     <!-- KPI 테이블 -->
     <BaseTable
