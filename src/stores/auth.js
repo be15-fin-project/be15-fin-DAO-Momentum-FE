@@ -31,6 +31,10 @@ export const useAuthStore = defineStore('auth', () => {
         expirationTime.value = null;
     }
 
+    function setResetToken(tokenFromUrl){
+        accessToken.value = tokenFromUrl;
+    }
+
     return {
         accessToken,
         userRole,
@@ -38,6 +42,7 @@ export const useAuthStore = defineStore('auth', () => {
         isAuthenticated,
         setAuth,
         clearAuth,
+        setResetToken
     }
 
 });
