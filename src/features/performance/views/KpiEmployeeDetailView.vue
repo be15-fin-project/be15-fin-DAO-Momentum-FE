@@ -339,12 +339,14 @@ async function openModalHandler(kpiId) {
 
     <!-- KPI 상세 모달 -->
     <SideModal
+        :readonly="true"
         :visible="isOpen"
         :title="`KPI 상세 정보`"
         icon="fa-chart-line"
         :sections="formSections"
         :showReject="false"
         :showSubmit="false"
+        :submit-text="제출"
         @close="isOpen = false"
     />
 

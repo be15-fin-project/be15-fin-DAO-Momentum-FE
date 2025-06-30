@@ -38,8 +38,8 @@ export async function getEmployeeKpiSummary(params) {
     return res.data.data;
 }
 
+// ---------- 사원 개인 KPI 대시보드 API ----------
 
-// 자신의 KPI 대시보드
 // 자신의 KPI 통계 조회
 export async function getMyKpiStatistics(params) {
     const res = await api.get('/kpi/my-statistics', { params });
@@ -55,4 +55,23 @@ export async function getMyKpiTimeseries(params) {
 export async function getMyKpiList(params) {
     const res = await api.get('/kpi/my-list', { params });
     return res.data.data;
+}
+
+
+// KPI 제출
+export async function createMyKpi(payload) {
+    const res = await api.post('/kpis', payload);
+    return res.data.data;
+}
+
+// KPI 진척도 최신화 (PATCH)
+export async function updateKpiProgress(kpiId, payload) {
+    const res = await api.patch(`/kpis/${kpiId}/progress`, payload);
+    return res.data;
+}
+
+// KPI 취소 요청 (DELETE)
+export async function deleteKpi(kpiId, payload) {
+    const res = await api.delete(`/kpis/${kpiId}`, { data: payload });
+    return res.data;
 }

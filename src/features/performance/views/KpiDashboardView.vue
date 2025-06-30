@@ -5,7 +5,6 @@ import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import SideModal from '@/components/common/SideModal.vue';
-import Chart from 'chart.js/auto';
 import BaseTable from "@/components/common/BaseTable.vue";
 import {getKpiDetail} from '@/features/performance/api.js';
 import DoughnutChart from '@/features/performance/components/DoughnutChart.vue';
@@ -175,6 +174,7 @@ async function handleSearch(values) {
     const params = {
       ...normalized,
       statusId: 2,
+      isDeleted: 'N',
       page: currentPage.value,
       size: 10
     };
@@ -236,9 +236,10 @@ const tableColumns = [
 async function handleDownload() {
   try {
     const normalized = normalizeFilterParams(filterValues.value);
+
     const blob = await getKpiExcelDownload({
       ...normalized,
-      statusId: 2,
+      statusId: 2
     });
 
     const url = window.URL.createObjectURL(new Blob([blob]));
@@ -255,7 +256,6 @@ async function handleDownload() {
   }
 }
 
-
 // KPI 상세 모달
 async function openModalHandler(kpiId) {
   isOpen.value = true;
@@ -269,39 +269,37 @@ async function openModalHandler(kpiId) {
         title: 'KPI 정보',
         icon: 'fa-bullseye',
         layout: 'two-column',
-        outerClass: 'kpi-detail-section',
         fields: [
-          {label: '목표', value: detail.goal},
-          {label: '목표 수치', value: `${detail.goalValue}건`},
-          {label: '진척도', value: `${detail.kpiProgress}%`},
-          {label: '마감일', value: detail.deadline}
+          { label: '목표', key: 'goal', value: detail.goal, editable: false, type: 'input' },
+          { label: '목표 수치', key: 'goalValue', value: detail.goalValue, editable: false, type: 'input' },
+          { label: '진척도', key: 'kpiProgress', value: detail.kpiProgress, editable: false, type: 'input' },
+          { label: '마감일', key: 'deadline', value: detail.deadline, editable: false, type: 'input' }
         ]
       },
       {
         title: '진척 기준',
         icon: 'fa-chart-bar',
         layout: 'two-column',
-        outerClass: 'kpi-detail-section',
         fields: [
-          {label: '25% 달성', value: detail.progress25},
-          {label: '50% 달성', value: detail.progress50},
-          {label: '75% 달성', value: detail.progress75},
-          {label: '100% 달성', value: detail.progress100}
+          { label: '25% 달성', key: 'progress25', value: detail.progress25, editable: false, type: 'input' },
+          { label: '50% 달성', key: 'progress50', value: detail.progress50, editable: false, type: 'input' },
+          { label: '75% 달성', key: 'progress75', value: detail.progress75, editable: false, type: 'input' },
+          { label: '100% 달성', key: 'progress100', value: detail.progress100, editable: false, type: 'input' }
         ]
       },
       {
         title: '작성 정보',
         icon: 'fa-user-edit',
         layout: 'two-column',
-        outerClass: 'kpi-detail-section',
         fields: [
-          {label: '작성자', value: detail.employeeName},
-          {label: '작성일', value: detail.createdAt},
-          {label: '부서', value: detail.departmentName},
-          {label: '직위', value: detail.positionName}
+          { label: '작성자', key: 'employeeName', value: detail.employeeName, editable: false, type: 'input' },
+          { label: '작성일', key: 'createdAt', value: detail.createdAt, editable: false, type: 'input' },
+          { label: '부서', key: 'departmentName', value: detail.departmentName, editable: false, type: 'input' },
+          { label: '직위', key: 'positionName', value: detail.positionName, editable: false, type: 'input' }
         ]
       }
     ];
+
   } catch (err) {
     console.error('KPI 상세 조회 실패:', err);
     isOpen.value = false;
