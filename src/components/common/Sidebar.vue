@@ -45,27 +45,27 @@
                 :class="{ open: openSubmenu === index || isSubmenuActive(menu.subItems) }"
             >
               <template v-for="(sub, i) in menu.subItems" :key="i">
-                <a
+                <router-link
                     v-if="isAllowed(sub)"
-                    :href="resolveHref(sub.hrefs)"
+                    :to="resolveRoute(sub.hrefs)"
                     class="sidebar-item"
-                    :class="{ active: isActive(resolveHrefList(sub.hrefs)) }"
+                    :class="{ active: isActive(resolveRouteList(sub.hrefs)) }"
                 >
                   {{ sub.label }}
-                </a>
+                </router-link>
               </template>
             </div>
           </template>
 
           <template v-else-if="!menu.subItems">
-            <a
-                :href="resolveHref(menu.hrefs)"
+            <router-link
+                :to="resolveRoute(menu.hrefs)"
                 class="sidebar-item"
-                :class="{ active: isActive(resolveHrefList(menu.hrefs)) }"
+                :class="{ active: isActive(resolveRouteList(menu.hrefs)) }"
             >
               <span class="material-symbols-rounded">{{ menu.icon }}</span>
               <span class="sidebar-label">{{ menu.label }}</span>
-            </a>
+            </router-link>
           </template>
         </template>
       </div>
@@ -73,10 +73,10 @@
 
     <!-- Footer -->
     <div class="sidebar-footer">
-      <a href="../setting/setting.html" class="sidebar-item">
+      <router-link to="/setting" class="sidebar-item">
         <span class="material-symbols-rounded">settings</span>
         <span class="sidebar-label">설정</span>
-      </a>
+      </router-link>
       <div class="sidebar-item" @click="handleLogout">
         <span class="material-symbols-rounded">logout</span>
         <span class="sidebar-label">로그아웃</span>
@@ -86,13 +86,15 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth.js'
 import { logoutUser } from '@/features/common/api.js'
 import router from '@/router/index.js'
+import { useRoute } from 'vue-router'
 
 const authStore = useAuthStore()
+const route = useRoute()
 const { isAuthenticated } = storeToRefs(authStore)
 
 const collapsed = ref(false)
@@ -213,19 +215,34 @@ function toggleSubmenu(index) {
   openSubmenu.value = openSubmenu.value === index ? null : index
 }
 
-function resolveHref(hrefs) {
+function resolveRoute(hrefs) {
   if (typeof hrefs === 'function') {
     for (const role of currentUserRoles.value) {
       try {
         const resolved = hrefs(role)
         if (resolved?.length > 0) return resolved[0]
       } catch (e) {
-        console.warn('resolveHref error:', e)
+        console.warn('resolveRoute error:', e)
       }
     }
-    return '#'
+    return '/'
   }
-  return Array.isArray(hrefs) && hrefs.length > 0 ? hrefs[0] : '#'
+  return Array.isArray(hrefs) && hrefs.length > 0 ? hrefs[0] : '/'
+}
+
+function resolveRouteList(hrefs) {
+  if (typeof hrefs === 'function') {
+    for (const role of currentUserRoles.value) {
+      try {
+        const resolved = hrefs(role)
+        if (resolved?.length > 0) return resolved
+      } catch (e) {
+        console.warn('resolveRouteList error:', e)
+      }
+    }
+    return []
+  }
+  return Array.isArray(hrefs) ? hrefs.filter(Boolean) : []
 }
 
 function resolveHrefList(hrefs) {
@@ -244,9 +261,9 @@ function resolveHrefList(hrefs) {
 }
 
 function isActive(hrefs) {
-  const current = window.location.pathname
+  const currentPath = route.path
   if (!Array.isArray(hrefs)) hrefs = [hrefs]
-  return hrefs.some((href) => current.endsWith(href.replace('../', '/')))
+  return hrefs.some(href => currentPath.endsWith(href.replace('../', '/')))
 }
 
 function isSubmenuActive(subItems) {
