@@ -75,3 +75,25 @@ export async function deleteKpi(kpiId, payload) {
     const res = await api.delete(`/kpis/${kpiId}`, { data: payload });
     return res.data;
 }
+
+// 하급자 KPI 요청 목록 조회
+export async function getKpiRequests(params) {
+    const res = await api.get('/kpi/requests', { params });
+    return res.data;
+}
+
+// KPI 제출 승인/반려
+export async function approveKpi(kpiId, approved, reason = '') {
+    const res = await api.patch(`/kpis/${kpiId}/approval`, {
+        approved, reason
+    });
+    return res.data;
+}
+
+// KPI 취소 승인/반려
+export async function approveKpiCancel(kpiId, approved, reason = '') {
+    const res = await api.patch(`/kpis/${kpiId}/cancel/approval`, {
+        approved, reason
+    });
+    return res.data;
+}
