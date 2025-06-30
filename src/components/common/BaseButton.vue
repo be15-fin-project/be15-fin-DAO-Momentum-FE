@@ -1,7 +1,9 @@
+<!-- BaseButton.vue -->
 <template>
   <button
+      type="button"
       :class="buttonClass"
-      @click="$emit('click')"
+      @click="handleClick"
   >
     <i v-if="icon" :class="`fas fa-${icon}`"></i>
     <slot />
@@ -12,13 +14,12 @@
 export default {
   name: 'BaseButton',
   props: {
-    type: {
-      type: String,
-      default: 'default', // 'submit' | 'cancel' | 'reject' 등
-    },
-    icon: {
-      type: String,
-      default: '', // ex: 'paper-plane', 'times'
+    variant: { type: String, default: 'default' },
+    icon: { type: String, default: '' },
+  },
+  methods: {
+    handleClick(event) {
+      this.$emit('button-click', event);
     },
   },
   computed: {
@@ -26,9 +27,10 @@ export default {
       return [
         'btn-action',
         {
-          'btn-submit': this.type === 'submit',
-          'btn-cancel': this.type === 'cancel',
-          'btn-reject': this.type === 'reject',
+          'btn-submit': this.variant === 'submit',
+          'btn-cancel': this.variant === 'cancel',
+          'btn-reject': this.variant === 'reject',
+          'btn-edit': this.variant === 'edit',
         },
       ];
     },
@@ -51,21 +53,21 @@ export default {
 
 /* 취소 */
 .btn-cancel {
-  background: white;
-  color: #6b7280;
-  border: 2px solid #e5e7eb;
+  background: var(--basic);
+  color: var(--gray-500);
+  border: 2px solid var(--color-muted);
 }
 
 .btn-cancel:hover {
-  background: #f9fafb;
-  color: #374151;
+  background: var(--color-background);
+  color: var(--gray-700);
   transform: translateY(-1px);
 }
 
 /* 제출/승인 */
 .btn-submit {
-  background: linear-gradient(to right, #10b981, #059669); /* var(--approve-gradient) */
-  color: white;
+  background: var(--approve-gradient);
+  color: var(--basic);
   border: none;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
@@ -77,13 +79,26 @@ export default {
 
 /* 반려 */
 .btn-reject {
-  background: linear-gradient(to right, #ef4444, #dc2626); /* var(--reject-gradient) */
-  color: white;
+  background: var(--reject-gradient);
+  color: var(--basic);
   border: none;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
 
 .btn-reject:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35);
+}
+
+/* 수정 */
+.btn-edit {
+  background: var(--edit-gradient);
+  color: var(--basic);
+  border: none;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+
+.btn-edit:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35);
 }

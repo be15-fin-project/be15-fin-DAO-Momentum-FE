@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useAuthStore } from '@/stores/auth.js'
 import { logoutUser } from '@/features/common/api.js'
@@ -95,7 +95,7 @@ import { useRoute } from 'vue-router'
 
 const authStore = useAuthStore()
 const route = useRoute()
-const { isAuthenticated } = storeToRefs(authStore)
+const { userRole } = storeToRefs(authStore)
 
 const collapsed = ref(false)
 const openSubmenu = ref(null)
@@ -217,7 +217,7 @@ function toggleSubmenu(index) {
 
 function resolveRoute(hrefs) {
   if (typeof hrefs === 'function') {
-    for (const role of currentUserRoles.value) {
+    for (const role of userRole.value) {
       try {
         const resolved = hrefs(role)
         if (resolved?.length > 0) return resolved[0]
@@ -232,7 +232,7 @@ function resolveRoute(hrefs) {
 
 function resolveRouteList(hrefs) {
   if (typeof hrefs === 'function') {
-    for (const role of currentUserRoles.value) {
+    for (const role of userRole.value) {
       try {
         const resolved = hrefs(role)
         if (resolved?.length > 0) return resolved
@@ -247,7 +247,7 @@ function resolveRouteList(hrefs) {
 
 function resolveHrefList(hrefs) {
   if (typeof hrefs === 'function') {
-    for (const role of currentUserRoles.value) {
+    for (const role of userRole.value) {
       try {
         const resolved = hrefs(role)
         if (resolved?.length > 0) return resolved
@@ -273,10 +273,17 @@ function isSubmenuActive(subItems) {
 }
 
 function isAllowed(item) {
-  if (!item) return false
-  const required = item.requireRole || []
-  return required.length === 0 || required.some((role) => currentUserRoles.value.includes(role))
+  if (!item) return false;
+
+  // 권한 없으면 모두 허용
+  if (!item.requireRole || item.requireRole.length === 0) {
+    return true;
+  }
+
+  // 현재 사용자 역할이 하나라도 포함되면 true
+  return item.requireRole.some((required) => userRole.value.includes(required));
 }
+
 
 function hasVisibleSubItems(menu) {
   if (!menu?.subItems) return false
