@@ -1,6 +1,17 @@
 <!-- src/components/common/Filter.vue -->
 <template>
   <div class="filter-group">
+
+    <div v-if="tabs?.length" class="tabs">
+      <button
+          v-for="(tab, index) in tabs"
+          :key="index"
+          :class="{ active: localValues[tab.key] === tab.value }"
+          @click="selectTab(tab.key, tab.value)"
+      >
+        {{ tab.label }}
+      </button>
+    </div>
     <div
         class="filter-box"
         v-for="(filter, index) in filters"
@@ -20,7 +31,7 @@
               :placeholder="filter.placeholder"
               v-model="localValues[filter.key]"
               @input="emitChange"
-              @keyup.enter="emitChange"
+              @keyup.enter="handleInputEnter(index)"
               style="width: 100%; padding: 8px 12px; border: none;"
           />
         </template>
@@ -42,15 +53,16 @@
             />
           </div>
         </template>
-        <template v-else>
-          <button
-              v-for="option in filter.options"
-              :key="option"
-              @click="selectOption(filter.key, option)"
-          >
-            {{ option }}
-          </button>
-        </template>
+        <button
+            v-for="option in filter.options"
+            :key="option"
+            :class="{ active: String(localValues[filter.key]) === String(option) }"
+            @click="selectOption(filter.key, option)"
+        >
+          {{ option }}
+        </button>
+
+
       </div>
     </div>
 
@@ -61,7 +73,6 @@
 
     <button class="filter-btn" @click="handleResetClick">
       <i class="fas fa-rotate-left icon"></i>
-      <span>초기화</span>
     </button>
   </div>
 </template>
@@ -71,23 +82,40 @@ import { ref, watch, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   filters: Array,
+  tabs: Array,
   modelValue: Object,
 });
 const emit = defineEmits(['update:modelValue', 'search']);
 
-const localValues = ref({ ...props.modelValue });
+const localValues = ref({});
+watch(
+    () => props.modelValue,
+    (newVal) => {
+      localValues.value = { ...newVal };
+    },
+    { immediate: true } // mount 시에도 바로 초기값 반영
+);
 const activeDropdown = ref(null);
 
 function toggleDropdown(index) {
   activeDropdown.value = activeDropdown.value === index ? null : index;
 }
 
-function selectOption(key, value) {
+function selectTab(key, value) {
   localValues.value[key] = value;
+  emit('update:modelValue', { ...localValues.value }); // v-model 반영
+  emit('search', { ...localValues.value }); // 검색 트리거
+}
+
+function selectOption(key, value) {
+  localValues.value = {
+    ...localValues.value,
+    [key]: value,
+  };
   emit('update:modelValue', { ...localValues.value });
-  emitChange();
   activeDropdown.value = null;
 }
+
 
 function emitChange() {
   emit('update:modelValue', { ...localValues.value });
@@ -101,6 +129,10 @@ function handleClickOutside(e) {
   if (!e.target.closest('.filter-box')) {
     activeDropdown.value = null;
   }
+}
+function handleInputEnter(index) {
+  emit('update:modelValue', { ...localValues.value }); // 값 저장
+  activeDropdown.value = null; // 드롭다운 닫기
 }
 
 function handleSearchClick() {
@@ -159,6 +191,28 @@ onUnmounted(() => {
   background-color: var(--color-background);
 }
 
+/* 탭 */
+.tabs {
+  display: flex;
+  border-radius: var(--radius-lg);
+  background-color: var(--basic);
+  border: 1px solid var(--gray-300);
+}
+.tabs button {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--basic);
+  background-color: var(--basic);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+}
+.tabs button.active {
+  background: var(--blue-400);
+  border-radius: var(--radius-lg);
+  color: var(--basic);
+  border-color: var(--blue-200);
+}
+
+/* 드롭다운 */
 .dropdown {
   position: absolute;
   top: 100%;
@@ -167,11 +221,10 @@ onUnmounted(() => {
   min-width: 160px;
   background: var(--basic);
   border: 1px solid var(--color-muted);
-  border-radius: 6px;
+  border-radius: var(--radius-ss);
   box-shadow: var(--dropdown-shadow);
   margin-top: 4px;
 }
-
 
 .dropdown.show {
   display: block;
@@ -191,6 +244,13 @@ onUnmounted(() => {
 .dropdown button:hover {
   background-color: var(--color-muted-light);
 }
+
+.dropdown button.active {
+  background-color: var(--blue-100);
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
 
 .icon {
   color: var(--gray-500);
