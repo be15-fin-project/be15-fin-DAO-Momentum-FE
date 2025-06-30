@@ -208,6 +208,13 @@ const closeModal = () => {
   workDetails.value = null;
 }
 
+const formatPushedAt = (val) => val ? val.replace('T', ' ') : '-';
+const formatDuration = (minutes) => {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return (h >= 1 ? `${h}시간 ` : '') + `${m}분`;
+}
+
 const modalSections = computed(() => {
   if (!workDetails.value) return [];
 
@@ -222,19 +229,19 @@ const modalSections = computed(() => {
         {
           key: 'startPushedAt',
           label: '출근 등록 일시',
-          value: workDetails.value.startPushedAt ? workDetails.value.startPushedAt.replace('T', ' ') : '-'
+          value: formatPushedAt(workDetails.value.startPushedAt)
         },
         {
           key: 'endPushedAt',
           label: '퇴근 등록 일시',
-          value: workDetails.value.endPushedAt ? workDetails.value.endPushedAt.replace('T', ' ') : '-'
+          value: formatPushedAt(workDetails.value.endPushedAt)
         },
         {
           key: 'breakTime',
           label: '휴게 시간',
-          value: (workDetails.value.breakTime >= 60 ? `${Math.floor(workDetails.value.breakTime / 60)}시간 ` : '') + `${workDetails.value.breakTime % 60}분`
+          value: formatDuration(workDetails.value.breakTime)
         },
-        { key: 'isNormalWork', label: '정상 근무 여부', value: workDetails.value.isNormalWork},
+        { key: 'isNormalWork', label: '정상 근무 여부', value: workDetails.value.isNormalWork}
       ],
     },
   ];
