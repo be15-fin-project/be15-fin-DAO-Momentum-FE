@@ -1,11 +1,10 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
-import { getKpiStatistics, getKpiTimeseries, getKpiList } from '@/features/performance/api.js';
+import { getMyKpiStatistics, getMyKpiTimeseries, getMyKpiList } from '@/features/performance/api.js';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import SideModal from '@/components/common/SideModal.vue';
-import Chart from 'chart.js/auto';
 import BaseTable from "@/components/common/BaseTable.vue";
 import { getKpiDetail } from '@/features/performance/api.js';
 import {useRoute, useRouter} from 'vue-router';
@@ -15,11 +14,11 @@ import LineChart from '@/features/performance/components/LineChart.vue';
 // Refs
 const route = useRoute();
 const router = useRouter();
-const donutChartRef = ref(null);
-const trendChartRef = ref(null);
 const currentPage = ref(1);
 const isOpen = ref(false);
-const filterValues = ref({});
+const filterValues = ref({
+  status: '전체'
+});
 const tableData = ref([]);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
 const selectedKpiId = ref(null); // 선택된 KPI ID
@@ -55,6 +54,13 @@ const filterOptions = [
     type: 'date-range'
   }
 ];
+// 필터 탭 옵션
+const tabOpstions = [
+  { key: 'status', label: '전체', value: '전체' },
+  { key: 'status', label: '승인', value: '승인' },
+  { key: 'status', label: '반려', value: '반려' }
+];
+
 
 // ✨ 필터 파라미터 정규화
 function normalizeFilterParams(values) {
@@ -112,7 +118,7 @@ async function renderCharts() {
     const blue400 = rootStyle.getPropertyValue('--blue-400').trim();
     const blue500 = rootStyle.getPropertyValue('--blue-500').trim();
 
-    const stats = await getKpiStatistics(normalizeFilterParams(filterValues.value));
+    const stats = await getMyKpiStatistics(normalizeFilterParams(filterValues.value));
     donutChartData.value = {
       labels: ['진행중', '완료'],
       data: [
@@ -122,7 +128,7 @@ async function renderCharts() {
       colors: [blue200, blue400],
     };
 
-    const {monthlyStats} = await getKpiTimeseries(normalizeFilterParams(filterValues.value));
+    const {monthlyStats} = await getMyKpiTimeseries(normalizeFilterParams(filterValues.value));
     const fullMonths = Array.from({length: 12}, (_, i) => i + 1); // 1~12
     const monthlyMap = Object.fromEntries(monthlyStats.map(d => [d.month, d]));
 
@@ -158,9 +164,6 @@ async function renderCharts() {
   }
 }
 
-
-
-
 // 🔍 KPI 목록 + 통계 동시 조회
 async function handleSearch(values) {
   try {
@@ -171,14 +174,16 @@ async function handleSearch(values) {
       page: currentPage.value,
       size: 10
     };
-    const response = await getKpiList(params);
-    const processed = (response.content ?? []).map((item) => ({
+    const res = await getMyKpiList(params);
+    const processed = (res.content ?? []).map((item) => ({
       ...item,
       statusName: item.kpiProgress === 100 ? '달성' : '미달성'
     }));
 
     tableData.value = processed;
-    pagination.value = response.pagination ?? { currentPage: 1, totalPage: 1 };
+    const current = res.pagination?.currentPage || 1;
+    const total = res.pagination?.totalPage > 0 ? res.pagination.totalPage : 1;
+    pagination.value = { currentPage: current, totalPage: total };
 
     await renderCharts();
   } catch (err) {
@@ -196,9 +201,7 @@ watch(currentPage, () => {
 
 // 초기 진입
 onMounted(() => {
-  const init = {};
-  filterValues.value = init;
-  handleSearch(init);
+  handleSearch(filterValues.value); // 초기값 그대로 사용
   window.addEventListener('resize', handleResize);
 });
 
@@ -273,9 +276,11 @@ async function openModalHandler(kpiId) {
     <!-- 헤더 및 상단 버튼 -->
     <HeaderWithTabs
         :headerItems="[
-        { label: '사원 KPI 상세 조회', href: '#', active: true },
+        { label: 'KPI 조회', href: '#', active: true },
       ]"
+        :submitButtons="[{ label: 'KPI 등록', icon: 'fa-file-signature', event: 'download', variant: 'blue' }]"
         :showTabs="false"
+        @download="handleSubmit"
         @back="handleBack"
     />
 
@@ -297,7 +302,7 @@ async function openModalHandler(kpiId) {
     </section>
 
     <!-- 필터 컴포넌트 -->
-    <EmployeeFilter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
+    <EmployeeFilter :filters="filterOptions" :tabs="tabOpstions" v-model="filterValues" @search="handleSearch" />
 
     <!-- KPI 테이블 -->
     <BaseTable

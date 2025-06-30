@@ -3,26 +3,29 @@
     <button class="nav-btn" @click="prevPage">&lt;</button>
     <div class="slider-pagination" ref="pagination">
       <div class="slider-track" :style="{ left: trackLeft + 'px' }"></div>
-      <button
-          v-for="page in pages"
-          :key="page"
-          class="page-btn"
-          :class="{ active: modelValue === page }"
-          @click="goToPage(page)"
-      >
-        {{ page }}
-      </button>
+      <template v-for="(page, index) in visiblePages" :key="index">
+        <span v-if="page === '...'" class="ellipsis">...</span>
+        <button
+            v-else
+            class="page-btn"
+            :class="{ active: modelValue === page }"
+            @click="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+      </template>
     </div>
     <button class="nav-btn" @click="nextPage">&gt;</button>
   </div>
+
 </template>
 
 <script setup>
-import { ref, watch, nextTick, onMounted } from 'vue';
+import { ref, watch, nextTick, onMounted, computed } from 'vue';
 
 const props = defineProps({
-  pages: {
-    type: Array,
+  totalPages: {
+    type: Number,
     required: true,
   },
   modelValue: {
@@ -36,10 +39,58 @@ const emit = defineEmits(['update:modelValue']);
 const trackLeft = ref(0);
 const pagination = ref(null);
 
+// 페이지 배열 계산
+const visiblePages = computed(() => {
+  const total = props.totalPages;
+  const current = props.modelValue;
+  const delta = 2;
+
+  if (total <= 10) {
+    return Array.from({ length: total }, (_, i) => i + 1);
+  }
+
+  const pages = [];
+
+  pages.push(1); // 항상 첫 페이지
+
+  let left = current - delta;
+  let right = current + delta;
+
+  if (left <= 2) {
+    left = 2;
+    right = left + 4;
+  }
+  if (right >= total - 1) {
+    right = total - 1;
+    left = right - 4;
+  }
+
+  if (left > 2) {
+    pages.push('...');
+  }
+
+  for (let i = left; i <= right; i++) {
+    if (i > 1 && i < total) {
+      pages.push(i);
+    }
+  }
+
+  if (right < total - 1) {
+    pages.push('...');
+  }
+
+  if (total > 1) {
+    pages.push(total); // 항상 마지막 페이지
+  }
+
+  return pages;
+});
+
+
 const updateSliderPosition = () => {
   nextTick(() => {
     const buttons = pagination.value?.querySelectorAll('.page-btn') || [];
-    const activeIndex = props.pages.findIndex((p) => p === props.modelValue);
+    const activeIndex = visiblePages.value.findIndex((p) => p === props.modelValue);
     const activeBtn = buttons[activeIndex];
     if (!activeBtn) return;
 
@@ -51,22 +102,20 @@ const updateSliderPosition = () => {
 };
 
 const goToPage = (page) => {
+  if (page === '...') return;
   emit('update:modelValue', page);
 };
 
-
 const prevPage = () => {
-  const idx = props.pages.findIndex((p) => p === props.modelValue);
-  if (idx > 0) emit('update:modelValue', props.pages[idx - 1]);
+  if (props.modelValue > 1) emit('update:modelValue', props.modelValue - 1);
 };
 
 const nextPage = () => {
-  const idx = props.pages.findIndex((p) => p === props.modelValue);
-  if (idx < props.pages.length - 1) emit('update:modelValue', props.pages[idx + 1]);
+  if (props.modelValue < props.totalPages) emit('update:modelValue', props.modelValue + 1);
 };
 
 watch(() => props.modelValue, updateSliderPosition);
-watch(() => props.pages, updateSliderPosition);
+watch(() => props.totalPages, updateSliderPosition);
 
 onMounted(() => {
   updateSliderPosition();
@@ -135,4 +184,10 @@ onMounted(() => {
   background: var(--blue-50);
   box-shadow: var(--shadow-lg);
 }
+.ellipsis {
+  padding: 10px 12px;
+  color: #aaa;
+  user-select: none;
+}
+
 </style>

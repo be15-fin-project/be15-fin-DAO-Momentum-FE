@@ -15,8 +15,6 @@ import LineChart from '@/features/performance/components/LineChart.vue';
 // Refs
 const route = useRoute();
 const router = useRouter();
-const donutChartRef = ref(null);
-const trendChartRef = ref(null);
 const currentPage = ref(1);
 const isOpen = ref(false);
 const filterValues = ref({});
@@ -174,14 +172,16 @@ async function handleSearch(values) {
       page: currentPage.value,
       size: 10
     };
-    const response = await getKpiList(params);
-    const processed = (response.content ?? []).map((item) => ({
+    const res = await getKpiList(params);
+    const processed = (res.content ?? []).map((item) => ({
       ...item,
       statusName: item.kpiProgress === 100 ? '달성' : '미달성'
     }));
 
     tableData.value = processed;
-    pagination.value = response.pagination ?? { currentPage: 1, totalPage: 1 };
+    const current = res.pagination?.currentPage || 1;
+    const total = res.pagination?.totalPage > 0 ? res.pagination.totalPage : 1;
+    pagination.value = { currentPage: current, totalPage: total };
 
     await renderCharts();
   } catch (err) {
