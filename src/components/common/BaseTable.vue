@@ -35,6 +35,19 @@ const emit = defineEmits(['click-detail']);
               </div>
             </template>
 
+            <!-- 상태 컬럼 색상 처리 -->
+            <template v-else-if="col.key === 'statusType'">
+              <span
+                :class="{
+                  'status-wait': row[col.key] === '대기',
+                  'status-approved': row[col.key] === '승인',
+                  'status-rejected': row[col.key] === '반려'
+                }"
+              >
+                {{ row[col.key] }}
+              </span>
+            </template>
+
             <!-- 일반 텍스트 렌더링 -->
             <template v-else-if="col.key !== 'action'">
               {{ row[col.key] }}
@@ -123,7 +136,6 @@ const emit = defineEmits(['click-detail']);
   color: var(--blue-400);
 }
 
-
 .action-button {
   background-color: var(--blue-400);
   color: var(--basic);
@@ -140,4 +152,24 @@ const emit = defineEmits(['click-detail']);
 
 @media (max-width: 1100px) { .list-table { min-width: 600px; } }
 @media (max-width: 700px)  { .list-table th, .list-table td { padding: 10px; } }
+
+.status-approved, .status-rejected, .status-wait {
+  border-radius: 30%;
+  padding: 3px 6px;
+}
+
+.status-approved {
+  background-color: #d9fbe5;
+  color: #1b5e20;
+}
+
+.status-rejected {
+  background-color: #ffe2e2;
+  color: #c62828;
+}
+
+.status-wait {
+  background-color: #e0f0ff;
+  color: #1565c0;
+}
 </style>
