@@ -140,7 +140,7 @@ const menuItems = [
     subItems: [
       {
         label: '전체 결재 내역',
-        hrefs: ['../approval/history.html'],
+        hrefs: ['../approvals'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       { label: '문서함', hrefs: ['../approval/inbox'] }
