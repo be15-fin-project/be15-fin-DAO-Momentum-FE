@@ -37,6 +37,7 @@
             v-if="showReject"
             variant="reject"
             icon="warning"
+            :disabled="rejectDisabled"
             @click="$emit('reject')"
         >
           {{ rejectText }}
@@ -55,10 +56,12 @@
             v-if="showSubmit"
             variant="submit"
             icon="paper-plane"
+            :disabled="submitDisabled"
             @click="$emit('submit')"
         >
           {{ submitText }}
         </BaseButton>
+
       </div>
 
 
@@ -84,6 +87,8 @@ const props = defineProps({
   showReject: { type: Boolean, default: false },
   showEdit: { type: Boolean, default: false },
   showSubmit: { type: Boolean, default: true },
+  submitDisabled: { type: Boolean, default: false },
+  rejectDisabled: { type: Boolean, default: false },
   rejectText: { type: String, default: '반려' },
   editText: { type: String, default: '수정' },
   submitText: { type: String, default: '저장' },

@@ -64,6 +64,24 @@ const submitText = computed(() => {
   return '최신화'; // 기본
 });
 
+const canEditProgress = computed(() => {
+  const detail = createForm.value;
+  return (
+      detail.statusType === 'ACCEPTED' &&
+      new Date(detail.deadline) > new Date()
+  );
+});
+
+const canCancelRequest = computed(() => {
+  const detail = createForm.value;
+  return (
+      detail.statusType === 'ACCEPTED' &&
+      new Date(detail.deadline) > new Date()
+  );
+});
+
+
+
 
 // 차트 데이터
 const donutChartData = ref({ labels: [], data: [], colors: [] });
@@ -218,16 +236,22 @@ async function handleSearch(values) {
   }
 }
 
-
 // KPI 상세 모달 열기
 async function openModalHandler(kpiId) {
   isOpen.value = true;
   selectedKpiId.value = kpiId;
 
   try {
-    const detail = await getKpiDetail(kpiId);
-    createForm.value.kpiProgress = detail.kpiProgress;
 
+    const detail = await getKpiDetail(kpiId);
+    createForm.value = {
+      ...createForm.value,
+      kpiProgress: detail.kpiProgress,
+      statusType: detail.statusType,
+      deadline: detail.deadline,
+      reason: detail.reason,
+      cancelReason: detail.cancelReason
+    };
     formSections.value = [
       {
         title: 'KPI 정보',
@@ -244,7 +268,7 @@ async function openModalHandler(kpiId) {
       {
         title: '진척 기준',
         icon: 'fa-chart-bar',
-        layout: 'two-column',
+        layout: 'one-column',
         outerClass: 'kpi-detail-section',
         fields: [
           { label: '25% 달성', value: detail.progress25, editable: false, type: 'input'  },
@@ -252,8 +276,29 @@ async function openModalHandler(kpiId) {
           { label: '75% 달성', value: detail.progress75, editable: false, type: 'input'  },
           { label: '100% 달성', value: detail.progress100, editable: false, type: 'input'  }
         ]
+      },
+      {
+        title: '처리 사유',
+        icon: 'fa-chart-bar',
+        layout: 'one-column',
+        outerClass: 'kpi-detail-section',
+        fields: [
+          ...(detail.reason ? [{
+            label: '처리 사유',
+            value: detail.reason,
+            editable: false,
+            type: 'input'
+          }] : []),
+
+          ...(detail.cancelReason ? [{
+            label: '취소 사유',
+            value: detail.cancelReason,
+            editable: false,
+            type: 'input'
+          }] : [])
+        ]
       }
-    ];
+    ].filter(section => section.fields.length > 0); // 빈 필드 그룹 제거
   } catch (err) {
     console.error('KPI 상세 조회 실패:', err);
     isOpen.value = false;
@@ -277,9 +322,9 @@ function handleSubmitModal() {
       ]
     },
     {
-      title: '진척 기준',
+      title: '처리 사유',
       icon: 'fa-chart-line',
-      layout: 'two-column',
+      layout: 'one-column',
       fields: [
         { label: '25% 달성', key: 'progress25', editable: true, type: 'input' },
         { label: '50% 달성', key: 'progress50', editable: true, type: 'input' },
@@ -499,15 +544,16 @@ function handleBack() {
         :title="`KPI 상세 정보`"
         icon="fa-chart-line"
         :sections="formSections"
-        :showReject="true"
+        :showReject="canCancelRequest"
         :reject-text="rejectText"
-        :showSubmit="true"
+        :showSubmit="canEditProgress"
         :submit-text="submitText"
         @close="isOpen = false"
         @submit="handleDetailModalSubmit"
         @reject="handleDetailModalReject"
         v-model:form="createForm"
     />
+
 
 
     <!-- KPI 등록 사이드 모달 -->

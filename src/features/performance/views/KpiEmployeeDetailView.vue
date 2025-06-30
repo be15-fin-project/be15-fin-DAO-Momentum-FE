@@ -270,7 +270,7 @@ async function openModalHandler(kpiId) {
       {
         title: '진척 기준',
         icon: 'fa-chart-bar',
-        layout: 'two-column',
+        layout: 'one-column',
         outerClass: 'kpi-detail-section',
         fields: [
           { label: '25% 달성', value: detail.progress25 },
