@@ -17,6 +17,14 @@ export async function getKpiList(params) {
     const res = await api.get('/kpi/list', { params });
     return res.data.data;
 }
+// KPI 엑셀 다운로드
+export async function getKpiExcelDownload(params) {
+    const res = await api.get('/kpi/excel', {
+        params,
+        responseType: 'blob' // 반드시 blob으로 지정해야 엑셀로 다운로드됨
+    });
+    return res.data; // Blob 데이터
+}
 
 // KPI 상세 조회
 export async function getKpiDetail(kpiId) {

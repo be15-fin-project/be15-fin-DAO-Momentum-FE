@@ -1,6 +1,6 @@
 <script setup>
 import {ref, onMounted, onBeforeUnmount, watch} from 'vue';
-import {getKpiStatistics, getKpiTimeseries, getKpiList} from '@/features/performance/api.js';
+import {getKpiStatistics, getKpiTimeseries, getKpiList, getKpiExcelDownload} from '@/features/performance/api.js';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
@@ -232,11 +232,31 @@ const tableColumns = [
   {key: 'action', label: '상세'}
 ];
 
-// KPI 상세 모달
-function handleDownload() {
-  alert('다운로드');
+// 엑셀 다운로드
+async function handleDownload() {
+  try {
+    const normalized = normalizeFilterParams(filterValues.value);
+    const blob = await getKpiExcelDownload({
+      ...normalized,
+      statusId: 2,
+    });
+
+    const url = window.URL.createObjectURL(new Blob([blob]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `kpi-list-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error('엑셀 다운로드 오류:', err);
+    alert('엑셀 다운로드 실패');
+  }
 }
 
+
+// KPI 상세 모달
 async function openModalHandler(kpiId) {
   isOpen.value = true;
   selectedKpiId.value = kpiId;

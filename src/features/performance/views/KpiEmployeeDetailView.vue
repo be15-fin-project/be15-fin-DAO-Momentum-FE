@@ -17,7 +17,9 @@ const route = useRoute();
 const router = useRouter();
 const currentPage = ref(1);
 const isOpen = ref(false);
-const filterValues = ref({});
+const filterValues = ref({
+  status: '승인'
+});
 const tableData = ref([]);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
 const selectedKpiId = ref(null); // 선택된 KPI ID
@@ -40,18 +42,18 @@ const lineChartData = ref({
 // 필터 옵션
 const filterOptions = [
   {
-    key: 'statusName',
-    label: '상태',
-    icon: 'fa-spinner',
-    type: 'select',
-    options: ['전체', '대기', '승인', '반려', '취소']
-  },
-  {
     key: 'date',
     label: '등록일',
     icon: 'fa-calendar-day',
     type: 'date-range'
   }
+];
+// 필터 탭 옵션
+const tabOpstions = [
+  { key: 'status', label: '승인', value: '승인' },
+  { key: 'status', label: '대기', value: '대기' },
+  { key: 'status', label: '반려', value: '반려' },
+  { key: 'status', label: '취소', value: '취소' }
 ];
 
 // ✨ 필터 파라미터 정규화
@@ -97,6 +99,24 @@ function normalizeFilterParams(values) {
     normalized.deptId = deptMap[normalized.deptId] ?? null;
   }
 
+  // 상태 탭 필터 → statusId + isDeleted 매핑
+  switch (values.status) {
+    case '대기':
+      normalized.statusId = 1;
+      break;
+    case '반려':
+      normalized.statusId = 3;
+      normalized.isDeleted = 'N';
+      break;
+    case '취소':
+      normalized.statusId = 2;
+      normalized.isDeleted = 'Y';
+      break;
+    default:
+      normalized.statusId = 2;
+      normalized.isDeleted = 'N';
+      break;
+  }
   return normalized;
 }
 
@@ -199,9 +219,7 @@ watch(currentPage, () => {
 
 // 초기 진입
 onMounted(() => {
-  const init = {};
-  filterValues.value = init;
-  handleSearch(init);
+  handleSearch(filterValues.value); // 초기값 그대로 사용
   window.addEventListener('resize', handleResize);
 });
 
@@ -301,7 +319,7 @@ async function openModalHandler(kpiId) {
     </section>
 
     <!-- 필터 컴포넌트 -->
-    <EmployeeFilter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
+    <EmployeeFilter :filters="filterOptions" :tabs="tabOpstions"  v-model="filterValues" @search="handleSearch" />
 
     <!-- KPI 테이블 -->
     <BaseTable
