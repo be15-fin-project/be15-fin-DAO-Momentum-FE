@@ -37,7 +37,7 @@ const emit = defineEmits(['click-detail']);
 
             <!-- 일반 텍스트 렌더링 -->
             <template v-else-if="col.key !== 'action'">
-              {{ row[col.key] }}
+              {{ col.format ? col.format(row[col.key], row) : row[col.key] }}
             </template>
 
             <!-- 상세 보기 버튼 -->

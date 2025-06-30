@@ -123,7 +123,7 @@ const menuItems = [
   {
     label: '근태 관리',
     icon: 'schedule',
-    hrefs: ['../attendance/attendance']
+    hrefs: ['../works']
   },
   {
     label: '내 정보',

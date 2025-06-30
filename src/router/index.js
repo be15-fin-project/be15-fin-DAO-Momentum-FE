@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LayoutDefault from "@/components/layout/LayoutDefault.vue";
 import evalRoutes from "@/features/performance/router.js"
 import {commonRoutes} from "@/features/common/router.js";
+import {worksRoutes} from "@/features/works/router.js";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -12,6 +13,7 @@ const router = createRouter({
             component: LayoutDefault,
             children: [
                 ...evalRoutes,
+                ...worksRoutes,
             ]
         },
         ...commonRoutes

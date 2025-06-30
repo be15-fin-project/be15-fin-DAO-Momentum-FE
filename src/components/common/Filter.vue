@@ -48,7 +48,7 @@
               :key="option"
               @click="selectOption(filter.key, option)"
           >
-            {{ option }}
+            {{ typeof option === 'object' ? option.label : option }}
           </button>
         </template>
       </div>
@@ -82,7 +82,11 @@ function toggleDropdown(index) {
   activeDropdown.value = activeDropdown.value === index ? null : index;
 }
 
-function selectOption(key, value) {
+function selectOption(key, option) {
+  const value = typeof option === 'object' && option !== null && 'value' in option
+      ? option.value
+      : option;
+
   localValues.value[key] = value;
   emit('update:modelValue', { ...localValues.value });
   emitChange();
