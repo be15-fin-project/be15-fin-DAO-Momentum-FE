@@ -11,8 +11,12 @@ const currentPage = ref(1);
 const pagination = ref({currentPage: 1, totalPage: 1});
 const filterValues = ref({});
 const appliedFilterValues = ref({});
-const showModal = ref(false);
 const works = ref([]);
+
+const showModal = ref(false);
+const modalWorkId = ref(null);
+const workDetails = ref(null);
+const loadingDetails = ref(false);
 
 const positionOptions = ref([]);
 const typeOptions = ref([]);
@@ -35,43 +39,37 @@ const deptOptions = ref([
 
 const columns = computed(() => {
   const baseColumns = [
-  { key: 'empNo', label: '사번'},
-  { key: 'empName', label: '이름'},
-  { key: 'deptName', label: '부서'},
-  { key: 'positionName', label: '직위'},
-  {
-    key: 'startAt', label: '출근 일시', format: val => val.replace('T', ' ').slice(0, -3)
-  },
-  {
-    key: 'endAt', label: '퇴근 일시', format: val => val.replace('T', ' ').slice(0, -3)
-  },
-  {
-    key: 'workTime', label: '근무 시간',
-    format: val => `${Math.floor(val / 60)}시간 ${val % 60}분`
-  },
-  {
-    key: 'typeName', label: '유형',
-    format: val => ({
-      WORK: '근무',
-      REMOTE_WORK: '재택근무',
-      VACATION: '휴가',
-      ADDITIONAL: '초과근무',
-      BUSINESS_TRIP: '출장',
-    }[val] || '-')
-  },
-  { key: 'isNormalWork', label: '정상 근무'},
-  { key: 'action', label: '상세'},
-];
+    {key: 'empNo', label: '사번'},
+    {key: 'empName', label: '이름'},
+    {key: 'deptName', label: '부서'},
+    {key: 'positionName', label: '직위'},
+    {key: 'startAt', label: '출근 일시', format: val => val.replace('T', ' ').slice(0, -3)},
+    {key: 'endAt', label: '퇴근 일시', format: val => val.replace('T', ' ').slice(0, -3)},
+    {key: 'workTime', label: '근무 시간', format: val => `${Math.floor(val / 60)}시간 ${val % 60}분`},
+    {key: 'typeName', label: '유형',
+      format: val => ({
+        WORK: '근무',
+        REMOTE_WORK: '재택근무',
+        VACATION: '휴가',
+        ADDITIONAL: '초과근무',
+        BUSINESS_TRIP: '출장',
+      }[val] || '-')
+    },
+    {key: 'isNormalWork', label: '정상 근무'},
+    {key: 'action', label: '상세'},
+  ];
 
 // 동적 생성
-if (appliedFilterValues.value.typeId === workTypeIdMap.value.VACATION) {
-  baseColumns.splice(8, 0, { key: 'vacationType', label: '세부 유형' });
-} else if (appliedFilterValues.value.typeId === workTypeIdMap.value.ADDITIONAL) {
-  baseColumns.splice(8, 0, { key: 'childTypeName', label: '세부 유형', format:
-  val => additionalWorkMap[val]});
-}
+  if (appliedFilterValues.value.typeId === workTypeIdMap.value.VACATION) {
+    baseColumns.splice(8, 0, {key: 'vacationType', label: '세부 유형'});
+  } else if (appliedFilterValues.value.typeId === workTypeIdMap.value.ADDITIONAL) {
+    baseColumns.splice(8, 0, {
+      key: 'childTypeName', label: '세부 유형', format:
+          val => additionalWorkMap[val]
+    });
+  }
 
-return baseColumns;
+  return baseColumns;
 });
 
 // 필터
@@ -161,17 +159,26 @@ const additionalWorkMap = {
 
 onMounted(async () => {
   const positions = await getPositions();
-  positionOptions.value = [{ label: '전체', value: null }, ...positions.map(p => ({ label: p.name, value: p.positionId }))];
+  positionOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({label: p.name, value: p.positionId}))];
 
-  const { parentWorkTypes, childWorkTypes } = await getWorkTypes();
-  typeOptions.value = [{ label: '전체', value: null }, ...parentWorkTypes.map(t => ({ label: typeNameMap[t.typeName] ||  t.typeName, value: t.typeId }))];
-  childWorkTypeOptions.value = [{ label: '전체', value: null }, ...childWorkTypes.map(t => ({ label: additionalWorkMap[t.typeName] || t.typeName, value: t.typeId }))];
+  const {parentWorkTypes, childWorkTypes} = await getWorkTypes();
+  typeOptions.value = [{
+    label: '전체',
+    value: null
+  }, ...parentWorkTypes.map(t => ({label: typeNameMap[t.typeName] || t.typeName, value: t.typeId}))];
+  childWorkTypeOptions.value = [{
+    label: '전체',
+    value: null
+  }, ...childWorkTypes.map(t => ({label: additionalWorkMap[t.typeName] || t.typeName, value: t.typeId}))];
 
   workTypeIdMap.value.VACATION = parentWorkTypes.find(t => t.typeName === 'VACATION')?.typeId;
   workTypeIdMap.value.ADDITIONAL = parentWorkTypes.find(t => t.typeName === 'ADDITIONAL')?.typeId;
 
   const vacationTypes = await getVacationTypes();
-  vacationTypeOptions.value = [{ label: '전체', value: null }, ...vacationTypes.map(t => ({ label: t.description, value: t.vacationTypeId }))];
+  vacationTypeOptions.value = [{label: '전체', value: null}, ...vacationTypes.map(t => ({
+    label: t.description,
+    value: t.vacationTypeId
+  }))];
 
   handleSearch();
   filterValues.value = {};
@@ -179,10 +186,59 @@ onMounted(async () => {
 
 watch(currentPage, () => fetchSummary(filterValues.value));
 
-const openDetailsModal = async (workId) => {
-  await getWorkDetails();
+const openDetailsModal = async (work) => {
+  const workId = work.workId;
+  modalWorkId.value = workId;
   showModal.value = true;
+  loadingDetails.value = true;
+
+  try {
+    workDetails.value = await getWorkDetails(workId);
+  } catch (error) {
+    workDetails.value = null;
+  } finally {
+    loadingDetails.value = false;
+  }
+
 };
+
+const closeModal = () => {
+  showModal.value = false;
+  modalWorkId.value = null;
+  workDetails.value = null;
+}
+
+const modalSections = computed(() => {
+  if (!workDetails.value) return [];
+
+  // 예시: workDetails 값에 맞게 키와 라벨, 값 매핑
+  // 필드는 key, label, value 순으로 필드 렌더러가 읽음
+  return [
+    {
+      title: '기록 정보',
+      icon: 'fa-info-circle',
+      layout: 'one-column',
+      fields: [
+        {
+          key: 'startPushedAt',
+          label: '출근 등록 일시',
+          value: workDetails.value.startPushedAt ? workDetails.value.startPushedAt.replace('T', ' ') : '-'
+        },
+        {
+          key: 'endPushedAt',
+          label: '퇴근 등록 일시',
+          value: workDetails.value.endPushedAt ? workDetails.value.endPushedAt.replace('T', ' ') : '-'
+        },
+        {
+          key: 'breakTime',
+          label: '휴게 시간',
+          value: (workDetails.value.breakTime >= 60 ? `${Math.floor(workDetails.value.breakTime / 60)}시간 ` : '') + `${workDetails.value.breakTime % 60}분`
+        },
+        { key: 'isNormalWork', label: '정상 근무 여부', value: workDetails.value.isNormalWork},
+      ],
+    },
+  ];
+});
 </script>
 
 <template>
@@ -202,6 +258,17 @@ const openDetailsModal = async (workId) => {
         :total-pages="pagination.totalPage"/>
 
     <!-- 출퇴근 상세 모달 -->
-    <SideModal v-if="showModal"/>
+    <SideModal
+        v-if="showModal"
+        :visible="showModal"
+        :title="'상세 출퇴근 정보'"
+        icon="fa-clock"
+        :sections="modalSections"
+        :readonly="true"
+        @update:visible="showModal = $event"
+        @close="closeModal"
+        :showSubmit="false"
+    />
+
   </main>
 </template>
