@@ -114,6 +114,10 @@
     --gradient-icon: linear-gradient(to right, var(--purple-50), var(--purple-100));
     --gradient-overlay: linear-gradient(135deg, var(--color-overlay), var(--color-overlay-dark));
     --gradient-score-bar: linear-gradient(to right, var(--purple-50), var(--purple-100));
+    --approve-gradient: linear-gradient(to right, #10b981, #059669);
+    --reject-gradient: linear-gradient(to right, var(--error-500), #dc2626);
+    --edit-gradient: linear-gradient(to right, #6366f1, #7c3aed); /* indigo to violet */
+
 
     /* ───────────── Overlay & Misc ───────────── */
     --color-overlay: rgba(0, 0, 0, 0.3);

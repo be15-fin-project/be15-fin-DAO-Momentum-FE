@@ -19,12 +19,14 @@
             :title="section.title"
             :icon="section.icon"
             :layout="section.layout"
-            :outer-class="section.outerClass"
         >
-          <div v-for="(field, fieldIdx) in section.fields" :key="fieldIdx" class="form-group">
-            <label class="form-label">{{ field.label }}</label>
-            <input type="text" class="form-input" :value="field.value" disabled />
-          </div>
+          <FieldRenderer
+              v-for="(field, fIdx) in section.fields"
+              :key="fIdx"
+              :field="field"
+              :model="form"
+              :readonly="readonly"
+          />
         </FormSection>
 
 
@@ -33,21 +35,33 @@
       <div class="modal-footer" v-if="showFooter">
         <BaseButton
             v-if="showReject"
-            type="reject"
+            variant="reject"
             icon="warning"
-            @click="onClose"
+            :disabled="rejectDisabled"
+            @click="$emit('reject')"
         >
           {{ rejectText }}
         </BaseButton>
 
         <BaseButton
+            v-if="showEdit"
+            variant="edit"
+            icon="pencil-alt"
+            @click="$emit('edit')"
+        >
+          {{ editText }}
+        </BaseButton>
+
+        <BaseButton
             v-if="showSubmit"
-            type="submit"
+            variant="submit"
             icon="paper-plane"
+            :disabled="submitDisabled"
             @click="$emit('submit')"
         >
           {{ submitText }}
         </BaseButton>
+
       </div>
 
 
@@ -55,33 +69,57 @@
   </div>
 </template>
 
-<script setup>
-import BaseButton from '@/components/common/BaseButton.vue'
-import FormSection from '@/components/common/FormSection.vue'
 
-defineProps({
+<script setup>
+import FormSection from '@/components/common/FormSection.vue';
+import FieldRenderer from '@/components/common/FieldRenderer.vue';
+import BaseButton from '@/components/common/BaseButton.vue';
+import { watch, onMounted, ref } from 'vue';
+
+const initialized = ref(false);
+
+const props = defineProps({
   visible: Boolean,
   title: String,
   icon: String,
+  readonly: { type: Boolean, default: false },
   showFooter: { type: Boolean, default: true },
-  showReject: { type: Boolean, default: true },
+  showReject: { type: Boolean, default: false },
+  showEdit: { type: Boolean, default: false },
   showSubmit: { type: Boolean, default: true },
+  submitDisabled: { type: Boolean, default: false },
+  rejectDisabled: { type: Boolean, default: false },
   rejectText: { type: String, default: '반려' },
-  submitText: { type: String, default: '승인' },
-  sections: {
-    type: Array,
-    default: () => [] // [{ title, icon, slot }]
-  }
-})
+  editText: { type: String, default: '수정' },
+  submitText: { type: String, default: '저장' },
+  sections: Array
+});
 
-const emit = defineEmits(['close', 'reject', 'submit'])
+const form = defineModel('form');
+const emit = defineEmits(['close', 'reject', 'submit', 'update:visible']);
 
 function onClose() {
-  emit('close')
+  emit('update:visible', false);
+  emit('close');
 }
 
+watch(
+    () => props.sections,
+    (newSections) => {
+      if (!initialized.value && newSections?.length && form) {
+        newSections.forEach((section) => {
+          section.fields?.forEach((field) => {
+            if (!(field.key in form)) {
+              form[field.key] = field.value ?? '';
+            }
+          });
+        });
+        initialized.value = true;
+      }
+    },
+    { immediate: true }
+);
 </script>
-
 
 <style scoped>
 /* 모달 전체 영역 */
@@ -242,53 +280,6 @@ function onClose() {
 
 .form-group.full-width {
   grid-column: 1 / -1;
-}
-
-.form-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--color-text-sub);
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-}
-
-.form-label.required::after {
-  content: '*';
-  color: #ef4444;
-  margin-left: 4px;
-}
-
-.form-input,
-.form-select,
-.form-textarea {
-  padding: 14px 16px;
-  border: 2px solid var(--color-muted);
-  border-radius: var(--radius-md);
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
-  background: var(--color-surface);
-  color: var(--color-text-main);
-  font-family: inherit;
-}
-
-.form-textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.form-input:focus,
-.form-select:focus,
-.form-textarea:focus {
-  outline: none;
-  border-color: var(--purple-50);
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
-  transform: translateY(-1px);
-}
-
-.form-input::placeholder {
-  color: #9ca3af;
-  font-style: italic;
 }
 
 .btn-add-section {

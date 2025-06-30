@@ -1,0 +1,142 @@
+<template>
+  <div class="form-group">
+    <label class="form-label" :class="{ required: field.required }">
+      {{ field.label }}
+    </label>
+
+    <!-- FormField.vue -->
+    <div v-if="readonly || !field.editable" class="form-input readonly">
+      {{ field.value ?? model[field.key] ?? '' }}
+    </div>
+
+
+    <!-- 입력 가능 -->
+    <template v-else>
+      <input
+          v-if="field.type === 'input'"
+          type="text"
+          class="form-input"
+          v-model="model[field.key]"
+          :placeholder="field.placeholder || field.label"
+      />
+      <input
+          v-else-if="field.type === 'number'"
+          type="number"
+          class="form-input"
+          v-model="model[field.key]"
+          :placeholder="field.placeholder || field.label"
+          @input="onPositiveIntegerInput(field.key)"
+          inputmode="numeric"
+          min="0"
+      />
+      <input
+          v-else-if="field.type === 'date'"
+          type="date"
+          class="form-input"
+          v-model="model[field.key]"
+      />
+      <textarea
+          v-else-if="field.type === 'textarea'"
+          class="form-textarea"
+          v-model="model[field.key]"
+          :placeholder="field.placeholder || field.label"
+      />
+      <select
+          v-else-if="field.type === 'select'"
+          class="form-select"
+          v-model="model[field.key]"
+      >
+        <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
+          {{ opt.label }}
+        </option>
+      </select>
+    </template>
+  </div>
+</template>
+
+<script setup>
+import { computed } from 'vue';
+
+const props = defineProps({
+  field: Object,
+  model: Object,
+  readonly: Boolean
+});
+
+// null, undefined, 빈 문자열일 때 대체 표시값
+const displayValue = computed(() => {
+  const raw = props.model?.[props.field.key];
+  return raw !== null && raw !== undefined && raw !== '' ? raw : '-';
+});
+const onPositiveIntegerInput = (key) => {
+  const value = model[key];
+
+  // 숫자 아닌 것 제거 + 0 이상 정수만 유지
+  if (typeof value === 'string') {
+    const cleaned = value.replace(/[^\d]/g, ''); // 숫자만 남김
+    model[key] = cleaned;
+  }
+
+  // 혹시 string -> number 변환 필요 시
+  // model[key] = cleaned !== '' ? parseInt(cleaned, 10) : '';
+};
+
+</script>
+
+<style scoped>
+.readonly {
+  background: var(--color-background);
+  border: 1px solid var(--color-muted);
+  padding: 12px 16px;
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+}
+
+.form-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-sub);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+
+.form-label.required::after {
+  content: '*';
+  color: #ef4444;
+  margin-left: 4px;
+}
+
+.form-input,
+.form-select,
+.form-textarea {
+  padding: 14px 16px;
+  border: 2px solid var(--color-muted);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  background: var(--color-surface);
+  color: var(--color-text-main);
+  font-family: inherit;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--purple-50);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-input::placeholder {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+</style>
