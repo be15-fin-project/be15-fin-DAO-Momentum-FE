@@ -266,6 +266,10 @@ async function fetchApprovals() {
   }
 }
 
+watch(currentPage, () => {
+  fetchApprovals();
+});
+
 /* api 호출하기 */
 onMounted(fetchApprovals);
 </script>
@@ -301,7 +305,7 @@ onMounted(fetchApprovals);
     <!-- 5. 페이징 처리 -->
     <Pagination
       v-if="pagination.totalPage"
-      :pages="Array.from({ length: pagination.totalPage }, (_, i) => i + 1)"
+      :totalPages="pagination.totalPage"
       v-model="currentPage"
     />
   </section>
