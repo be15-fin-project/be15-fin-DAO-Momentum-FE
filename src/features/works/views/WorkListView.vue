@@ -109,8 +109,9 @@ const setParams = (v) => {
     rangeStartDate: v.startAt_start || null,
     rangeEndDate: v.startAt_end || null,
     order: v.order || null,
-    typeId: v.childTypeId ?? v.typeId ?? null,
-    vacationTypeId: v.typeId === workTypeIdMap.value.VACATION ? v.vacationTypeId ?? null : null,
+    typeId: v.typeId ?? null,
+    childTypeId: v.typeId === workTypeIdMap.value.ADDITIONAL ? (v.childTypeId ?? null) : null,
+    vacationTypeId: v.typeId === workTypeIdMap.value.VACATION ? (v.vacationTypeId ?? null) : null
   };
 }
 
