@@ -1,6 +1,6 @@
 import KpiDashboardView from "@/features/performance/views/KpiDashboardView.vue";
 import KpiEmployeeListView from "@/features/performance/views/KpiEmployeeListView.vue";
-import KpiEmployeeDetail from "@/features/performance/views/KpiEmployeeDetail.vue";
+import KpiEmployeeDetailView from "@/features/performance/views/KpiEmployeeDetailView.vue";
 
 export default [
     {
@@ -12,8 +12,10 @@ export default [
                 component : () => import('@/features/performance/views/KpiDashboardView.vue')},
             { path: 'employees', name: 'KpiEmployeeListView',
                 component : () => import('@/features/performance/views/KpiEmployeeListView.vue')},
-            { path: 'employee-detail', name: 'KpiEmployeeDetail',
-                component : () => import('@/features/performance/views/KpiEmployeeDetail.vue')},
+            { path: 'employee-detail', name: 'KpiEmployeeDetailView',
+                component : () => import('@/features/performance/views/KpiEmployeeDetailView.vue')},
+            { path: 'list', name: 'MyKpiView',
+                component : () => import('@/features/performance/views/MyKpiView.vue')},
         ]
     }
 ];

@@ -9,6 +9,8 @@ import Chart from 'chart.js/auto';
 import BaseTable from "@/components/common/BaseTable.vue";
 import { getKpiDetail } from '@/features/performance/api.js';
 import {useRoute, useRouter} from 'vue-router';
+import DoughnutChart from '@/features/performance/components/DoughnutChart.vue';
+import LineChart from '@/features/performance/components/LineChart.vue';
 
 // Refs
 const route = useRoute();
@@ -25,10 +27,17 @@ const formSections = ref([]); // 동적으로 변경될 모달 폼 내용
 
 
 // Chart instance container
-const chartRefs = {
-  donut: null,
-  monthly: null
-};
+const donutChartData = ref({
+  labels: [],
+  data: [],
+  colors: [],
+});
+
+const lineChartData = ref({
+  labels: [],
+  datasets: [],
+});
+
 
 // 필터 옵션
 const filterOptions = [
@@ -95,84 +104,61 @@ function normalizeFilterParams(values) {
 
 
 // 📊 KPI 통계 차트 렌더링
+
 async function renderCharts() {
   try {
     const rootStyle = getComputedStyle(document.documentElement);
-    const blue100 = rootStyle.getPropertyValue('--blue-100').trim();
-    const mainColor = rootStyle.getPropertyValue('--main-color').trim();
-
-    const ctx = donutChartRef.value?.getContext('2d');
-    if (!ctx) return;
-
-    if (chartRefs.donut) {
-      chartRefs.donut.destroy();
-      chartRefs.donut = null;
-    }
+    const blue200 = rootStyle.getPropertyValue('--blue-200').trim();
+    const blue400 = rootStyle.getPropertyValue('--blue-400').trim();
+    const blue500 = rootStyle.getPropertyValue('--blue-500').trim();
 
     const stats = await getKpiStatistics(normalizeFilterParams(filterValues.value));
-    chartRefs.donut = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['진행중', '완료'],
-        datasets: [{
-          data: [
-            stats.totalKpiCount - stats.completedKpiCount,
-            stats.completedKpiCount
-          ],
-          backgroundColor: [blue100, mainColor],
-          borderWidth: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'bottom' }
-        }
-      }
-    });
+    donutChartData.value = {
+      labels: ['진행중', '완료'],
+      data: [
+        stats.totalKpiCount - stats.completedKpiCount,
+        stats.completedKpiCount,
+      ],
+      colors: [blue200, blue400],
+    };
 
-    await renderMonthlyTrendChart();
+    const {monthlyStats} = await getKpiTimeseries(normalizeFilterParams(filterValues.value));
+    const fullMonths = Array.from({length: 12}, (_, i) => i + 1); // 1~12
+    const monthlyMap = Object.fromEntries(monthlyStats.map(d => [d.month, d]));
+
+    lineChartData.value = {
+      labels: fullMonths.map(m => `${m}월`),
+      datasets: [
+        {
+          label: '전체 KPI 수',
+          data: fullMonths.map(m => monthlyMap[m]?.totalKpiCount ?? 0),
+          color: blue400,
+          type: 'bar',
+          yAxisID: 'y',
+        },
+        {
+          label: '완료 KPI 수',
+          data: fullMonths.map(m => monthlyMap[m]?.completedKpiCount ?? 0),
+          color: blue500,
+          type: 'bar',
+          yAxisID: 'y',
+        },
+        {
+          label: '평균 진척률 (%)',
+          data: fullMonths.map(m => monthlyMap[m]?.averageProgress ?? 0),
+          type: 'line',
+          color: blue200,
+          borderWidth: 2,
+          yAxisID: 'y2',
+        },
+      ],
+    };
   } catch (e) {
-    console.warn('차트 렌더링 실패:', e);
+    console.warn('차트 데이터 로드 실패:', e);
   }
 }
 
 
-// 📈 KPI 월별 추이 차트
-async function renderMonthlyTrendChart() {
-  const ctx = trendChartRef.value?.getContext('2d');
-  if (!ctx) return;
-
-  const data = await getKpiTimeseries(normalizeFilterParams(filterValues.value));
-  const monthlyStats = data.monthlyStats;
-
-  // Destroy safely
-  if (chartRefs.monthly) {
-    chartRefs.monthly.destroy();
-    chartRefs.monthly = null;
-  }
-
-  chartRefs.monthly = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: Array.from({ length: 12 }, (_, i) => `${i + 1}월`),
-      datasets: [{
-        label: '월별 KPI 추이',
-        data: monthlyStats.map(item => item.averageProgress),
-        borderColor: 'rgba(59,130,246,1)',
-        backgroundColor: 'rgba(147,197,253,0.2)',
-        fill: true,
-        tension: 0.4
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true }
-      }
-    }
-  });
-}
 
 
 // 🔍 KPI 목록 + 통계 동시 조회
@@ -289,7 +275,6 @@ async function openModalHandler(kpiId) {
         :headerItems="[
         { label: '사원 KPI 상세 조회', href: '#', active: true },
       ]"
-        :submitButtons="[{ label: '뒤로 가기', icon: 'fa-arrow-left', event: 'back', variant: 'white' }]"
         :showTabs="false"
         @back="handleBack"
     />
@@ -297,22 +282,18 @@ async function openModalHandler(kpiId) {
     <!-- KPI 통계 차트 영역 -->
     <section class="chart-row">
       <!-- 도넛 차트 -->
-      <div class="chart-box">
-        <h3 class="chart-title"><i class="fas fa-pie-chart icon-blue" /> 월별 KPI 현황</h3>
-        <div class="chart-content donut">
-          <canvas ref="donutChartRef"></canvas>
-        </div>
-      </div>
+      <DoughnutChart
+          :labels="donutChartData.labels"
+          :data="donutChartData.data"
+          :colors="donutChartData.colors"
+      />
 
       <!-- 선형 차트 -->
-      <div class="chart-box">
-        <div class="chart-header">
-          <h3 class="chart-title"><i class="fas fa-chart-line icon-blue" /> 월별 KPI 추이</h3>
-        </div>
-        <div class="chart-content">
-          <canvas ref="trendChartRef"></canvas>
-        </div>
-      </div>
+      <LineChart
+          :labels="lineChartData.labels"
+          :datasets="lineChartData.datasets"
+      />
+
     </section>
 
     <!-- 필터 컴포넌트 -->
@@ -356,46 +337,6 @@ async function openModalHandler(kpiId) {
   grid-template-columns: 1fr 1fr;
   gap: 32px;
   margin-bottom: 32px;
-}
-
-.chart-box {
-  background: var(--basic);
-  padding: 24px;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--chart-shadow);
-}
-
-.chart-title {
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.chart-content.donut {
-  margin: 0 auto;
-  padding: 0;
-  width: 55%;
-  display: flex;
-  justify-content: center;
-}
-.chart-content canvas {
-  width: 100% !important;
-  height: auto !important;
-}
-.year-selector select{
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  font-size: 12px;
-  font-weight: 300;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-ss);
-  background-color: var(--basic);
-  color: var(--font-main);
-  cursor: pointer;
 }
 
 </style>
