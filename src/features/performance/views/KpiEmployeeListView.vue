@@ -73,7 +73,9 @@ async function fetchSummary(values) {
     console.log('[fetchSummary] 응답 데이터:', res);
 
     tableData.value = res.content || [];
-    pagination.value = res.pagination || { currentPage: 1, totalPage: 1 };
+    const current = res.pagination?.currentPage || 1;
+    const total = res.pagination?.totalPage > 0 ? res.pagination.totalPage : 1;
+    pagination.value = { currentPage: current, totalPage: total };
   } catch (err) {
     console.error('[fetchSummary] 오류:', err);
     tableData.value = [];
