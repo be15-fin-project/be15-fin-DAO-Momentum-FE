@@ -11,3 +11,7 @@ export function refreshUserToken() {
 export function logoutUser() {
     return api.post(`/employees/logout`);
 }
+
+export function forgetPassword(data) {
+    return api.post('/employees/reset-password/request',data);
+}
