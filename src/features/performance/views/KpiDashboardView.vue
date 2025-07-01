@@ -7,7 +7,7 @@ import {
   getKpiExcelDownload,
   getKpiDetail,
 } from '@/features/performance/api.js';
-import { getDepartments } from '@/features/works/api.js';
+import { getDepartments, getPositions  } from '@/features/works/api.js';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
@@ -27,6 +27,7 @@ const selectedKpiId = ref(null); // 선택된 KPI ID
 const formSections = ref([]); // 동적으로 변경될 모달 폼 내용
 const departmentTree = ref([]);
 const filterOptions = ref([]);
+const positionList = ref([]);
 
 
 // Chart instance container
@@ -57,7 +58,10 @@ function initFilters() {
       label: '직위',
       icon: 'fa-user-tie',
       type: 'select',
-      options: ['전체', '대표이사', '이사', '부장', '과장', '대리', '사원']
+      options: [
+        '전체',
+        ...positionList.value.map(pos => pos.name)
+      ]
     },
     {
       key: 'empNo',
@@ -90,17 +94,11 @@ function normalizeFilterParams(values) {
   }
 
   // 직위 라벨 → ID 매핑
-  const positionMap = {
-    '전체': null,
-    '대표이사': 1,
-    '이사': 2,
-    '부장': 3,
-    '과장': 4,
-    '대리': 5,
-    '사원': 6
-  };
-  if (normalized.positionId) {
-    normalized.positionId = positionMap[normalized.positionId] ?? null;
+  if (normalized.positionId && normalized.positionId !== '전체') {
+    const match = positionList.value.find(p => p.name === normalized.positionId);
+    normalized.positionId = match?.positionId ?? null;
+  } else {
+    normalized.positionId = null;
   }
 
   // 부서 라벨 → ID 매핑
@@ -209,6 +207,7 @@ onMounted(async () => {
   try {
     const response = await getDepartments();
     departmentTree.value = response.data?.departmentInfoDTOList || [];
+    positionList.value = await getPositions();
     initFilters(); // 부서 데이터 기반 필터 초기화
   } catch (e) {
     console.error('부서 정보 조회 실패:', e);

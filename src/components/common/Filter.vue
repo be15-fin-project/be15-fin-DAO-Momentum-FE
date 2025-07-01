@@ -42,6 +42,7 @@
                 :key="node.deptId"
                 :node="node"
                 :selected-id="localValues[filter.key]"
+                :depth="0"
                 @select="(id) => selectOption(filter.key, id)"
             />
           </div>
@@ -64,7 +65,18 @@
             />
           </div>
         </template>
-        <template v-else>
+        <template v-if="filter.type === 'select'">
+          <button
+              v-for="option in filter.options"
+              :key="option"
+              :class="{ active: String(localValues[filter.key]) === String(option) }"
+              @click="selectOption(filter.key, option)"
+          >
+            {{ option }}
+          </button>
+        </template>
+
+        <template v-else-if="filter.type !== 'input' && filter.type !== 'date-range' && filter.type !== 'tree'">
           <button
               v-for="option in filter.options"
               :key="typeof option === 'object' ? option.value : option"
