@@ -29,6 +29,8 @@ export default [
                 component : () => import('@/features/performance/views/EvaluationPeerView.vue')},
             { path: 'manage-org', name: 'EvaluationOrgView',
                 component : () => import('@/features/performance/views/EvaluationOrgView.vue')},
+            { path: 'manage-self', name: 'EvaluationSelfView',
+                component : () => import('@/features/performance/views/EvaluationSelfView.vue')},
 
         ]
     }

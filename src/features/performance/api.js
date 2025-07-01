@@ -151,3 +151,25 @@ export async function getOrgExcelDownload(params) {
     });
     return res.data; // Blob 데이터
 }
+
+
+// 자가 진단 평가 목록 조회
+export async function getSelfEvaluations(params) {
+    const res = await api.get('/evaluation/results/self', { params });
+    return res.data.data;
+}
+
+// 자가 진단 평가 상세 조회
+export async function getSelfEvaluationDetail(resultId) {
+    const res = await api.get(`/evaluation/results/self/${resultId}`);
+    return res.data.data;
+}
+
+// 자가 진단 평가 엑셀 다운로드
+export async function getSelfExcelDownload(params) {
+    const res = await api.get('/evaluations/excel/self', {
+        params,
+        responseType: 'blob' // 반드시 blob으로 지정
+    });
+    return res.data; // Blob 데이터 반환
+}
