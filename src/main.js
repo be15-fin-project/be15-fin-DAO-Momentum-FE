@@ -13,24 +13,17 @@ async function bootstrap() {
 
     const authStore = useAuthStore()
 
-    let shouldRedirectToLogin = false
 
     try {
         const resp = await refreshUserToken()
         authStore.setAuth(resp.data.data.accessToken)
     } catch (e) {
         authStore.clearAuth()
-        shouldRedirectToLogin = true
     }
 
     app.use(router)
 
-    //마운트 후에 redirect
     app.mount('#app')
-
-    if (shouldRedirectToLogin) {
-        router.push('/login')
-    }
 }
 
 
