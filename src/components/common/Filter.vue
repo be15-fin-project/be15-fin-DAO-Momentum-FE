@@ -53,14 +53,16 @@
             />
           </div>
         </template>
-        <button
-            v-for="option in filter.options"
-            :key="option"
-            :class="{ active: String(localValues[filter.key]) === String(option) }"
-            @click="selectOption(filter.key, option)"
-        >
-          {{ option }}
-        </button>
+        <template v-else>
+          <button
+              v-for="option in filter.options"
+              :key="typeof option === 'object' ? option.value : option"
+              :class="{ active: String(localValues[filter.key]) === String(option) }"
+              @click="selectOption(filter.key, option)"
+          >
+            {{ typeof option === 'object' ? option.label : option }}
+          </button>
+        </template>
 
 
       </div>
@@ -107,15 +109,25 @@ function selectTab(key, value) {
   emit('search', { ...localValues.value }); // 검색 트리거
 }
 
-function selectOption(key, value) {
-  localValues.value = {
-    ...localValues.value,
-    [key]: value,
-  };
+// function selectOption(key, value) {
+//   localValues.value = {
+//     ...localValues.value,
+//     [key]: value,
+//   };
+//   emit('update:modelValue', { ...localValues.value });
+//   activeDropdown.value = null;
+// }
+
+function selectOption(key, option) {
+  const value = typeof option === 'object' && option !== null && 'value' in option
+      ? option.value
+      : option;
+
+  localValues.value[key] = value;
   emit('update:modelValue', { ...localValues.value });
+  emitChange();
   activeDropdown.value = null;
 }
-
 
 function emitChange() {
   emit('update:modelValue', { ...localValues.value });
@@ -130,6 +142,7 @@ function handleClickOutside(e) {
     activeDropdown.value = null;
   }
 }
+
 function handleInputEnter(index) {
   emit('update:modelValue', { ...localValues.value }); // 값 저장
   activeDropdown.value = null; // 드롭다운 닫기
