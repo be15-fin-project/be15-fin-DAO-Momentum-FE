@@ -1,5 +1,5 @@
 <script setup>
-import {ref, computed, onMounted} from 'vue'
+import {ref, computed, onMounted, onUnmounted} from 'vue'
 import '@/assets/css/login.css'
 import { useRoute, useRouter } from 'vue-router'
 import CommonModal from "@/components/common/CommonModal.vue";
@@ -30,9 +30,9 @@ const closeModal = () => {
   modalVisible.value = false
   if(resetSuccess.value ===  true){
     resetSuccess.value = false
+    authStore.clearAuth();
     router.push("/login")
   }
-
 }
 
   const handleSubmit = async () => {
@@ -60,6 +60,10 @@ onMounted(() => {
   if (typeof tokenFromUrl === 'string') {
     authStore.setResetToken(tokenFromUrl) // store에 저장
   }
+})
+
+onUnmounted(() => {
+  authStore.clearAuth();
 })
 
 </script>
