@@ -30,7 +30,6 @@ const tabItems = [
 const filterValues = ref({
   approveType: null,
   receiptType: null,
-  attendanceType: null,
   statusType: null,
   title: '',
   employeeName: '',
@@ -96,7 +95,7 @@ const receiptTypeFilter = {
 
 // 근태 필터
 const attendanceTypeFilter = {
-  key: 'attendanceType',
+  key: 'approveType',
   label: '근태 종류',
   icon: 'fa-clock',
   type: 'select',
@@ -169,21 +168,32 @@ function convertSort(sort) {
   return statusMap[sort] || null;
 }
 
-// 근태 변환
-function convertAttendance(attendanceType) {
-  const statusMap = {
-    '품의' : 'PROPOSAL',
-    '영수증': 'RECEIPT',
-    '출장': 'BUSINESSTRIP',
-    '휴가': 'VACATION',
-    '재택 근무': 'REMOTEWORK',
-    '초과 근무': 'OVERTIME',
-    '출퇴근 정정': 'WORKCORRECTION',
-    '취소': 'CANCEL'
+// approveType 변환
+function convertApproveType(tab, approveTypeLabel) {
+  const map = {
+    'ATTENDANCE': {
+      '출퇴근 정정': 'WORKCORRECTION',
+      '초과 근무': 'OVERTIME',
+      '재택 근무': 'REMOTEWORK',
+      '출장': 'BUSINESSTRIP',
+      '휴가': 'VACATION'
+    },
+    'RECEIPT': {
+      '영수증': 'RECEIPT'
+    },
+    'PROPOSAL': {
+      '품의': 'PROPOSAL'
+    },
+    'CANCEL': {
+      '취소': 'CANCEL'
+    }
   };
 
-  return statusMap[attendanceType] || null;
+  if (approveTypeLabel === '전체') return null;
+
+  return map[tab]?.[approveTypeLabel] || null;
 }
+
 
 // 영수증 변환
 function convertReceipt(receiptType) {
@@ -195,6 +205,22 @@ function convertReceipt(receiptType) {
   };
 
   return statusMap[receiptType] || null;
+}
+
+// 부서 변환
+function convertDepartment(departmentName) {
+  const statusMap = {
+    '전체': null,
+    '인사팀': 10,
+    '재무팀': 11,
+    '프론트엔드팀': 12,
+    '백엔드팀': 13,
+    '데이터팀': 14,
+    '영업팀': 15,
+    '디지털마케팅팀': 16
+  };
+
+  return statusMap[departmentName] || null;
 }
 
 const displayApprovals = computed(() => {
@@ -219,7 +245,6 @@ const resetFilters = () => {
   filterValues.value = {
     approveType: null,
     receiptType: null,
-    attendanceType: null,
     statusType: null,
     approveTitle: '',
     employeeName: '',
@@ -241,12 +266,12 @@ async function fetchApprovals() {
   try {
     const approveListRequest = {
       tab: selectedTab.value,
-      approveType: convertAttendance(filterValues.value.approveType) || null ,
+      approveType:  convertApproveType(selectedTab.value, filterValues.value.approveType) || null ,
       receiptType: convertReceipt(filterValues.value.receiptType) || null,
       status: convertStatusToId(filterValues.value.statusType),
       title: filterValues.value.title || null,
       employeeName: filterValues.value.employeeName || null,
-      departmentName: filterValues.value.departmentName || null,
+      deptId: convertDepartment(filterValues.value.departmentName) || null,
       startDate: filterValues.value.completeAt_start || null,
       endDate: filterValues.value.completeAt_end || null,
       sort:  convertSort(filterValues.value.sort) || null
@@ -257,6 +282,7 @@ async function fetchApprovals() {
       size: 10
     }
 
+    console.log(approveListRequest.approveType);
     const res = await getApprovals(approveListRequest, pageRequest);
     approvals.value = res.data.data.approveDTO;
     pagination.value.totalPage = res.data.data.pagination.totalPage;
