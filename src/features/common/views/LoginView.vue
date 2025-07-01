@@ -4,11 +4,14 @@ import LoginVisualSection from "@/features/common/components/LoginVisualSection.
 import {loginUser} from "@/features/common/api.js";
 import router from "@/router/index.js";
 import {useAuthStore} from "@/stores/auth.js";
+import CommonModal from "@/components/common/CommonModal.vue";
 
-const email = ref('')
-const password = ref('')
+const email = ref('employee1@example.com')
+const password = ref('Test1234!')
+const modalMessage = ref('');
 const showPassword = ref(false)
 const isSubmitting = ref(false)
+const modalVisible = ref(false);
 const authStore = useAuthStore()
 
 function togglePassword() {
@@ -31,13 +34,19 @@ const handleSubmit = async () => {
 
   }  catch (error) {
     isSubmitting.value = false;
-    //modalMessage.value = '아이디 또는 비밀번호를 확인해주세요.'
+    modalMessage.value = error.response?.data?.message || '알 수 없는 오류'
+    modalVisible.value = true; // 모달 띄우기
   }
 
   setTimeout(() => {
     isSubmitting.value = false
     // window.location.href = '/dashboard'
   }, 2000)
+
+}
+
+const closeModal = () => {
+  modalVisible.value = false
 }
 </script>
 
@@ -60,7 +69,7 @@ const handleSubmit = async () => {
         <div class="login-card">
           <div style="text-align:center;">
             <div class="login-title">로그인</div>
-            <div class="login-desc">사번과 비밀번호를 입력해주세요</div>
+            <div class="login-desc">이메일과 비밀번호를 입력해주세요</div>
           </div>
 
           <form @submit.prevent="handleSubmit" autocomplete="off">
@@ -109,10 +118,6 @@ const handleSubmit = async () => {
 
             <!-- 로그인 옵션 -->
             <div class="login-options">
-              <label class="login-checkbox-group">
-                <input type="checkbox" />
-                <span class="login-checkbox-label">로그인 상태 유지</span>
-              </label>
               <router-link to="/forgot-password" class="login-forgot-link">비밀번호 찾기</router-link>
             </div>
 
@@ -134,6 +139,13 @@ const handleSubmit = async () => {
       </div>
     </section>
   </div>
+  <CommonModal
+      :visible="modalVisible"
+      :confirm-text="'확인'"
+      @cancel="closeModal"
+  >
+    <p>{{ modalMessage }}</p>
+  </CommonModal>
 </template>
 
 <style scoped>
