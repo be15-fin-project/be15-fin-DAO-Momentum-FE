@@ -300,7 +300,7 @@ onMounted(() => {
     />
 
     <Pagination
-        v-if="pagination.totalPage"
+        v-if="pagination.totalPage >= 1"
         :pages="Array.from({ length: pagination.totalPage }, (_, i) => i + 1)"
         v-model="currentPage"
     />

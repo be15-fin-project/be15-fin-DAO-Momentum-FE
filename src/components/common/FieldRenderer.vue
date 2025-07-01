@@ -11,6 +11,20 @@
       </div>
     </div>
 
+    <SliderGroup
+        v-else-if="field.type === 'sliderGroup'"
+        v-model="model[field.key]"
+        :handles="field.handles"
+        :initial="model[field.key] ?? field.initial"
+        :labels="field.labels"
+        :icons="field.icons"
+        :readonly="readonly"
+        :editable="!readonly && field.editable"
+        :disabled="readonly || !field.editable"
+    />
+
+
+
     <!-- 읽기 전용 -->
     <div v-else-if="readonly || !field.editable" class="form-input readonly">
       {{ field.value ?? model[field.key] ?? '' }}
@@ -62,6 +76,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import SliderGroup from "@/components/common/SliderGroup.vue";
 
 const props = defineProps({
   field: Object,
@@ -114,7 +129,7 @@ const scoreWidth = computed(() => {
 
 .form-label.required::after {
   content: '*';
-  color: #ef4444;
+  color: var(--error-500);
   margin-left: 4px;
 }
 
