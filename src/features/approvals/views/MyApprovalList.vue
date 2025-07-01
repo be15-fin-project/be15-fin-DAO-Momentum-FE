@@ -1,10 +1,10 @@
 <script setup>
 import { ref } from 'vue'
 
-import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue"
 import ReceivedApproval from "@/features/approvals/components/ReceivedApproval.vue"
 import SentApproval from "@/features/approvals/components/SentApproval.vue"
-import ApprovalHeaderWithTabs from "@/features/approvals/components/ApprovalHeaderWithTabs.vue";
+import ApprovalHeader from "@/features/approvals/components/ApprovalHeader.vue";
+import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 
 /* 현재 활성화 되어 있는 탭 */
 const currentTab = ref('RECEIVED')
@@ -17,11 +17,12 @@ const handleTabClick = (tabLabel) => {
 
 <template>
   <!-- 내 결재 내역 탭 나누기 -->
-  <ApprovalHeaderWithTabs
+  <ApprovalHeader
     :headerItems="[
       { label: '받은 문서함', active: currentTab === 'RECEIVED' },
       { label: '보낸 문서함', active: currentTab === 'SENT' }
     ]"
+    :submitButtons="[{ label: '결재 작성', icon: 'fa-file-signature', variant: 'blue' }]"
     :showTabs="false"
     @tab-click="handleTabClick"
   />

@@ -144,7 +144,7 @@ const menuItems = [
         hrefs: ['../approvals'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      { label: '문서함', hrefs: ['../approvals/inbox'] }
+      { label: '문서함', hrefs: ['../approval/inbox'] }
     ]
   },
   {

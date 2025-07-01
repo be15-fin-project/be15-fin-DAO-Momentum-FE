@@ -1,11 +1,11 @@
 export const approvalsRoutes = [
     {
-        path: 'approvals',
+        path: 'approval/list',
         name: 'ApprovalsList',
         component: () => import('@/features/approvals/views/ApprovalList.vue')
     },
     {
-        path: 'approvals/inbox',
+        path: 'approval/inbox',
         name: 'ApprovalsList',
         component: () => import('@/features/approvals/views/MyApprovalList.vue')
     },
