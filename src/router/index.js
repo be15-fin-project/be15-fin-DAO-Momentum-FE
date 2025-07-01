@@ -4,6 +4,7 @@ import evalRoutes from "@/features/performance/router.js"
 import {commonRoutes} from "@/features/common/router.js";
 import {approvalsRoutes} from "@/features/approvals/router.js";
 import {worksRoutes} from "@/features/works/router.js";
+import {employeeRoutes} from "@/features/employee/router.js";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -15,7 +16,8 @@ const router = createRouter({
             children: [
                 ...evalRoutes,
                 ...worksRoutes,
-                ...approvalsRoutes
+                ...approvalsRoutes,
+                ...employeeRoutes,
             ]
         },
         ...commonRoutes
