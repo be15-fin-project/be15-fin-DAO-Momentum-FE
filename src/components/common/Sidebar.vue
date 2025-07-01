@@ -123,7 +123,8 @@ const menuItems = [
   {
     label: '근태 관리',
     icon: 'schedule',
-    hrefs: ['../works']
+    hrefs: ['../works'],
+    requireRole: ['MASTER', 'HR_MANAGER']
   },
   {
     label: '내 정보',
