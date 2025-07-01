@@ -2,17 +2,13 @@
 import {ref, onMounted, computed, watch} from 'vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import Pagination from "@/components/common/Pagination.vue"
-import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue"
 import Filter from "@/components/common/Filter.vue"
 import TabNav from '@/components/common/NavigationTab.vue'
-import {getApprovals} from "@/features/approvals/api.js";
-import { useRouter } from 'vue-router'
-
-/* 경로 이동을 의한 부분 */
-const router = useRouter();
+import {getSentApprovals} from "@/features/approvals/api.js";
+import NotExistApproval from "@/features/approvals/components/NotExistApproval.vue";
 
 /* 결재 목록 데이터 */
-const approvals = ref([])
+const sentApprovals = ref([])
 const pagination = ref({ totalPage: 0 })
 const currentPage = ref(1)
 
@@ -36,8 +32,6 @@ const filterValues = ref({
   receiptType: null,
   statusType: null,
   title: '',
-  employeeName: '',
-  departmentName: null,
   completeAt: null,
   sort: null
 })
@@ -57,20 +51,6 @@ const baseFilterOptions = [
     icon: 'fa-heading',
     type: 'input',
     placeholder: '제목 검색'
-  },
-  {
-    key: 'employeeName',
-    label: '기안자',
-    icon: 'fa-user',
-    type: 'input',
-    placeholder: '기안자 이름 입력'
-  },
-  {
-    key: 'departmentName',
-    label: '부서',
-    icon: 'fa-building',
-    type: 'select',
-    options: ['전체', '기획팀', '인사팀', '재무팀', '프론트엔드팀', '백엔드팀', '데이터팀', '영업팀', '디지털마케팅팀']
   },
   {
     key: 'completeAt',
@@ -124,8 +104,6 @@ const columns = [
   { key: 'statusType', label: '상태' },
   { key: 'approveTitle', label: '제목' },
   { key: 'approveType', label: '종류' },
-  { key: 'employeeName', label: '작성자' },
-  { key: 'departmentName', label: '부서' },
   { key: 'createAt', label: '작성일' },
   { key: 'completeAt', label: '처리일' },
   { key: 'action', label: '상세' }
@@ -211,24 +189,8 @@ function convertReceipt(receiptType) {
   return statusMap[receiptType] || null;
 }
 
-// 부서 변환
-function convertDepartment(departmentName) {
-  const statusMap = {
-    '전체': null,
-    '인사팀': 10,
-    '재무팀': 11,
-    '프론트엔드팀': 12,
-    '백엔드팀': 13,
-    '데이터팀': 14,
-    '영업팀': 15,
-    '디지털마케팅팀': 16
-  };
-
-  return statusMap[departmentName] || null;
-}
-
 const displayApprovals = computed(() => {
-  return approvals.value.map(item => ({
+  return sentApprovals.value.map(item => ({
     ...item,
     statusType: statusTypeMap[item.statusType] || item.statusType,
     approveType: approveTypeMap[item.approveType] || item.approveType
@@ -241,7 +203,7 @@ const displayApprovals = computed(() => {
 const handleTabClick = () => {
   resetFilters(); // 필터들 다 초기화 하기
   currentPage.value = 1 // 1번재 페이지로 넘어가기
-  fetchApprovals(); // 결재 문서 가져오기
+  fetchSentApprovals()// (); // 결재 문서 가져오기
 }
 
 // 필터 조건을 초기화
@@ -251,8 +213,6 @@ const resetFilters = () => {
     receiptType: null,
     statusType: null,
     approveTitle: '',
-    employeeName: '',
-    departmentName: null,
     startDate: null,
     endDate: null,
     sort: null
@@ -262,20 +222,18 @@ const resetFilters = () => {
 /* 필터 검색 이벤트 */
 const handleSearch = (filters) => {
   currentPage.value = 1;
-  fetchApprovals();
+  fetchSentApprovals();
 }
 
 /* 결재 문서를 가져오는 api  */
-async function fetchApprovals() {
+async function fetchSentApprovals() {
   try {
-    const approveListRequest = {
+    const draftApproveListRequest = {
       tab: selectedTab.value,
       approveType:  convertApproveType(selectedTab.value, filterValues.value.approveType) || null ,
       receiptType: convertReceipt(filterValues.value.receiptType) || null,
       status: convertStatusToId(filterValues.value.statusType),
       title: filterValues.value.title || null,
-      employeeName: filterValues.value.employeeName || null,
-      deptId: convertDepartment(filterValues.value.departmentName) || null,
       startDate: filterValues.value.completeAt_start || null,
       endDate: filterValues.value.completeAt_end || null,
       sort:  convertSort(filterValues.value.sort) || null
@@ -286,9 +244,8 @@ async function fetchApprovals() {
       size: 10
     }
 
-    console.log(approveListRequest.approveType);
-    const res = await getApprovals(approveListRequest, pageRequest);
-    approvals.value = res.data.data.approveDTO;
+    const res = await getSentApprovals(draftApproveListRequest, pageRequest);
+    sentApprovals.value = res.data.data.draftApproveDTO;
     pagination.value.totalPage = res.data.data.pagination.totalPage;
 
   } catch (e) {
@@ -297,48 +254,32 @@ async function fetchApprovals() {
 }
 
 watch(currentPage, () => {
-  fetchApprovals();
+  fetchSentApprovals();
 });
 
 /* api 호출하기 */
-onMounted(fetchApprovals);
-//
-// function handleDetailClick(row) {
-//   router.push(`/approvals/detail/${row.approveId}`)
-// }
-
+onMounted(fetchSentApprovals);
 </script>
 
 <template>
   <section>
-    <!-- 1. 전체 결재 내역 헤더 -->
-    <HeaderWithTabs
-      :headerItems="[{ label: '전체 결재', active: true }]"
-      :showTabs="false"
-    />
-
-    <!-- 2. 탭 조건 (전체, 근태, 영수증, 품의, 취소) -->
     <TabNav
       :tabs="tabItems"
       v-model:selected="selectedTab"
       @tab-click="handleTabClick"
     />
 
-    <!-- 3. 필터 -->
     <Filter
       :filters="visibleFilterOptions"
       v-model="filterValues"
       @search="handleSearch"
     />
 
-    <!-- 4. 표 -->
-    <BaseTable
-      :columns="columns"
-      :rows="displayApprovals"
-      @click-detail="handleDetailClick"
-    />
+    <div>
+      <NotExistApproval v-if="sentApprovals.length === 0" message="보낸 문서가 없습니다." />
+      <BaseTable v-else :columns="columns" :rows="displayApprovals"/>
+    </div>
 
-    <!-- 5. 페이징 처리 -->
     <Pagination
       v-if="pagination.totalPage"
       :totalPages="pagination.totalPage"

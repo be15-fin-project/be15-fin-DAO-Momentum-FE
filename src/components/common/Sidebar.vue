@@ -120,7 +120,7 @@ const menuItems = [
     label: '사원 관리',
     icon: 'group',
     subItems: [
-      { label: '사원 목록 조회', hrefs: ['../employee/employees'] },
+      { label: '사원 목록 조회', hrefs: ['../employees'] },
       { label: '인사 발령 내역', hrefs: ['../employee/appointment'] },
       { label: '계약서 내역', hrefs: ['../employee/contracts-admin'] }
     ],
@@ -170,7 +170,7 @@ const menuItems = [
       },
       {
         label: '평가 관리',
-        hrefs: ['../eval/manage'],
+        hrefs: ['../eval/manage', '../eval/manage-org'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       { label: '다면 평가 제출', hrefs: ['../eval/submit'] },
