@@ -1,6 +1,6 @@
 <script setup>
 // Vue
-import { ref, onMounted, watch } from 'vue';
+import {ref, onMounted, watch} from 'vue';
 import {
   getEvaluationRounds,
   createEvaluationRound,
@@ -14,28 +14,28 @@ import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
 
-const currentPage        = ref(1);
-const filterValues       = ref({});
-const tableData          = ref([]);
-const pagination         = ref({ currentPage: 1, totalPage: 1 });
+const currentPage = ref(1);
+const filterValues = ref({});
+const tableData = ref([]);
+const pagination = ref({currentPage: 1, totalPage: 1});
 
-const isOpenCreate       = ref(false);
-const createFormModel    = ref({});
+const isOpenCreate = ref(false);
+const createFormModel = ref({});
 const createFormSections = ref([]);
 
-const isOpenDetail       = ref(false);
-const detailFormModel    = ref({});
+const isOpenDetail = ref(false);
+const detailFormModel = ref({});
 const detailFormSections = ref([]);
-const selectedRoundId    = ref(null);
-const detailMode         = ref('view');
-const detailStatus       = ref();
-let   origDetailModel   = null;
+const selectedRoundId = ref(null);
+const detailMode = ref('view');
+const detailStatus = ref();
+let origDetailModel = null;
 
 const roundStatusOptions = [
-  { label: '전체',     value: null },
-  { label: '대기',     value: 'BEFORE' },
-  { label: '진행 중',   value: 'IN_PROGRESS' },
-  { label: '진행 완료', value: 'DONE' }
+  {label: '전체', value: null},
+  {label: '대기', value: 'BEFORE'},
+  {label: '진행 중', value: 'IN_PROGRESS'},
+  {label: '진행 완료', value: 'DONE'}
 ];
 
 const filterOptions = [
@@ -56,8 +56,8 @@ const filterOptions = [
 
 function formatDate(date) {
   const yyyy = date.getFullYear();
-  const mm   = String(date.getMonth() + 1).padStart(2, '0');
-  const dd   = String(date.getDate()).padStart(2, '0');
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
 
@@ -70,7 +70,7 @@ function addDays(date, days) {
 function normalizeFilterParams(values) {
   const params = {};
   if (values.date_start) params.startDate = values.date_start;
-  if (values.date_end)   params.endDate   = values.date_end;
+  if (values.date_end) params.endDate = values.date_end;
   const sel = roundStatusOptions.find(o => o.label === values.status);
   if (sel) params.status = sel.value;
   return params;
@@ -84,13 +84,20 @@ async function handleSearch(values) {
   };
   try {
     const res = await getEvaluationRounds(params);
-    tableData.value = res.list || [];
+    tableData.value = (res.list || []).map(item => {
+      const label = roundStatusOptions.find(o => o.value === item.status)?.label;
+      return {
+        ...item,
+        status: label || item.status
+      };
+    });
     const p = res.pagination || {};
     pagination.value = {
       currentPage: p.currentPage || 1,
-      totalPage:   p.totalPage   || 1
+      totalPage: p.totalPage || 1
     };
-  } catch (err) {
+  } catch
+      (err) {
     console.error('회차 조회 실패:', err);
     tableData.value = [];
   }
@@ -104,53 +111,53 @@ function openCreateModal() {
   isOpenCreate.value = true;
   const today = new Date();
   const start = formatDate(today);
-  const end   = formatDate(addDays(today, 7));
+  const end = formatDate(addDays(today, 7));
 
   createFormModel.value = {
-    roundNo:        null,
-    startAt:        start,
-    endAt:          end,
+    roundNo: null,
+    startAt: start,
+    endAt: end,
     weightSegments: [20, 20, 20, 15, 15, 10],
-    gradeRatios:    [10, 20, 30, 20, 20]
+    gradeRatios: [10, 20, 30, 20, 20]
   };
 
   createFormSections.value = [
     {
       title: '회차 정보',
-      icon:  'fa-calendar-plus',
-      layout:'two-column',
+      icon: 'fa-calendar-plus',
+      layout: 'two-column',
       fields: [
-        { label: '회차 번호', key: 'roundNo', type: 'number', editable: true },
-        { label: '시작일',     key: 'startAt',  type: 'date',   editable: true },
-        { label: '종료일',     key: 'endAt',    type: 'date',   editable: false }
+        {label: '회차 번호', key: 'roundNo', type: 'number', editable: true},
+        {label: '시작일', key: 'startAt', type: 'date', editable: true},
+        {label: '종료일', key: 'endAt', type: 'date', editable: false}
       ]
     },
     {
       title: '항목 가중치 (%)',
-      icon:  'fa-weight-hanging',
-      layout:'one-column',
+      icon: 'fa-weight-hanging',
+      layout: 'one-column',
       fields: [
         {
-          key:     'weightSegments',
-          type:    'sliderGroup',
+          key: 'weightSegments',
+          type: 'sliderGroup',
           initial: createFormModel.value.weightSegments,
-          labels:  ['성과','팀워크','태도','성장','몰입','결과'],
-          icons:   ['fa-chart-line','fa-people-group','fa-thumbs-up','fa-seedling','fa-fire','fa-award'],
+          labels: ['성과', '팀워크', '태도', '성장', '몰입', '결과'],
+          icons: ['fa-chart-line', 'fa-people-group', 'fa-thumbs-up', 'fa-seedling', 'fa-fire', 'fa-award'],
           editable: true
         }
       ]
     },
     {
       title: '등급 비율 (%)',
-      icon:  'fa-percent',
-      layout:'one-column',
+      icon: 'fa-percent',
+      layout: 'one-column',
       fields: [
         {
-          key:     'gradeRatios',
-          type:    'sliderGroup',
+          key: 'gradeRatios',
+          type: 'sliderGroup',
           initial: createFormModel.value.gradeRatios,
-          labels:  ['S등급','A등급','B등급','C등급','D등급'],
-          icons:   ['fa-star','fa-medal','fa-user','fa-user-alt','fa-user-slash'],
+          labels: ['S등급', 'A등급', 'B등급', 'C등급', 'D등급'],
+          icons: ['fa-star', 'fa-medal', 'fa-user', 'fa-user-alt', 'fa-user-slash'],
           editable: true
         }
       ]
@@ -164,24 +171,24 @@ async function handleSubmit() {
     startAt,
     endAt,
     weightSegments = [],
-    gradeRatios    = []
+    gradeRatios = []
   } = createFormModel.value;
 
   const payload = {
     roundNo,
     startAt,
     endAt,
-    performWt:    weightSegments[0],
-    teamWt:       weightSegments[1],
-    attitudeWt:   weightSegments[2],
-    growthWt:     weightSegments[3],
+    performWt: weightSegments[0],
+    teamWt: weightSegments[1],
+    attitudeWt: weightSegments[2],
+    growthWt: weightSegments[3],
     engagementWt: weightSegments[4],
-    resultWt:     weightSegments[5],
-    rateS:        gradeRatios[0],
-    rateA:        gradeRatios[1],
-    rateB:        gradeRatios[2],
-    rateC:        gradeRatios[3],
-    rateD:        gradeRatios[4]
+    resultWt: weightSegments[5],
+    rateS: gradeRatios[0],
+    rateA: gradeRatios[1],
+    rateB: gradeRatios[2],
+    rateC: gradeRatios[3],
+    rateD: gradeRatios[4]
   };
 
   try {
@@ -204,43 +211,43 @@ function makeDetailSections(editable = false) {
   return [
     {
       title: '회차 정보',
-      icon:  'fa-calendar-alt',
-      layout:'two-column',
+      icon: 'fa-calendar-alt',
+      layout: 'two-column',
       fields: [
-        { label: '회차 번호', key: 'roundNo', type: 'number', editable },
-        { label: '참여 인원', key: 'participantCount', type: 'number', editable: false },
-        { label: '시작일',     key: 'startAt',  type: 'date',   editable },
-        { label: '종료일',     key: 'endAt',    type: 'date',   editable: false }
+        {label: '회차 번호', key: 'roundNo', type: 'number', editable},
+        {label: '참여 인원', key: 'participantCount', type: 'number', editable: false},
+        {label: '시작일', key: 'startAt', type: 'date', editable},
+        {label: '종료일', key: 'endAt', type: 'date', editable: false}
       ]
     },
     {
       title: '등급 비율 (%)',
-      icon:  'fa-percent',
-      layout:'one-column',
+      icon: 'fa-percent',
+      layout: 'one-column',
       fields: [
         {
-          key:     'gradeRatios',
-          type:    'sliderGroup',
+          key: 'gradeRatios',
+          type: 'sliderGroup',
           handles: detailFormModel.value.gradeRatios.length - 1,
           initial: detailFormModel.value.gradeRatios,
-          labels:  ['S','A','B','C','D'],
-          icons:   ['fa-star','fa-medal','fa-user','fa-user-alt','fa-user-slash'],
+          labels: ['S', 'A', 'B', 'C', 'D'],
+          icons: ['fa-star', 'fa-medal', 'fa-user', 'fa-user-alt', 'fa-user-slash'],
           editable
         }
       ]
     },
     {
       title: '항목 가중치 (%)',
-      icon:  'fa-weight-hanging',
-      layout:'one-column',
+      icon: 'fa-weight-hanging',
+      layout: 'one-column',
       fields: [
         {
-          key:     'weightSegments',
-          type:    'sliderGroup',
+          key: 'weightSegments',
+          type: 'sliderGroup',
           handles: detailFormModel.value.weightSegments.length - 1,
           initial: detailFormModel.value.weightSegments,
-          labels:  ['성과','팀워크','태도','성장','몰입','결과'],
-          icons:   ['fa-chart-line','fa-people-group','fa-thumbs-up','fa-seedling','fa-fire','fa-award'],
+          labels: ['성과', '팀워크', '태도', '성장', '몰입', '결과'],
+          icons: ['fa-chart-line', 'fa-people-group', 'fa-thumbs-up', 'fa-seedling', 'fa-fire', 'fa-award'],
           editable
         }
       ]
@@ -249,24 +256,24 @@ function makeDetailSections(editable = false) {
 }
 
 async function openDetailModal(row) {
-  isOpenDetail.value    = true;
+  isOpenDetail.value = true;
   selectedRoundId.value = row.roundId;
-  detailMode.value      = 'view';
-  detailStatus.value    = row.status;
+  detailMode.value = 'view';
+  detailStatus.value = row.status;
 
   try {
-    const { rateInfo, weightInfo } = await getHrEvaluationCriteria(row.roundNo);
+    const {rateInfo, weightInfo} = await getHrEvaluationCriteria(row.roundNo);
 
     detailFormModel.value = {
-      roundNo:          row.roundNo,
+      roundNo: row.roundNo,
       participantCount: row.participantCount,
-      startAt:          row.startAt,
-      endAt:            row.endAt,
-      gradeRatios:      [
+      startAt: row.startAt,
+      endAt: row.endAt,
+      gradeRatios: [
         rateInfo.rateS, rateInfo.rateA, rateInfo.rateB,
         rateInfo.rateC, rateInfo.rateD
       ],
-      weightSegments:   [
+      weightSegments: [
         weightInfo.weightPerform,
         weightInfo.weightTeam,
         weightInfo.weightAttitude,
@@ -290,38 +297,38 @@ function handleEdit() {
 }
 
 function handleCancelEdit() {
-  detailFormModel.value     = JSON.parse(JSON.stringify(origDetailModel));
-  detailFormSections.value  = makeDetailSections(false);
-  detailMode.value          = 'view';
+  detailFormModel.value = JSON.parse(JSON.stringify(origDetailModel));
+  detailFormSections.value = makeDetailSections(false);
+  detailMode.value = 'view';
 }
 
 function handleCloseDetailModal() {
   if (detailMode.value === 'edit') {
     detailFormModel.value = JSON.parse(JSON.stringify(origDetailModel));
-    detailMode.value      = 'view';
+    detailMode.value = 'view';
   }
   isOpenDetail.value = false;
 }
 
 async function handleEditSubmit() {
-  const { roundNo, startAt, gradeRatios, weightSegments } = detailFormModel.value;
+  const {roundNo, startAt, gradeRatios, weightSegments} = detailFormModel.value;
   const endAt = formatDate(addDays(new Date(startAt), 7));
 
   const payload = {
     roundNo,
     startAt,
     endAt,
-    performWt:    weightSegments[0],
-    teamWt:       weightSegments[1],
-    attitudeWt:   weightSegments[2],
-    growthWt:     weightSegments[3],
+    performWt: weightSegments[0],
+    teamWt: weightSegments[1],
+    attitudeWt: weightSegments[2],
+    growthWt: weightSegments[3],
     engagementWt: weightSegments[4],
-    resultWt:     weightSegments[5],
-    rateS:        gradeRatios[0],
-    rateA:        gradeRatios[1],
-    rateB:        gradeRatios[2],
-    rateC:        gradeRatios[3],
-    rateD:        gradeRatios[4]
+    resultWt: weightSegments[5],
+    rateS: gradeRatios[0],
+    rateA: gradeRatios[1],
+    rateB: gradeRatios[2],
+    rateC: gradeRatios[3],
+    rateD: gradeRatios[4]
   };
 
   try {
@@ -391,7 +398,7 @@ watch(() => detailFormModel.value.startAt, (newDate) => {
 
     <Pagination
         v-if="pagination.totalPage >= 1"
-        :pages="Array.from({ length: pagination.totalPage }, (_, i) => i + 1)"
+        :total-pages="pagination.totalPage"
         v-model="currentPage"
     />
 

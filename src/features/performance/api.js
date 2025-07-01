@@ -227,3 +227,27 @@ export async function getHrEvaluationCriteria(roundNo) {
     const res = await api.get(`/evaluations/hr/${roundNo}/criteria`);
     return res.data.data;
 }
+
+// ==================================================
+// 평가 제출 API (평가 제출 목록 조회 등)
+// ==================================================
+
+// 평가 제출 목록 조회
+export async function getEvaluationTasks(params) {
+    const res = await api.get('/evaluation/tasks', { params });
+    return res.data.data;
+}
+
+// 평가 제출 상세 조회
+export async function getEvaluationFormDetail(formId, roundId) {
+    const res = await api.get(`/eval-forms/${formId}`, {
+        params: { roundId }
+    });
+    return res.data.data;
+}
+
+// 다면 평가 제출
+export async function submitEvaluation(payload) {
+    const res = await api.post('/evaluations/submit', payload);
+    return res.data.data;
+}

@@ -33,6 +33,8 @@ export default [
                 component : () => import('@/features/performance/views/EvaluationSelfView.vue')},
             { path: 'round', name: 'EvaluationRoundView',
                 component : () => import('@/features/performance/views/EvaluationRoundView.vue')},
+            { path: 'submit', name: 'SubmitEvaluationTasks',
+                component : () => import('@/features/performance/views/SubmitEvaluationTasks.vue')},
 
         ]
     }
