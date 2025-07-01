@@ -5,6 +5,12 @@ export const getWorks = async (params) => {
     return resp.data.data;
 }
 
+// 부서 트리 구조 조회
+export async function getDepartments() {
+    const res = await api.get('/departments');
+    return res.data;
+}
+
 export const getPositions = async () => {
     const resp = await api.get("/position");
     return resp.data.data.positionDtoList;

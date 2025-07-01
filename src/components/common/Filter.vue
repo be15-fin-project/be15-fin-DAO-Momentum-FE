@@ -35,6 +35,17 @@
               style="width: 100%; padding: 8px 12px; border: none;"
           />
         </template>
+        <template v-if="filter.type === 'tree'">
+          <div class="tree-dropdown">
+            <TreeNode
+                v-for="node in filter.options"
+                :key="node.deptId"
+                :node="node"
+                :selected-id="localValues[filter.key]"
+                @select="(id) => selectOption(filter.key, id)"
+            />
+          </div>
+        </template>
         <template v-if="filter.type === 'date-range'">
           <div class="date-range">
             <label>시작일</label>
@@ -81,6 +92,7 @@
 
 <script setup>
 import { ref, watch, onMounted, onUnmounted } from 'vue';
+import TreeNode from "@/components/common/TreeNode.vue";
 
 const props = defineProps({
   filters: Array,
