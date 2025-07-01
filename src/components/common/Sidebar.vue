@@ -170,7 +170,7 @@ const menuItems = [
       },
       {
         label: '평가 관리',
-        hrefs: ['../eval/manage', '../eval/manage-org'],
+        hrefs: ['../eval/manage', '../eval/manage-org', '../eval/manage-self', '../eval/round'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       { label: '다면 평가 제출', hrefs: ['../eval/submit'] },

@@ -174,8 +174,8 @@ watch(currentPage, () => {
 
     <!-- 페이지네이션 -->
     <Pagination
-        v-if="pagination.totalPage"
-        :pages="Array.from({ length: pagination.totalPage }, (_, i) => i + 1)"
+        v-if="pagination.totalPage >= 1"
+        :total-pages="pagination.totalPage"
         v-model="currentPage"
     />
 
