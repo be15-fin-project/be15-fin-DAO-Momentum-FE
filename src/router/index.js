@@ -5,6 +5,7 @@ import {commonRoutes} from "@/features/common/router.js";
 import {approvalsRoutes} from "@/features/approvals/router.js";
 import {worksRoutes} from "@/features/works/router.js";
 import {employeeRoutes} from "@/features/employee/router.js";
+import {useAuthStore} from "@/stores/auth.js";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -23,6 +24,20 @@ const router = createRouter({
         ...commonRoutes
 
     ]
+})
+
+//권한 없어도 되는 페이지들
+router.beforeEach((to, from, next) => {
+    const authStore = useAuthStore()
+    const publicPages = ['/login', '/register', '/password/reset']
+
+    const requiresAuth = !publicPages.includes(to.path)
+
+    if (requiresAuth && !authStore.accessToken) {
+        return next('/login')
+    }
+
+    next()
 })
 
 export default router
