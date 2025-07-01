@@ -4,6 +4,7 @@ import evalRoutes from "@/features/performance/router.js"
 import {commonRoutes} from "@/features/common/router.js";
 import {approvalsRoutes} from "@/features/approvals/router.js";
 import {worksRoutes} from "@/features/works/router.js";
+import {employeeRoutes} from "@/features/employee/router.js";
 import {useAuthStore} from "@/stores/auth.js";
 
 const router = createRouter({
@@ -16,7 +17,8 @@ const router = createRouter({
             children: [
                 ...evalRoutes,
                 ...worksRoutes,
-                ...approvalsRoutes
+                ...approvalsRoutes,
+                ...employeeRoutes,
             ]
         },
         ...commonRoutes
