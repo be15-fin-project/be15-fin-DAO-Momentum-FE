@@ -223,7 +223,7 @@ async function openModalHandler(row) {
           fields: factorScores.map(f => ({
             label: f.propertyName,
             value: f.score,
-            type: 'input',
+            type: 'scoreChart',
             editable: false,
           }))
         }]
