@@ -5,8 +5,9 @@ import {
   getKpiTimeseries,
   getKpiList,
   getKpiExcelDownload,
-  getKpiDetail
+  getKpiDetail,
 } from '@/features/performance/api.js';
+import { getDepartments, getPositions  } from '@/features/works/api.js';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
@@ -24,6 +25,9 @@ const tableData = ref([]);
 const pagination = ref({currentPage: 1, totalPage: 1});
 const selectedKpiId = ref(null); // 선택된 KPI ID
 const formSections = ref([]); // 동적으로 변경될 모달 폼 내용
+const departmentTree = ref([]);
+const filterOptions = ref([]);
+const positionList = ref([]);
 
 
 // Chart instance container
@@ -40,35 +44,40 @@ const lineChartData = ref({
 
 
 // 필터 옵션
-const filterOptions = [
-  {
-    key: 'deptId',
-    label: '부서',
-    icon: 'fa-building',
-    type: 'select',
-    options: ['전체', '인사팀', '재무팀', '프론트엔드팀', '백엔드팀', '데이터팀', '영업팀', '디지털마케팅팀']
-  },
-  {
-    key: 'positionId',
-    label: '직위',
-    icon: 'fa-user-tie',
-    type: 'select',
-    options: ['전체', '대표이사', '이사', '부장', '과장', '대리', '사원']
-  },
-  {
-    key: 'empNo',
-    label: '사번',
-    icon: 'fa-id-badge',
-    type: 'input',
-    placeholder: '사번 입력'
-  },
-  {
-    key: 'date',
-    label: '등록일',
-    icon: 'fa-calendar-day',
-    type: 'date-range'
-  }
-];
+function initFilters() {
+  filterOptions.value = [
+    {
+      key: 'deptId',
+      label: '부서',
+      icon: 'fa-building',
+      type: 'tree',
+      options: departmentTree.value, // 부서 트리 반영
+    },
+    {
+      key: 'positionId',
+      label: '직위',
+      icon: 'fa-user-tie',
+      type: 'select',
+      options: [
+        '전체',
+        ...positionList.value.map(pos => pos.name)
+      ]
+    },
+    {
+      key: 'empNo',
+      label: '사번',
+      icon: 'fa-id-badge',
+      type: 'input',
+      placeholder: '사번 입력'
+    },
+    {
+      key: 'date',
+      label: '등록일',
+      icon: 'fa-calendar-day',
+      type: 'date-range'
+    }
+  ];
+}
 
 // ✨ 필터 파라미터 정규화
 function normalizeFilterParams(values) {
@@ -85,33 +94,18 @@ function normalizeFilterParams(values) {
   }
 
   // 직위 라벨 → ID 매핑
-  const positionMap = {
-    '전체': null,
-    '대표이사': 1,
-    '이사': 2,
-    '부장': 3,
-    '과장': 4,
-    '대리': 5,
-    '사원': 6
-  };
-  if (normalized.positionId) {
-    normalized.positionId = positionMap[normalized.positionId] ?? null;
+  if (normalized.positionId && normalized.positionId !== '전체') {
+    const match = positionList.value.find(p => p.name === normalized.positionId);
+    normalized.positionId = match?.positionId ?? null;
+  } else {
+    normalized.positionId = null;
   }
 
   // 부서 라벨 → ID 매핑
-  const deptMap = {
-    '전체': null,
-    '인사팀': 10,
-    '재무팀': 11,
-    '프론트엔드팀': 12,
-    '백엔드팀': 13,
-    '데이터팀': 14,
-    '영업팀': 15,
-    '디지털마케팅팀': 16
-  };
-  if (normalized.deptId) {
-    normalized.deptId = deptMap[normalized.deptId] ?? null;
+  if (typeof normalized.deptId === 'string') {
+    normalized.deptId = Number(normalized.deptId);
   }
+
 
   return normalized;
 }
@@ -209,12 +203,23 @@ watch(currentPage, () => {
 });
 
 // 초기 진입
-onMounted(() => {
+onMounted(async () => {
+  try {
+    const response = await getDepartments();
+    departmentTree.value = response.data?.departmentInfoDTOList || [];
+    positionList.value = await getPositions();
+    initFilters(); // 부서 데이터 기반 필터 초기화
+  } catch (e) {
+    console.error('부서 정보 조회 실패:', e);
+  }
+
   const init = {};
   filterValues.value = init;
-  handleSearch(init);
+  await handleSearch(init);
+
   window.addEventListener('resize', handleResize);
 });
+
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize);
