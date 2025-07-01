@@ -5,6 +5,7 @@ import Pagination from "@/components/common/Pagination.vue"
 import Filter from "@/components/common/Filter.vue"
 import TabNav from '@/components/common/NavigationTab.vue'
 import {getReceivedApprovals} from "@/features/approvals/api.js";
+import NotExistApproval from "@/features/approvals/components/NotExistApproval.vue";
 
 /* 결재 목록 데이터 */
 const approvals = ref([])
@@ -312,10 +313,10 @@ onMounted(fetchReceivedApprovals);
       @search="handleSearch"
     />
 
-    <BaseTable
-      :columns="columns"
-      :rows="displayApprovals"
-    />
+    <div>
+      <NotExistApproval v-if="approvals.length === 0" message="받은 문서가 없습니다." />
+      <BaseTable v-else :columns="columns" :rows="displayApprovals"/>
+    </div>
 
     <Pagination
       v-if="pagination.totalPage"
