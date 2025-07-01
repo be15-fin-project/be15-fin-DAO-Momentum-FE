@@ -27,6 +27,8 @@ export default [
             { path: '', redirect: 'manage'},
             { path: 'manage', name: 'EvaluationPeerView',
                 component : () => import('@/features/performance/views/EvaluationPeerView.vue')},
+            { path: 'manage-org', name: 'EvaluationOrgView',
+                component : () => import('@/features/performance/views/EvaluationOrgView.vue')},
 
         ]
     }

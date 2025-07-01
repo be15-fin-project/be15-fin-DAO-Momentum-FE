@@ -131,3 +131,23 @@ export async function getPeerEvaluationDetail(resultId) {
     return res.data.data;
 }
 
+// 조직 평가 목록 조회
+export async function getOrgEvaluations(params) {
+    const res = await api.get('/evaluation/results/org', { params });
+    return res.data.data;
+}
+
+// 조직 평가 상세 조회
+export async function getOrgEvaluationDetail(resultId) {
+    const res = await api.get(`/evaluation/results/org/${resultId}`);
+    return res.data.data;
+}
+
+// 조직 평가 엑셀 다운로드
+export async function getOrgExcelDownload(params) {
+    const res = await api.get('/evaluations/excel/org', {
+        params,
+        responseType: 'blob' // 반드시 blob 지정
+    });
+    return res.data; // Blob 데이터
+}

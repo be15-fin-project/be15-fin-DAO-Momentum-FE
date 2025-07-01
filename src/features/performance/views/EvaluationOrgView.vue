@@ -1,12 +1,15 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
-import { getDepartments, getPositions } from '@/features/works/api.js';
+import {
+  getDepartments,
+  getPositions
+} from '@/features/works/api.js';
 import {
   getEvaluationFormTypes,
   getEvaluationRoundNos,
-  getPeerEvaluations,
-  getPeerExcelDownload,
-  getPeerEvaluationDetail
+  getOrgEvaluations,
+  getOrgEvaluationDetail,
+  getOrgExcelDownload
 } from '@/features/performance/api.js';
 
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
@@ -20,24 +23,24 @@ const filterValues = ref({});
 const tableData = ref([]);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
 const isOpen = ref(false);
-const departmentTree = ref([]);
-const positionList = ref([]);
 const formSections = ref([]);
 const selectedRow = ref(null);
+const currentTab = ref('조직 평가');
+
+const departmentTree = ref([]);
+const positionList = ref([]);
 const formTypeList = ref([]);
 const roundList = ref([]);
-const currentTab = ref('사원 간 평가');
-
 
 const fetchFormTypes = async () => {
-  formTypeList.value = await getEvaluationFormTypes({ typeId: 1 });
+  formTypeList.value = await getEvaluationFormTypes({ typeId: 2 }); // 조직 평가
 };
 
 const fetchRoundNos = async () => {
   roundList.value = await getEvaluationRoundNos();
 };
 
-// 필터
+const filterOptions = ref([]);
 function initFilters() {
   filterOptions.value = [
     {
@@ -48,7 +51,7 @@ function initFilters() {
       options: ['전체', ...formTypeList.value.map(f => f.description)],
     },
     {
-      key: 'roundId',
+      key: 'roundNo',
       label: '회차',
       icon: 'fa-list-ol',
       type: 'select',
@@ -70,14 +73,7 @@ function initFilters() {
     },
     {
       key: 'evalNo',
-      label: '평가자 사번',
-      icon: 'fa-id-badge',
-      type: 'input',
-      placeholder: '사번 입력',
-    },
-    {
-      key: 'targetNo',
-      label: '피평가자 사번',
+      label: '사번',
       icon: 'fa-id-badge',
       type: 'input',
       placeholder: '사번 입력',
@@ -91,9 +87,6 @@ function initFilters() {
   ];
 }
 
-
-const filterOptions = ref([]);
-
 function normalizeFilterParams(values) {
   const normalized = { ...values };
 
@@ -106,7 +99,6 @@ function normalizeFilterParams(values) {
     delete normalized.date_end;
   }
 
-  // 직위 변환 (이름 → ID)
   if (normalized.positionId && normalized.positionId !== '전체') {
     const match = positionList.value.find(p => p.name === normalized.positionId);
     normalized.positionId = match?.positionId ?? null;
@@ -114,12 +106,10 @@ function normalizeFilterParams(values) {
     normalized.positionId = null;
   }
 
-  // 부서 ID 변환 (string → number)
   if (typeof normalized.deptId === 'string') {
     normalized.deptId = Number(normalized.deptId);
   }
 
-  // 폼 ID 변환 (form name → formId)
   if (normalized.formId && normalized.formId !== '전체') {
     const match = formTypeList.value.find(f => f.name === normalized.formId || f.description === normalized.formId);
     normalized.formId = match?.formId ?? null;
@@ -127,18 +117,12 @@ function normalizeFilterParams(values) {
     normalized.formId = null;
   }
 
-// 회차 변환 (roundNo → roundId)
-  if (normalized.roundId && normalized.roundId !== '전체') {
-    normalized.roundNo = normalized.roundId;
-  } else {
+  if (normalized.roundNo && normalized.roundNo === '전체') {
     normalized.roundNo = null;
   }
-  delete normalized.roundId;
-
 
   return normalized;
 }
-
 
 async function handleSearch(values) {
   const params = {
@@ -146,29 +130,27 @@ async function handleSearch(values) {
     page: currentPage.value,
     size: 10,
   };
-
   console.log('[SEARCH PARAMS]', params);
 
   try {
-    const resData = await getPeerEvaluations(params);
+    const resData = await getOrgEvaluations(params);
     tableData.value = resData.list ?? [];
 
     const current = resData.pagination?.currentPage || 1;
     const total = resData.pagination?.totalPage > 0 ? resData.pagination.totalPage : 1;
     pagination.value = { currentPage: current, totalPage: total };
   } catch (e) {
-    console.error('평가 목록 조회 실패:', e);
+    console.error('조직 평가 조회 실패:', e);
     tableData.value = [];
   }
 }
 
-// 가공된 테이블 row 목록
 const mappedTableData = computed(() =>
     tableData.value.map(row => {
       const form = formTypeList.value.find(f => f.name === row.formName);
       return {
         ...row,
-        formDisplayName: form?.description || row.formName, // 매핑 실패 시 원본 fallback
+        formDisplayName: form?.description || row.formName,
       };
     })
 );
@@ -178,7 +160,7 @@ async function openModalHandler(row) {
   isOpen.value = true;
 
   try {
-    const { detail, factorScores } = await getPeerEvaluationDetail(row.resultId);
+    const { detail, factorScores } = await getOrgEvaluationDetail(row.resultId);
 
     const form = formTypeList.value.find(f => f.name === detail.formName);
     const formDisplayName = form?.description || detail.formName;
@@ -186,7 +168,7 @@ async function openModalHandler(row) {
 
     const baseSections = [
       {
-        title: '평가 정보',
+        title: '조직 평가 정보',
         icon: 'fa-clipboard-check',
         layout: 'two-column',
         fields: [
@@ -197,12 +179,11 @@ async function openModalHandler(row) {
         ],
       },
       {
-        title: '평가자/피평가자',
-        icon: 'fa-users',
-        layout: 'two-column',
+        title: '평가자',
+        icon: 'fa-user',
+        layout: 'one-column',
         fields: [
-          { label: '평가자', value: `${detail.evalName} (${detail.evalNo})`, type: 'input', editable: false },
-          { label: '피평가자', value: `${detail.targetName} (${detail.targetNo})`, type: 'input', editable: false },
+          { label: '사번', value: `${detail.evalName} (${detail.empNo})`, type: 'input', editable: false },
         ],
       },
     ];
@@ -243,14 +224,14 @@ async function handleDownload() {
   try {
     const normalized = normalizeFilterParams(filterValues.value);
 
-    const blob = await getPeerExcelDownload({
+    const blob = await getOrgExcelDownload({
       ...normalized
     });
 
     const url = window.URL.createObjectURL(new Blob([blob]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `evaluation-employee-list-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    link.setAttribute('download', `evaluation-org-list-${new Date().toISOString().slice(0, 10)}.xlsx`);
     document.body.appendChild(link);
     link.click();
     link.remove();
@@ -260,7 +241,6 @@ async function handleDownload() {
     alert('엑셀 다운로드 실패');
   }
 }
-
 watch(currentPage, () => handleSearch(filterValues.value));
 
 onMounted(async () => {
@@ -280,26 +260,24 @@ onMounted(async () => {
     console.error('초기화 실패:', e);
   }
 });
-
 </script>
 
 <template>
   <main>
     <HeaderWithTabs
         :headerItems="[
-            { label: '평가 내역', to: '/eval/manage', active: true },
-            { label: '평가 회차', to: '/eval/round', active: false }]"
+        { label: '평가 내역', to: '/eval/manage', active: true },
+        { label: '평가 회차', to: '/eval/round', active: false }]"
         :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
         :tabs="[
-            { label: '사원 간 평가', icon: 'fa-building', to: '/eval/manage' },
-            { label: '조직 평가', icon: 'fa-sitemap', to: '/eval/manage-org' },
-            { label: '자가 진단', icon: 'fa-user-tie', to: '/eval/manage-self' }
-            ]"
+        { label: '사원 간 평가', icon: 'fa-building', to: '/eval/manage' },
+        { label: '조직 평가', icon: 'fa-sitemap', to: '/eval/manage-org', active: true },
+        { label: '자가 진단', icon: 'fa-user-tie', to: '/eval/manage-self' }
+      ]"
         :showTabs="true"
         :activeTab="currentTab"
         @tabSelected="currentTab = $event"
         @download="handleDownload"
-
     />
 
     <EmployeeFilter
@@ -310,13 +288,12 @@ onMounted(async () => {
 
     <BaseTable
         :columns="[
-          { key: 'roundNo', label: '회차' },
-          { key: 'formDisplayName', label: '폼 이름' },
-          { key: 'evalName', label: '평가자' },
-          { key: 'targetName', label: '피평가자' },
-          { key: 'score', label: '점수' },
-          { key: 'action', label: '상세' },
-        ]"
+        { key: 'roundNo', label: '회차' },
+        { key: 'formDisplayName', label: '폼 이름' },
+        { key: 'evalName', label: '사원 이름' },
+        { key: 'score', label: '점수' },
+        { key: 'action', label: '상세' }
+      ]"
         :rows="mappedTableData"
         @click-detail="openModalHandler"
     />
@@ -329,7 +306,7 @@ onMounted(async () => {
 
     <SideModal
         :visible="isOpen"
-        :title="'평가 상세 정보'"
+        title="조직 평가 상세 정보"
         icon="fa-chart-line"
         :sections="formSections"
         :showSubmit="false"

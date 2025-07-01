@@ -164,7 +164,7 @@ const menuItems = [
       },
       {
         label: '평가 관리',
-        hrefs: ['../eval/manage'],
+        hrefs: ['../eval/manage', '../eval/manage-org'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       { label: '다면 평가 제출', hrefs: ['../eval/submit'] },
