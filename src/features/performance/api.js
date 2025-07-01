@@ -97,3 +97,57 @@ export async function approveKpiCancel(kpiId, approved, reason = '') {
     });
     return res.data;
 }
+
+// 사원 간 평가 목록 조회
+export async function getPeerEvaluations(params) {
+    const res = await api.get('/evaluation/results/peer', { params });
+    return res.data.data;
+}
+
+// 사원 간 평가 엑셀 다운로드
+export async function getPeerExcelDownload(params) {
+    const res = await api.get('/evaluations/excel/peer', {
+        params,
+        responseType: 'blob' // 반드시 blob으로 지정해야 엑셀로 다운로드됨
+    });
+    return res.data; // Blob 데이터
+}
+
+// 평가 종류 조회
+export async function getEvaluationFormTypes(params) {
+    const res = await api.get('/evaluations/forms', { params });
+    return res.data.data;
+}
+
+// 평가 회차 번호 조회
+export async function getEvaluationRoundNos() {
+    const res = await api.get('/evaluations/roundNo');
+    return res.data.data;
+}
+
+// 사원 간 평가 상세 조회
+export async function getPeerEvaluationDetail(resultId) {
+    const res = await api.get(`/evaluation/results/peer/${resultId}`);
+    return res.data.data;
+}
+
+// 조직 평가 목록 조회
+export async function getOrgEvaluations(params) {
+    const res = await api.get('/evaluation/results/org', { params });
+    return res.data.data;
+}
+
+// 조직 평가 상세 조회
+export async function getOrgEvaluationDetail(resultId) {
+    const res = await api.get(`/evaluation/results/org/${resultId}`);
+    return res.data.data;
+}
+
+// 조직 평가 엑셀 다운로드
+export async function getOrgExcelDownload(params) {
+    const res = await api.get('/evaluations/excel/org', {
+        params,
+        responseType: 'blob' // 반드시 blob 지정
+    });
+    return res.data; // Blob 데이터
+}
