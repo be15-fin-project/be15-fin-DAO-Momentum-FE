@@ -23,7 +23,15 @@
         :disabled="readonly || !field.editable"
     />
 
-
+    <LikertScale
+        v-else-if="field.type === 'likert'"
+        v-model="model[field.key]"
+        labelClass="text-lg text-blue-600 mb-2"
+        :min="field.min ?? 1"
+        :max="field.max ?? 7"
+        :labels="field.labels ?? ['매우 불만족','매우 만족']"
+        :readonly="readonly || !field.editable"
+    />
 
     <!-- 읽기 전용 -->
     <div v-else-if="readonly || !field.editable" class="form-input readonly">
@@ -77,6 +85,7 @@
 <script setup>
 import { computed } from 'vue';
 import SliderGroup from "@/components/common/SliderGroup.vue";
+import LikertScale from "@/components/common/LikertScale.vue";
 
 const props = defineProps({
   field: Object,

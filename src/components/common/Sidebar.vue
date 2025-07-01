@@ -159,7 +159,7 @@ const menuItems = [
     subItems: [
       {
         label: 'KPI 분석',
-        hrefs: ['../kpi/statics', '../kpi/employees', '../kpi/employee-detail'],
+        hrefs: ['../kpi/statics', '../kpi/employee-kpis', '../kpi/employee-detail'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       { label: 'KPI 조회', hrefs: ['../kpi/list'] },

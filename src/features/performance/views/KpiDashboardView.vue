@@ -346,7 +346,7 @@ async function openModalHandler(kpiId) {
     <HeaderWithTabs
         :headerItems="[
         { label: '대시보드', to: '/kpi/statics', active: true },
-        { label: '사원별 KPI', to: '/kpi/employees', active: false }
+        { label: '사원별 KPI', to: '/kpi/employee-kpis', active: false }
       ]"
         :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
         :showTabs="false"
