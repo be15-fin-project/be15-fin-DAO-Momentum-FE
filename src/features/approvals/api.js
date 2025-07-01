@@ -9,3 +9,13 @@ export function getApprovals(approveListRequest, pageRequest = {}) {
         }
     });
 }
+
+/* 2. 받은 문서함 결재 내역 불러오기 */
+export function getReceivedApprovals(approveListRequest, pageRequest = {}) {
+    return api.get('/approval/documents/received', {
+        params: {
+            ...approveListRequest,
+            ...pageRequest
+        }
+    });
+}

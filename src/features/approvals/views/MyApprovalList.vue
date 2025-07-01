@@ -1,68 +1,37 @@
 <script setup>
-import BaseTable from '@/components/common/BaseTable.vue'
-import { ref, onMounted } from 'vue'
-import Pagination from "@/components/common/Pagination.vue";
-import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
-import EmployeeFilter from "@/components/common/Filter.vue";
-import Filter from "@/components/common/Filter.vue";
+import { ref } from 'vue'
 
-const approvals = ref([])
+import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue"
+import ReceivedApproval from "@/features/approvals/components/ReceivedApproval.vue"
+import SentApproval from "@/features/approvals/components/SentApproval.vue"
+import ApprovalHeaderWithTabs from "@/features/approvals/components/ApprovalHeaderWithTabs.vue";
 
-/* 컬럼명들 */
-const columns = [
-  { key: 'status', label: '상태' },
-  { key: 'approveTitle', label: '제목' },
-  { key: 'type', label: '종류' },
-  { key: 'employeeName', label: '작성자' },
-  { key: 'departmentName', label: '부서' },
-  { key: 'createAt', label: '작성일' },
-  { key: 'completeAt', label: '처리일' },
-  { key: 'detail', label: '상세' }
-]
+/* 현재 활성화 되어 있는 탭 */
+const currentTab = ref('RECEIVED')
 
-/* 전체 결재 내역 */
-onMounted(() => {
-  approvals.value = [
-    {
-      status: '대기',
-      title: '연차 신청서',
-      writer: '김태훈',
-      type: '휴가',
-      department: '개발팀',
-      createdAt: '2024-06-15',
-      processedAt: '-'
-    },
-    {
-      status: '승인',
-      title: '출장비 청구서',
-      writer: '이하나',
-      type: '출장',
-      department: '영업팀',
-      createdAt: '2024-06-12',
-      processedAt: '2024-06-13'
-    }
-  ]
-})
-
+/* 탭 클릭 핸들러 */
+const handleTabClick = (tabLabel) => {
+  currentTab.value = tabLabel === '받은 문서함' ? 'RECEIVED' : 'SENT'
+}
 </script>
 
 <template>
-  <section>
-    <!-- 1. 탭이 있는 부분 -->
-    <HeaderWithTabs
-      :headerItems="[
-        { label: '전체 결재 목록', active: true }
-      ]"
-      :showTabs="false"
-    />
+  <!-- 내 결재 내역 탭 나누기 -->
+  <ApprovalHeaderWithTabs
+    :headerItems="[
+      { label: '받은 문서함', active: currentTab === 'RECEIVED' },
+      { label: '보낸 문서함', active: currentTab === 'SENT' }
+    ]"
+    :showTabs="false"
+    @tab-click="handleTabClick"
+  />
 
-    <!-- 2. 필터 -->
-    <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
+  <!-- 받은 문서함 -->
+  <ReceivedApproval v-if="currentTab === 'RECEIVED'" />
 
-    <!-- 3. 결재 목록 표 -->
-    <BaseTable :columns="columns" :rows="approvals" :classMap="statusClassMap" />
-
-    <!-- 4. 페이징 처리 -->
-    <Pagination/>
-  </section>
+  <!-- 보낸 문서함 -->
+  <SentApproval v-else />
 </template>
+
+<style scoped>
+</style>
