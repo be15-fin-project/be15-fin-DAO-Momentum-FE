@@ -208,7 +208,7 @@ const handleRegisterSubmit = async (req) => {
         v-model="currentPage"
         :total-pages="pagination.totalPage"/>
 
-    <!-- 사원 등록 사이드 모달 -->
+    <!-- 발령 등록 사이드 모달 -->
     <SideModal
         v-if="showModal"
         :visible="showModal"
