@@ -10,7 +10,7 @@ export default [
             { path: '', redirect: 'statics'},
             { path: 'statics', name: 'KpiDashboardView',
                 component : () => import('@/features/performance/views/KpiDashboardView.vue')},
-            { path: 'employees', name: 'KpiEmployeeListView',
+            { path: 'employee-kpis', name: 'KpiEmployeeListView',
                 component : () => import('@/features/performance/views/KpiEmployeeListView.vue')},
             { path: 'employee-detail', name: 'KpiEmployeeDetailView',
                 component : () => import('@/features/performance/views/KpiEmployeeDetailView.vue')},

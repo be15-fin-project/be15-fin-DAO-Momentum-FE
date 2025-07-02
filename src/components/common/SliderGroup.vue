@@ -154,6 +154,7 @@ watch(
 .progress-label i {
   margin-right: 0.5rem;
   font-size: 1rem;
+  color: var(--blue-400);
 }
 .weight-badge {
   padding: 4px 12px;

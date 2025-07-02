@@ -216,7 +216,7 @@ const tableColumns = [
 
 // KPI 상세 모달
 function handleBack() {
-  router.push({ path: `../kpi/employees` });
+  router.push({ path: `../kpi/employee-kpis` });
 }
 async function openModalHandler(kpiId) {
   isOpen.value = true;

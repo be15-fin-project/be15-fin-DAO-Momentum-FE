@@ -22,7 +22,7 @@
         { key: 'action',             label: '제출' }
       ]"
         :rows="mappedTableData"
-        @click-action="row => !row.submitted && openSubmitModal(row)"
+        @click-detail="row => !row.submitted && openSubmitModal(row)"
     />
 
     <Pagination
@@ -33,6 +33,7 @@
 
     <SideModal
         :visible="isModalOpen"
+        :form="submitForm"
         title="평가 제출"
         icon="fa-clipboard-list"
         :sections="formSections"
@@ -72,6 +73,7 @@ const isModalOpen   = ref(false)
 const selectedTask  = ref(null)
 const formSections  = ref([])
 const formTypeList  = ref([])
+const submitForm = ref({});
 
 // 폼 종류 조회
 const fetchFormTypes = async () => {
@@ -189,41 +191,63 @@ async function handleSearch(values) {
 }
 
 async function openSubmitModal(row) {
-  selectedTask.value = row
-  isModalOpen.value  = true
+  console.log('▶ 호출됨:', row);
+  selectedTask.value = row;
+  isModalOpen.value  = true;
 
-  const { form, questions } = await getEvaluationFormDetail(
-      row.formId,
-      row.roundId
-  )
+  try {
+    const data = await getEvaluationFormDetail(row.formId, row.roundId);
+    const formDesc = formTypeList.value.find(f => f.formId === row.formId)
+        ?.description || row.formName
+    formSections.value = [
+      {
+        title: '평가 정보',
+        icon: 'fa-info-circle',
+        layout: 'two-column',
+        fields: [
+          { label: '회차',    value: row.roundNo,      type: 'input', editable: false },
+          { label: '폼 이름',  value: formDesc, type: 'input', editable: false },
+          { label: '피평가자', value: row.targetName,   type: 'input', editable: false },
+        ]
+      },
+      {
+        title: '문항',
+        icon: 'fa-question-circle',
+        layout: 'one-column',
+        fields: data.factors.flatMap(factor =>
+            factor.prompts.map((p, idx) => ({
+              key:     `q_${factor.propertyName}_${idx}`,  // v-model key
+              label:   p.content,                          // 화면에 표시할 문항 텍스트
+              type:    'likert',                           // sliderGroup 대신 likert 타입
+              min:     1,                                  // 척도 최소값
+              max:     7,                                  // 척도 최대값
+              labels:  ['매우 불만족','매우 만족'],         // 양끝 레이블
+              editable: true,                              // 수정 가능 여부
+              value:   null                                // 초기값 (v-model에 매핑)
+            }))
+        )
+      },
+      {
+        title: '평가 사유',
+        icon: 'fa-comment-dots',
+        layout: 'one-column',
+        fields: [
+          { label: '사유',    value: row.reason,      type: 'input', editable: true },
+        ]
+      }
+    ];
 
-  formSections.value = [
-    {
-      title: '평가 정보',
-      icon: 'fa-info-circle',
-      layout: 'two-column',
-      fields: [
-        { label: '회차',    value: row.roundNo,      type: 'input', editable: false },
-        { label: '폼 이름', value: form.description, type: 'input', editable: false },
-        { label: '피평가자', value: row.targetName,   type: 'input', editable: false },
-        { label: '마감일',  value: row.dueDate,       type: 'input', editable: false }
-      ]
-    },
-    {
-      title: '문항',
-      icon: 'fa-question-circle',
-      layout: 'one-column',
-      fields: questions.map(q => ({
-        label:    q.prompt,
-        key:      `q_${q.questionId}`,
-        type:     'sliderGroup',
-        initial:  0,
-        handles: [0, q.maxScore],
-        editable: true
-      }))
+    submitForm.value = {
+      roundNo:    row.roundNo,
+      formName:   data.description,
+      targetName: row.targetName
     }
-  ]
+  } catch (e) {
+    console.error('폼 상세 조회 실패:', e);
+    // 필요시 isModalOpen.value = false;
+  }
 }
+
 
 async function handleSubmit() {
   const payload = {
@@ -246,7 +270,9 @@ async function handleSubmit() {
 watch(currentPage, () => handleSearch(filterValues.value))
 
 onMounted(async () => {
-  await Promise.all([fetchFormTypes(), handleSearch(filterValues.value)])})
+  await fetchFormTypes()
+  await handleSearch(filterValues.value)
+})
 </script>
 
 <style scoped>
