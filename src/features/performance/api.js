@@ -259,6 +259,12 @@ export async function getEvaluationFormDetail(formId, roundId) {
     return res.data.data;
 }
 
+// 평가 종류별 요인 목록 조회
+export async function getEvaluationFormProperties(params) {
+    const res = await api.get('/evaluations/form-property', { params });
+    return res.data.data;
+}
+
 // 다면 평가 제출
 export async function submitEvaluation(payload) {
     const res = await api.post('/evaluations/submit', payload);

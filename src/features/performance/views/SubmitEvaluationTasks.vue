@@ -51,11 +51,11 @@
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
 import {
-  getEvaluationFormTypes,
   getEvaluationTasks,
   getEvaluationFormDetail,
-  submitEvaluation,
-  getEvaluationFormTree
+  getEvaluationFormTree,
+  getEvaluationFormProperties,
+  submitEvaluation
 } from '@/features/performance/api.js'
 
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue'
@@ -80,7 +80,6 @@ const formTree = ref([])
 const selectedFormId = ref(null)
 const submitForm = ref({});
 
-// 필터 UI 설정
 const filterOptions = computed(() => [
   {
     key: 'formId',
@@ -111,16 +110,12 @@ function normalizeFilterParams(values) {
   else if (normalized.submitted === '미제출') normalized.submitted = false
   else delete normalized.submitted
 
-  // formTree에서 formId와 typeId 분기 처리
   const selectedId = values.formId
-
   const typeMatch = formTree.value.find(type => type.deptId === selectedId)
   if (typeMatch) {
-    // type 노드 선택됨
     normalized.typeId = typeMatch.typeId
     normalized.formId = null
   } else {
-    // form 노드 선택됨
     const allForms = formTree.value.flatMap(type => type.childDept || [])
     const formMatch = allForms.find(f => f.deptId === selectedId)
     if (formMatch) {
@@ -141,11 +136,8 @@ function normalizeFilterParams(values) {
     delete normalized.date_end
   }
 
-  console.log('[정규화된 파라미터]', normalized)
   return normalized
 }
-
-
 
 async function fetchTasks() {
   try {
@@ -168,7 +160,6 @@ async function fetchTasks() {
   }
 }
 
-// tasks 기반으로 매핑, formDisplayName 사용
 const mappedTableData = computed(() => {
   const allForms = formTree.value.flatMap(type => type.childDept  || [])
   return tasks.value.map(row => {
@@ -179,7 +170,6 @@ const mappedTableData = computed(() => {
     }
   })
 })
-
 
 async function handleSearch(values) {
   const params = {
@@ -209,76 +199,85 @@ async function handleSearch(values) {
 }
 
 async function openSubmitModal(row) {
-  console.log('▶ 호출됨:', row);
   selectedTask.value = row;
   isModalOpen.value  = true;
 
   try {
-    const data = await getEvaluationFormDetail(row.formId, roundId.value);
+    const [data, properties] = await Promise.all([
+      getEvaluationFormDetail(row.formId, roundId.value),
+      getEvaluationFormProperties({ formId: row.formId })
+    ])
 
-    const allForms = formTree.value.flatMap(type => type.childDept  || []);
-    const formDesc = allForms.find(f => f.formId === row.formId)?.description || row.formName;
+    const allForms = formTree.value.flatMap(type => type.childDept  || [])
+    const formDesc = allForms.find(f => f.formId === row.formId)?.name || row.formName
 
-    formSections.value = [
-      {
-        title: '평가 정보',
-        icon: 'fa-info-circle',
-        layout: 'two-column',
-        fields: [
-          { label: '회차',    value: row.roundNo,      type: 'input', editable: false },
-          { label: '폼 이름',  value: formDesc,         type: 'input', editable: false },
-          { label: '피평가자', value: row.targetName,   type: 'input', editable: false },
-        ]
-      },
-      {
-        title: '문항',
-        icon: 'fa-question-circle',
-        layout: 'one-column',
-        fields: data.factors.flatMap(factor =>
-            factor.prompts.map((p, idx) => ({
-              key:     `q_${factor.propertyName}_${idx}`,
-              label:   p.content,
-              type:    'likert',
-              min:     1,
-              max:     7,
-              labels:  ['매우 불만족','매우 만족'],
-              editable: true,
-              value:   null
-            }))
-        )
-      },
-      {
-        title: '평가 사유',
-        icon: 'fa-comment-dots',
-        layout: 'one-column',
-        fields: [
-          { label: '사유', value: row.reason, type: 'input', editable: true }
-        ]
-      }
-    ];
+    const propertyMap = new Map(properties.map(p => [p.name, p.propertyId]))
+
+    const baseInfoSection = {
+      title: '평가 정보',
+      icon: 'fa-info-circle',
+      layout: 'two-column',
+      fields: [
+        { label: '회차',    value: row.roundNo,      type: 'input', editable: false },
+        { label: '폼 이름',  value: formDesc,         type: 'input', editable: false },
+        { label: '피평가자', value: row.targetName,   type: 'input', editable: false },
+      ]
+    }
+
+    const factorSections = data.factors
+        .filter(f => f.prompts?.length > 0)
+        .map(factor => ({
+          title: factor.propertyName,
+          icon: 'fa-question-circle',
+          layout: 'one-column',
+          fields: factor.prompts.map((p, idx) => ({
+            key: `q_${factor.propertyName}_${idx}`,
+            label: p.content,
+            type: 'likert',
+            min: 1,
+            max: 7,
+            labels: ['매우 불만족', '매우 만족'],
+            editable: true,
+            value: null
+          }))
+        }))
+
+    const reasonSection = {
+      title: '평가 사유',
+      icon: 'fa-comment-dots',
+      layout: 'one-column',
+      fields: [
+        { label: '사유', value: row.reason, type: 'input', editable: true }
+      ]
+    }
+
+    formSections.value = [baseInfoSection, ...factorSections, reasonSection]
 
     submitForm.value = {
       roundNo:    row.roundNo,
       formName:   formDesc,
       targetName: row.targetName
-    };
+    }
   } catch (e) {
-    console.error('폼 상세 조회 실패:', e);
+    console.error('폼 상세 조회 실패:', e)
   }
 }
 
 async function handleSubmit() {
+  const responseSections = formSections.value.filter(s => s.title !== '평가 정보' && s.title !== '평가 사유')
+  const responses = responseSections.flatMap(section =>
+      section.fields.map(f => ({
+        questionId: f.key,
+        score: f.value
+      }))
+  )
+
   const payload = {
     typeId:    selectedTask.value.typeId,
     formId:    selectedTask.value.formId,
     roundId:   roundId.value,
     targetNo:  selectedTask.value.targetNo,
-    responses: formSections.value
-        .find(s => s.title === '문항')
-        .fields.map(f => ({
-          questionId: Number(f.key.split('_')[1]),
-          score:      f.value
-        }))
+    responses
   }
 
   await submitEvaluation(payload)
@@ -301,16 +300,15 @@ function transformFormTree(rawTree) {
   }))
 }
 
-
 watch(currentPage, () => handleSearch(filterValues.value))
 
 onMounted(async () => {
-  const rawTree = await getEvaluationFormTree();
-  formTree.value = transformFormTree(rawTree);
-  await handleSearch(filterValues.value);
+  const rawTree = await getEvaluationFormTree()
+  formTree.value = transformFormTree(rawTree)
+  await handleSearch(filterValues.value)
 })
-
 </script>
+
 
 <style scoped>
 /* action 버튼 숨기기: submitted가 true면 빈 셀 */
