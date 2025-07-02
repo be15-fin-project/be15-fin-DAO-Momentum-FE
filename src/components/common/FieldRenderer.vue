@@ -42,7 +42,10 @@
     />
 
     <!-- 읽기 전용 -->
-    <div v-else-if="readonly || !field.editable" class="form-input readonly">
+    <div
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'scoreChart', 'likert', 'radarChart'].includes(field.type)"
+        class="form-input readonly"
+    >
       {{ field.value ?? model[field.key] ?? '' }}
     </div>
 

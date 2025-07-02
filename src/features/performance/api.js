@@ -303,3 +303,27 @@ export async function deleteHrObjection(objectionId) {
     const res = await api.delete(`/hr-objections/${objectionId}`);
     return res.data.data;
 }
+
+// 이의제기 요청 목록 조회 (팀장)
+export async function getHrObjectionRequests(params) {
+    const res = await api.get('/api/v1/hr-objections/requests', { params });
+    return res.data.data;
+}
+
+// 나의 이의제기 목록 조회 (사원)
+export async function getMyHrObjections(params) {
+    const res = await api.get('/api/v1/hr-objections/my', { params });
+    return res.data.data;
+}
+
+// 나의 이의제기 상세 조회 (사원)
+export async function getMyHrObjectionDetail(objectionId) {
+    const res = await api.get(`/api/v1/hr-objections/my/${objectionId}`);
+    return res.data.data;
+}
+
+// 이의제기 승인/반려 처리 (팀장)
+export async function processHrObjection(payload) {
+    const res = await api.patch('/api/v1/hr-objections/process', payload);
+    return res.data.data;
+}
