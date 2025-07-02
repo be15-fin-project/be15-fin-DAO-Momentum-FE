@@ -69,19 +69,19 @@ export async function getMyKpiList(params) {
 
 // KPI 등록 (제출)
 export async function createMyKpi(payload) {
-    const res = await api.post('/kpis', payload);
+    const res = await api.post('/kpi', payload);
     return res.data.data;
 }
 
 // KPI 진척도 최신화
 export async function updateKpiProgress(kpiId, payload) {
-    const res = await api.patch(`/kpis/${kpiId}/progress`, payload);
+    const res = await api.patch(`/kpi/${kpiId}/progress`, payload);
     return res.data;
 }
 
 // KPI 취소 요청
 export async function deleteKpi(kpiId, payload) {
-    const res = await api.delete(`/kpis/${kpiId}`, { data: payload });
+    const res = await api.delete(`/kpi/${kpiId}`, { data: payload });
     return res.data;
 }
 
@@ -93,13 +93,13 @@ export async function getKpiRequests(params) {
 
 // KPI 승인/반려 처리
 export async function approveKpi(kpiId, approved, reason = '') {
-    const res = await api.patch(`/kpis/${kpiId}/approval`, { approved, reason });
+    const res = await api.patch(`/kpi/${kpiId}/approval`, { approved, reason });
     return res.data;
 }
 
 // KPI 취소 승인/반려 처리
 export async function approveKpiCancel(kpiId, approved, reason = '') {
-    const res = await api.patch(`/kpis/${kpiId}/cancel/approval`, { approved, reason });
+    const res = await api.patch(`/kpi/${kpiId}/cancel/approval`, { approved, reason });
     return res.data;
 }
 
@@ -268,5 +268,22 @@ export async function getEvaluationFormProperties(params) {
 // 다면 평가 제출
 export async function submitEvaluation(payload) {
     const res = await api.post('/evaluations/submit', payload);
+    return res.data.data;
+}
+
+
+// ==================================================
+// 인사 평가 내역 조회 API (평가 제출 목록 조회 등)
+// ==================================================
+
+// 인사 평가 내역 목록 조회
+export async function getMyHrEvaluations(params) {
+    const res = await api.get('/evaluations/hr', { params });
+    return res.data.data;
+}
+
+// 인사 평가 상세 조회
+export async function getMyHrEvaluationDetail(resultId) {
+    const res = await api.get(`/evaluations/hr/${resultId}`);
     return res.data.data;
 }

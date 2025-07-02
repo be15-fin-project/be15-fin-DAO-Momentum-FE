@@ -1,7 +1,3 @@
-import KpiDashboardView from "@/features/performance/views/KpiDashboardView.vue";
-import KpiEmployeeListView from "@/features/performance/views/KpiEmployeeListView.vue";
-import KpiEmployeeDetailView from "@/features/performance/views/KpiEmployeeDetailView.vue";
-
 export default [
     {
         path: '/kpi',
@@ -14,7 +10,7 @@ export default [
                 component : () => import('@/features/performance/views/KpiEmployeeListView.vue')},
             { path: 'employee-detail', name: 'KpiEmployeeDetailView',
                 component : () => import('@/features/performance/views/KpiEmployeeDetailView.vue')},
-            { path: 'list', name: 'MyKpiView',
+            { path: 'kpi-list', name: 'MyKpiView',
                 component : () => import('@/features/performance/views/MyKpiView.vue')},
             { path: 'requests', name: 'KpiRequestsView',
                 component : () => import('@/features/performance/views/KpiRequestsView.vue')},
@@ -24,8 +20,8 @@ export default [
         path: '/eval',
         meta: { requiresAuth: true },
         children: [
-            { path: '', redirect: 'manage'},
-            { path: 'manage', name: 'EvaluationPeerView',
+            { path: '', redirect: 'manage-peer'},
+            { path: 'manage-peer', name: 'EvaluationPeerView',
                 component : () => import('@/features/performance/views/EvaluationPeerView.vue')},
             { path: 'manage-org', name: 'EvaluationOrgView',
                 component : () => import('@/features/performance/views/EvaluationOrgView.vue')},
@@ -36,6 +32,15 @@ export default [
             { path: 'submit', name: 'SubmitEvaluationTasks',
                 component : () => import('@/features/performance/views/SubmitEvaluationTasks.vue')},
 
+        ]
+    },
+    {
+        path: '/hr',
+        meta: { requiresAuth: true },
+        children: [
+            { path: '', redirect: 'hr-list'},
+            { path: 'hr-list', name: 'EvaluationPeerView',
+                component : () => import('@/features/performance/views/MyHrEvaluationView.vue')},
         ]
     }
 ];

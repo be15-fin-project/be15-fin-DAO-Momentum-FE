@@ -88,7 +88,8 @@ async function handleSearch(values) {
       const label = roundStatusOptions.find(o => o.value === item.status)?.label;
       return {
         ...item,
-        status: label || item.status
+        statusLabel: roundStatusOptions.find(o => o.value === item.status)?.label || item.status,
+        status: item.status
       };
     });
     const p = res.pagination || {};
@@ -367,7 +368,7 @@ watch(() => detailFormModel.value.startAt, (newDate) => {
   <main>
     <HeaderWithTabs
         :headerItems="[
-        { label: '평가 내역', to: '/eval/manage', active: false },
+        { label: '평가 내역', to: '/eval/manage-peer', active: false },
         { label: '평가 회차', to: '/eval/round',  active: true  }
       ]"
         :submitButtons="[
@@ -389,7 +390,7 @@ watch(() => detailFormModel.value.startAt, (newDate) => {
         { key: 'startAt',          label: '시작일'   },
         { key: 'endAt',            label: '종료일'   },
         { key: 'participantCount', label: '참여 인원' },
-        { key: 'status',           label: '상태'     },
+        { key: 'statusLabel',           label: '상태'     },
         { key: 'action',           label: '상세'     }
       ]"
         :rows="tableData"

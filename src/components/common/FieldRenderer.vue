@@ -25,7 +25,7 @@
 
     <LikertScale
         v-else-if="field.type === 'likert'"
-        v-model="model[field.key]"
+        v-model="field.value"
         labelClass="text-lg text-blue-600 mb-2"
         :min="field.min ?? 1"
         :max="field.max ?? 7"

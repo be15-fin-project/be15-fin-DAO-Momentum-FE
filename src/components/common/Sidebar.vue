@@ -164,7 +164,7 @@ const menuItems = [
         hrefs: ['../kpi/statics', '../kpi/employee-kpis', '../kpi/employee-detail'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      { label: 'KPI 조회', hrefs: ['../kpi/list'] },
+      { label: 'KPI 조회', hrefs: ['../kpi/kpi-list'] },
       {
         label: 'KPI 요청 관리',
         hrefs: ['../kpi/requests'],
@@ -172,7 +172,7 @@ const menuItems = [
       },
       {
         label: '평가 관리',
-        hrefs: ['../eval/manage', '../eval/manage-org', '../eval/manage-self', '../eval/round'],
+        hrefs: ['/eval/manage-peer', '../eval/manage-org', '../eval/manage-self', '../eval/round'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       {
@@ -180,7 +180,7 @@ const menuItems = [
         hrefs: ['../eval/submit'],
         required: () => roundStatus.value.inProgress === true
       },
-      { label: '인사 평가 조회', hrefs: ['../hr/list'] },
+      { label: '인사 평가 조회', hrefs: ['../hr/hr-list'] },
       {
         label: '이의 제기 관리',
         hrefs: ['../hr/objections'],

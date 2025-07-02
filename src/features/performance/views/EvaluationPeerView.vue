@@ -287,11 +287,11 @@ onMounted(async () => {
   <main>
     <HeaderWithTabs
         :headerItems="[
-            { label: '평가 내역', to: '/eval/manage', active: true },
+            { label: '평가 내역', to: '/eval/manage-peer', active: true },
             { label: '평가 회차', to: '/eval/round', active: false }]"
         :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
         :tabs="[
-            { label: '사원 간 평가', icon: 'fa-building', to: '/eval/manage' },
+            { label: '사원 간 평가', icon: 'fa-building', to: '/eval/manage-peer' },
             { label: '조직 평가', icon: 'fa-sitemap', to: '/eval/manage-org' },
             { label: '자가 진단', icon: 'fa-user-tie', to: '/eval/manage-self' }
             ]"
@@ -311,7 +311,7 @@ onMounted(async () => {
     <BaseTable
         :columns="[
           { key: 'roundNo', label: '회차' },
-          { key: 'formDisplayName', label: '폼 이름' },
+          { key: 'formDisplayName', label: '평가 유형' },
           { key: 'evalName', label: '평가자' },
           { key: 'targetName', label: '피평가자' },
           { key: 'score', label: '점수' },
