@@ -346,7 +346,7 @@ async function openModalHandler(kpiId) {
     <HeaderWithTabs
         :headerItems="[
         { label: '대시보드', to: '/kpi/statics', active: true },
-        { label: '사원별 KPI', to: '/kpi/employees', active: false }
+        { label: '사원별 KPI', to: '/kpi/employee-kpis', active: false }
       ]"
         :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
         :showTabs="false"
@@ -382,8 +382,8 @@ async function openModalHandler(kpiId) {
 
     <!-- 페이지네이션 -->
     <Pagination
-        v-if="pagination.totalPage"
-        :pages="Array.from({ length: pagination.totalPage }, (_, i) => i + 1)"
+        v-if="pagination.totalPage >= 1"
+        :total-pages="pagination.totalPage"
         v-model="currentPage"
     />
 
