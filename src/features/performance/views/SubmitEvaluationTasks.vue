@@ -54,7 +54,8 @@ import {
   getEvaluationFormTypes,
   getEvaluationTasks,
   getEvaluationFormDetail,
-  submitEvaluation
+  submitEvaluation,
+  getEvaluationFormTree
 } from '@/features/performance/api.js'
 
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue'
@@ -62,7 +63,10 @@ import EmployeeFilter from '@/components/common/Filter.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import SideModal from '@/components/common/SideModal.vue'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
+const roundId = computed(() => route?.state?.roundId ?? null)
 const currentPage   = ref(1)
 const pageSize      = 10
 const filterValues  = ref({})
@@ -72,13 +76,9 @@ const pagination    = ref({ currentPage: 1, totalPage: 1 })
 const isModalOpen   = ref(false)
 const selectedTask  = ref(null)
 const formSections  = ref([])
-const formTypeList  = ref([])
+const formTree = ref([])
+const selectedFormId = ref(null)
 const submitForm = ref({});
-
-// 폼 종류 조회
-const fetchFormTypes = async () => {
-  formTypeList.value = await getEvaluationFormTypes()
-}
 
 // 필터 UI 설정
 const filterOptions = computed(() => [
@@ -86,8 +86,8 @@ const filterOptions = computed(() => [
     key: 'formId',
     label: '폼 종류',
     icon: 'fa-file-signature',
-    type: 'select',
-    options: ['전체', ...formTypeList.value.map(f => f.description)],
+    type: 'tree',
+    options: formTree.value,
   },
   {
     key: 'submitted',
@@ -107,17 +107,29 @@ const filterOptions = computed(() => [
 function normalizeFilterParams(values) {
   const normalized = { ...values }
 
-  if (normalized.submitted === '제출')      normalized.submitted = true
+  if (normalized.submitted === '제출') normalized.submitted = true
   else if (normalized.submitted === '미제출') normalized.submitted = false
   else delete normalized.submitted
 
-  if (normalized.formId && normalized.formId !== '전체') {
-    const match = formTypeList.value.find(f =>
-        f.name === normalized.formId || f.description === normalized.formId
-    )
-    normalized.formId = match?.formId ?? null
-  } else {
+  // formTree에서 formId와 typeId 분기 처리
+  const selectedId = values.formId
+
+  const typeMatch = formTree.value.find(type => type.deptId === selectedId)
+  if (typeMatch) {
+    // type 노드 선택됨
+    normalized.typeId = typeMatch.typeId
     normalized.formId = null
+  } else {
+    // form 노드 선택됨
+    const allForms = formTree.value.flatMap(type => type.childDept || [])
+    const formMatch = allForms.find(f => f.deptId === selectedId)
+    if (formMatch) {
+      normalized.formId = formMatch.formId
+      normalized.typeId = formMatch.typeId
+    } else {
+      normalized.formId = null
+      normalized.typeId = null
+    }
   }
 
   if (normalized.date_start) {
@@ -129,14 +141,17 @@ function normalizeFilterParams(values) {
     delete normalized.date_end
   }
 
+  console.log('[정규화된 파라미터]', normalized)
   return normalized
 }
 
+
+
 async function fetchTasks() {
   try {
-    const params = { page: currentPage.value, size: pageSize }
+    const params = { page: currentPage.value, size: pageSize, roundId: roundId.value }
     const res    = await getEvaluationTasks(params)
-    const { tasks: apiTasks, pagination: apiPage } = res
+    const { tasks: apiTasks, pagination: apiPage } = res.get
 
     tasks.value = apiTasks.map(item => ({
       ...item,
@@ -154,21 +169,24 @@ async function fetchTasks() {
 }
 
 // tasks 기반으로 매핑, formDisplayName 사용
-const mappedTableData = computed(() =>
-    tasks.value.map(row => {
-      const form = formTypeList.value.find(f => f.name === row.formName)
-      return {
-        ...row,
-        formDisplayName: form?.description || row.formName
-      }
-    })
-)
+const mappedTableData = computed(() => {
+  const allForms = formTree.value.flatMap(type => type.childDept  || [])
+  return tasks.value.map(row => {
+    const match = allForms.find(f => f.formId === row.formId)
+    return {
+      ...row,
+      formDisplayName: match?.name || row.formName
+    }
+  })
+})
+
 
 async function handleSearch(values) {
   const params = {
     ...normalizeFilterParams(values),
     page: currentPage.value,
-    size: pageSize
+    size: pageSize,
+    roundId: roundId.value
   }
 
   try {
@@ -196,9 +214,11 @@ async function openSubmitModal(row) {
   isModalOpen.value  = true;
 
   try {
-    const data = await getEvaluationFormDetail(row.formId, row.roundId);
-    const formDesc = formTypeList.value.find(f => f.formId === row.formId)
-        ?.description || row.formName
+    const data = await getEvaluationFormDetail(row.formId, roundId.value);
+
+    const allForms = formTree.value.flatMap(type => type.childDept  || []);
+    const formDesc = allForms.find(f => f.formId === row.formId)?.description || row.formName;
+
     formSections.value = [
       {
         title: '평가 정보',
@@ -206,7 +226,7 @@ async function openSubmitModal(row) {
         layout: 'two-column',
         fields: [
           { label: '회차',    value: row.roundNo,      type: 'input', editable: false },
-          { label: '폼 이름',  value: formDesc, type: 'input', editable: false },
+          { label: '폼 이름',  value: formDesc,         type: 'input', editable: false },
           { label: '피평가자', value: row.targetName,   type: 'input', editable: false },
         ]
       },
@@ -216,14 +236,14 @@ async function openSubmitModal(row) {
         layout: 'one-column',
         fields: data.factors.flatMap(factor =>
             factor.prompts.map((p, idx) => ({
-              key:     `q_${factor.propertyName}_${idx}`,  // v-model key
-              label:   p.content,                          // 화면에 표시할 문항 텍스트
-              type:    'likert',                           // sliderGroup 대신 likert 타입
-              min:     1,                                  // 척도 최소값
-              max:     7,                                  // 척도 최대값
-              labels:  ['매우 불만족','매우 만족'],         // 양끝 레이블
-              editable: true,                              // 수정 가능 여부
-              value:   null                                // 초기값 (v-model에 매핑)
+              key:     `q_${factor.propertyName}_${idx}`,
+              label:   p.content,
+              type:    'likert',
+              min:     1,
+              max:     7,
+              labels:  ['매우 불만족','매우 만족'],
+              editable: true,
+              value:   null
             }))
         )
       },
@@ -232,27 +252,26 @@ async function openSubmitModal(row) {
         icon: 'fa-comment-dots',
         layout: 'one-column',
         fields: [
-          { label: '사유',    value: row.reason,      type: 'input', editable: true },
+          { label: '사유', value: row.reason, type: 'input', editable: true }
         ]
       }
     ];
 
     submitForm.value = {
       roundNo:    row.roundNo,
-      formName:   data.description,
+      formName:   formDesc,
       targetName: row.targetName
-    }
+    };
   } catch (e) {
     console.error('폼 상세 조회 실패:', e);
-    // 필요시 isModalOpen.value = false;
   }
 }
 
-
 async function handleSubmit() {
   const payload = {
+    typeId:    selectedTask.value.typeId,
     formId:    selectedTask.value.formId,
-    roundId:   selectedTask.value.roundId,
+    roundId:   roundId.value,
     targetNo:  selectedTask.value.targetNo,
     responses: formSections.value
         .find(s => s.title === '문항')
@@ -267,12 +286,30 @@ async function handleSubmit() {
   await fetchTasks()
 }
 
+function transformFormTree(rawTree) {
+  return rawTree.map(type => ({
+    typeId: type.typeId,
+    deptId: type.typeId + 20,
+    name: type.typeName,
+    childDept: type.children.map(form => ({
+      deptId: form.formId,
+      name: form.description,
+      childDept: [],
+      formId: form.formId,
+      typeId: type.typeId
+    })),
+  }))
+}
+
+
 watch(currentPage, () => handleSearch(filterValues.value))
 
 onMounted(async () => {
-  await fetchFormTypes()
-  await handleSearch(filterValues.value)
+  const rawTree = await getEvaluationFormTree();
+  formTree.value = transformFormTree(rawTree);
+  await handleSearch(filterValues.value);
 })
+
 </script>
 
 <style scoped>

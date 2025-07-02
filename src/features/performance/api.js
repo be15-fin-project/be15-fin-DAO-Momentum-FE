@@ -186,6 +186,13 @@ export async function getSelfExcelDownload(params) {
 // 평가 관리 API (평가 회차 등)
 // ==================================================
 
+// 평가 진행 여부 조회
+export async function getEvaluationRoundStatus() {
+    const res = await api.get('/evaluations/roundStatus')
+    return res.data.data
+}
+
+
 // 평가 종류(폼 타입) 조회
 export async function getEvaluationFormTypes(params) {
     const res = await api.get('/evaluations/forms', { params });
@@ -231,6 +238,12 @@ export async function getHrEvaluationCriteria(roundNo) {
 // ==================================================
 // 평가 제출 API (평가 제출 목록 조회 등)
 // ==================================================
+
+// 평가 종류 트리 조회
+export async function getEvaluationFormTree() {
+    const res = await api.get('/evaluations/form-tree');
+    return res.data.data;
+}
 
 // 평가 제출 목록 조회
 export async function getEvaluationTasks(params) {
