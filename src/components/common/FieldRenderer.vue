@@ -33,6 +33,14 @@
         :readonly="readonly || !field.editable"
     />
 
+    <RadarChart
+        v-if="field.type === 'radarChart'"
+        :labels="field.value.labels"
+        :values="field.value.scores"
+        :editable="!readonly && field.editable"
+        :readonly="readonly"
+    />
+
     <!-- 읽기 전용 -->
     <div v-else-if="readonly || !field.editable" class="form-input readonly">
       {{ field.value ?? model[field.key] ?? '' }}
@@ -86,6 +94,7 @@
 import { computed } from 'vue';
 import SliderGroup from "@/components/common/SliderGroup.vue";
 import LikertScale from "@/components/common/LikertScale.vue";
+import RadarChart from "@/components/common/RadarChart.vue";
 
 const props = defineProps({
   field: Object,

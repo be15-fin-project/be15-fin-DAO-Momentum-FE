@@ -48,7 +48,6 @@ const createForm = ref({
   progress75: '',
   progress100: '',
   deadline: '',
-  cancelReason: '',
 });
 
 const editMode = ref(null); // 'progress' | 'cancel' | null
@@ -377,12 +376,15 @@ async function submitKpiForm() {
 function startEditProgress() {
   editMode.value = 'progress';
 
+  // KPI 정보 필드 중 '진척도' 항목만 editable 처리
   const progressField = formSections.value
       .flatMap(section => section.fields)
       .find(f => f.key === 'kpiProgress');
-  if (progressField) progressField.editable = true;
-}
 
+  if (progressField) {
+    progressField.editable = true;
+  }
+}
 
 // KPI 취소 요청 시작 함수
 function startCancelRequest() {
@@ -399,22 +401,10 @@ function startCancelRequest() {
         key: 'cancelReason',
         type: 'textarea',
         editable: true,
+        value: ''
       }
     ]
   });
-}
-
-function handleDetailModalCancel() {
-  editMode.value = null;
-  cancelReason.value = '';
-  createForm.value.cancelReason = '';
-
-  formSections.value = formSections.value.filter(s => s.title !== '취소 요청 사유');
-
-  const progressField = formSections.value
-      .flatMap(section => section.fields)
-      .find(f => f.key === 'kpiProgress');
-  if (progressField) progressField.editable = false;
 }
 
 // 모달 제출 처리 함수
@@ -437,11 +427,22 @@ function handleDetailModalReject() {
   }
 }
 
-
 async function handleDetailModalSubmit() {
+  // 진짜 편집 상태이면 → 제출
   if (editMode.value === 'progress' || editMode.value === 'cancel') {
     await submitEditOrCancel();
+    return;
   }
+
+  // 아직 편집 모드 아니면 → 편집 모드 진입만
+  editMode.value = 'progress';
+
+  // 진척도 필드 editable 켜기
+  const progressField = formSections.value
+      .flatMap(section => section.fields)
+      .find(f => f.key === 'kpiProgress');
+
+  if (progressField) progressField.editable = true;
 }
 
 
@@ -551,28 +552,15 @@ function handleBack() {
         :title="`KPI 상세 정보`"
         icon="fa-chart-line"
         :sections="formSections"
-
-        :showEdit="editMode === null && canEditProgress"
-        edit-text="최신화"
-
-        :showReject="editMode === null && canCancelRequest"
-        reject-text="취소 신청"
-
-        :showCancel="editMode === 'progress' || editMode === 'cancel'"
-        :cancel-text="editMode === 'progress' ? '최신화 취소' : '입력 취소'"
-
-        :showSubmit="editMode === 'progress' || editMode === 'cancel'"
-        :submit-text="editMode === 'progress' ? '최신화 제출' : '취소 제출'"
-
+        :showReject="canCancelRequest"
+        :reject-text="rejectText"
+        :showSubmit="canEditProgress"
+        :submit-text="submitText"
         @close="isOpen = false"
-        @edit="startEditProgress"
-        @reject="startCancelRequest"
-        @cancel="handleDetailModalCancel"
         @submit="handleDetailModalSubmit"
-
+        @reject="handleDetailModalReject"
         v-model:form="createForm"
     />
-
 
 
 
@@ -585,7 +573,6 @@ function handleBack() {
         :readonly="false"
         @close="isCreateModalOpen = false"
         @submit="submitKpiForm"
-        :submit-text="`제출`"
         :sections="createFormSections"
         v-model:form="createForm"
     />

@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import {
+  getEvaluationRounds,
   getMyHrEvaluations,
   getMyHrEvaluationDetail,
 } from '@/features/performance/api.js';
@@ -16,10 +17,12 @@ const tableData = ref([]);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
 
 const isOpen = ref(false);
+const isRejecting = ref(false);
+const createForm = ref({ reason: '' });
 const formSections = ref([]);
 const selectedRow = ref(null);
+const roundOptions = ref([]);
 
-// 필터 옵션: 회차/등급 등 추후 확장 가능
 const filterOptions = ref([
   {
     key: 'date',
@@ -53,7 +56,14 @@ async function handleSearch(values) {
 
   try {
     const res = await getMyHrEvaluations(params);
-    tableData.value = res.items ?? [];
+
+    // 항목이 하나뿐이면 factorScores를 해당 row에 주입
+    const items = res.items ?? [];
+    if (items.length === 1 && Array.isArray(res.factorScores)) {
+      items[0].factorScores = res.factorScores;
+    }
+
+    tableData.value = items;
 
     const current = res.pagination?.currentPage || 1;
     const total = res.pagination?.totalPage || 1;
@@ -64,17 +74,34 @@ async function handleSearch(values) {
   }
 }
 
+
 const mappedTableData = computed(() =>
-    tableData.value.map(row => ({
-      ...row,
-      evaluatedAt: row.evaluatedAt?.split('T')[0] ?? '',
-    }))
+    tableData.value.map(row => {
+      const baseRow = {
+        ...row,
+        evaluatedAt: row.evaluatedAt?.split('T')[0] ?? '',
+      };
+
+      // factorScores에서 각 propertyName을 key로, score를 값으로 병합
+      if (row.factorScores) {
+        row.factorScores.forEach(f => {
+          baseRow[f.propertyName] = f.score;
+        });
+      }
+
+      return baseRow;
+    })
 );
 
 async function openModalHandler(row) {
   try {
     const res = await getMyHrEvaluationDetail(row.resultId);
-    const { overallGrade, factorScores } = res;
+    const { content, factorScores } = res;
+
+    isOpen.value = true;
+    isRejecting.value = false;
+    createForm.value = { reason: '' };
+    selectedRow.value = row;
 
     const baseSection = {
       title: '인사 평가 정보',
@@ -82,37 +109,79 @@ async function openModalHandler(row) {
       layout: 'two-column',
       fields: [
         { label: '회차', value: row.roundNo, type: 'input', editable: false },
-        { label: '등급', value: overallGrade, type: 'input', editable: false },
-        { label: '평가일', value: row.evaluatedAt, type: 'input', editable: false },
+        { label: '사원명', value: `${content.empName} (${content.empNo})`, type: 'input', editable: false },
+        { label: '등급', value: content.overallGrade, type: 'input', editable: false },
+        { label: '평가일', value: content.evaluatedAt?.split('T')[0], type: 'input', editable: false }
       ]
     };
 
-    const scoreSection = {
+    const radarSection = {
       title: '요인별 평가 결과',
-      icon: 'fa-chart-pie',
+      icon: 'fa-star-half-alt',
       layout: 'one-column',
-      fields: factorScores.map(f => ({
-        label: f.propertyName,
-        value: f.score,
-        type: 'input',
-        editable: false,
-      }))
+      fields: [
+        {
+          label: '',
+          type: 'radarChart',
+          editable: false,
+          value: {
+            labels: factorScores.map(f => f.propertyName),
+            scores: factorScores.map(f => f.score)
+          }
+        }
+      ]
     };
 
-    formSections.value = [baseSection, scoreSection];
-    selectedRow.value = row;
-    isOpen.value = true;
+    formSections.value = [baseSection, radarSection];
   } catch (err) {
-    console.error('인사 평가 상세 조회 실패:', err);
+    console.error('상세 조회 실패:', err);
     isOpen.value = false;
   }
 }
 
+
+function handleCancel() {
+  isRejecting.value = false;
+  createForm.value.reason = '';
+  formSections.value = formSections.value.filter(s => s.title !== '이의제기 사유');
+}
+
+
+async function handleSubmit() {
+  const reason = createForm.value.reason?.trim();
+  if (!reason) {
+    alert('이의제기 사유를 입력해주세요.');
+    return;
+  }
+
+  try {
+    // TODO: API 호출
+    console.log('이의제기 제출:', selectedRow.value.resultId, reason);
+    isOpen.value = false;
+    isRejecting.value = false;
+  } catch (e) {
+    console.error('이의제기 제출 실패:', e);
+    alert('제출 실패');
+  }
+}
+
+
 watch(currentPage, () => handleSearch(filterValues.value));
 
-onMounted(() => {
+onMounted(async () => {
+  try {
+    const res = await getEvaluationRounds({ page: 1, size: 100 }); // 최대 100개까지
+    roundOptions.value = res.list.map(round => ({
+      label: `${round.roundNo} 회`,
+      value: round.roundNo
+    }));
+  } catch (e) {
+    console.error('회차 목록 로딩 실패:', e);
+  }
+
   handleSearch({});
 });
+
 </script>
 
 <template>
@@ -132,14 +201,21 @@ onMounted(() => {
 
     <BaseTable
         :columns="[
-        { key: 'roundNo', label: '회차' },
-        { key: 'overallGrade', label: '등급' },
-        { key: 'evaluatedAt', label: '평가일' },
-        { key: 'action', label: '상세' }
-      ]"
+          { key: 'roundNo', label: '회차' },
+          { key: 'evaluatedAt', label: '평가일' },
+          { key: '업무 수행 역량', label: '업무 수행 역량' },
+          { key: '협업 역량', label: '협업 역량' },
+          { key: '자기관리 및 태도', label: '자기 관리 및 태도' },
+          { key: '성장 의지', label: '성장 의지' },
+          { key: '조직 기여도', label: '조직 기여도' },
+          { key: 'KPI 성과관리', label: 'KPI 성과 관리' },
+          { key: 'overallGrade', label: '등급' },
+          { key: 'action', label: '상세' }
+        ]"
         :rows="mappedTableData"
         @click-detail="openModalHandler"
     />
+
 
     <Pagination
         v-if="pagination.totalPage >= 1"
@@ -151,9 +227,19 @@ onMounted(() => {
         :visible="isOpen"
         title="인사 평가 상세 정보"
         icon="fa-star-half-stroke"
+
         :sections="formSections"
-        :showSubmit="false"
+        :showReject="!isRejecting"
+        :showSubmit="isRejecting"
+        :submitText="'제출'"
+        :rejectText="'이의제기'"
+
         @close="isOpen = false"
+        @submit="handleSubmit"
+        @reject="handleReject"
+        @cancel="handleCancel"
+        v-model:form="createForm"
     />
+
   </main>
 </template>
