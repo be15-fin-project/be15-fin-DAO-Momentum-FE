@@ -1,216 +1,3 @@
-<script setup>
-import { ref, onMounted, computed, watch } from 'vue';
-import {
-  getEvaluationRounds,
-  getMyHrEvaluations,
-  getMyHrEvaluationDetail,
-  submitHrObjection,
-} from '@/features/performance/api.js';
-import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
-import EmployeeFilter from '@/components/common/Filter.vue';
-import Pagination from '@/components/common/Pagination.vue';
-import BaseTable from '@/components/common/BaseTable.vue';
-import SideModal from '@/components/common/SideModal.vue';
-
-const currentPage = ref(1);
-const filterValues = ref({});
-const tableData = ref([]);
-const pagination = ref({ currentPage: 1, totalPage: 1 });
-
-const isOpen = ref(false);
-const isRejecting = ref(false);
-const createForm = ref({ reason: '' });
-const formSections = ref([]);
-const selectedRow = ref(null);
-const roundOptions = ref([]);
-
-const filterOptions = ref([
-  {
-    key: 'date',
-    label: '평가일',
-    icon: 'fa-calendar-day',
-    type: 'date-range',
-  }
-]);
-
-function normalizeFilterParams(values) {
-  const normalized = { ...values };
-
-  if (normalized.date_start) {
-    normalized.startDate = normalized.date_start;
-    delete normalized.date_start;
-  }
-  if (normalized.date_end) {
-    normalized.endDate = normalized.date_end;
-    delete normalized.date_end;
-  }
-
-  return normalized;
-}
-
-async function handleSearch(values) {
-  const params = {
-    ...normalizeFilterParams(values),
-    page: currentPage.value,
-    size: 10,
-  };
-
-  try {
-    const res = await getMyHrEvaluations(params);
-
-    // 항목이 하나뿐이면 factorScores를 해당 row에 주입
-    const items = res.items ?? [];
-    if (items.length === 1 && Array.isArray(res.factorScores)) {
-      items[0].factorScores = res.factorScores;
-    }
-
-    tableData.value = items;
-
-    const current = res.pagination?.currentPage || 1;
-    const total = res.pagination?.totalPage || 1;
-    pagination.value = { currentPage: current, totalPage: total };
-  } catch (e) {
-    console.error('인사 평가 내역 조회 실패:', e);
-    tableData.value = [];
-  }
-}
-
-
-const mappedTableData = computed(() =>
-    tableData.value.map(row => {
-      const baseRow = {
-        ...row,
-        evaluatedAt: row.evaluatedAt?.split('T')[0] ?? '',
-      };
-
-      // factorScores에서 각 propertyName을 key로, score를 값으로 병합
-      if (row.factorScores) {
-        row.factorScores.forEach(f => {
-          baseRow[f.propertyName] = f.score;
-        });
-      }
-
-      return baseRow;
-    })
-);
-
-async function openModalHandler(row) {
-  try {
-    const res = await getMyHrEvaluationDetail(row.resultId);
-    const { content, factorScores } = res;
-
-    isOpen.value = true;
-    isRejecting.value = false;
-    createForm.value = { reason: '' };
-    selectedRow.value = row;
-
-    const baseSection = {
-      title: '인사 평가 정보',
-      icon: 'fa-clipboard-check',
-      layout: 'two-column',
-      fields: [
-        { label: '회차', value: row.roundNo, type: 'input', editable: false },
-        { label: '사원명', value: `${content.empName} (${content.empNo})`, type: 'input', editable: false },
-        { label: '등급', value: content.overallGrade, type: 'input', editable: false },
-        { label: '평가일', value: content.evaluatedAt?.split('T')[0], type: 'input', editable: false }
-      ]
-    };
-
-    const radarSection = {
-      title: '요인별 평가 결과',
-      icon: 'fa-star-half-alt',
-      layout: 'one-column',
-      fields: [
-        {
-          label: '',
-          type: 'radarChart',
-          editable: false,
-          value: {
-            labels: factorScores.map(f => f.propertyName),
-            scores: factorScores.map(f => f.score)
-          }
-        }
-      ]
-    };
-
-    formSections.value = [baseSection, radarSection];
-  } catch (err) {
-    console.error('상세 조회 실패:', err);
-    isOpen.value = false;
-  }
-}
-
-
-function handleCancel() {
-  isRejecting.value = false;
-  createForm.value.reason = '';
-
-  formSections.value = formSections.value.filter(
-      section => section.title !== '이의제기 사유'
-  );
-}
-
-function handleReject() {
-  if (isRejecting.value) return;
-  isRejecting.value = true;
-
-  formSections.value.push({
-    title: '이의제기 사유',
-    icon: 'fa-comment-dots',
-    layout: 'one-column',
-    fields: [
-      {
-        label: '사유',
-        type: 'textarea',
-        key: 'reason',
-        required: true,
-        editable: true,
-        placeholder: '이의제기 사유를 입력하세요.',
-      },
-    ],
-  });
-}
-
-async function handleSubmit() {
-  const reason = createForm.value.reason?.trim();
-  if (!reason) {
-    alert('이의제기 사유를 입력해주세요.');
-    return;
-  }
-  console.log('제출 ID:', selectedRow.value?.resultId);
-  console.log('제출 사유:', reason);
-
-  try {
-    await submitHrObjection(selectedRow.value.resultId, { reason });
-
-    alert('이의제기가 성공적으로 제출되었습니다.');
-    isOpen.value = false;
-    isRejecting.value = false;
-    createForm.value = { reason: '' };
-  } catch (e) {
-    console.error('이의제기 제출 실패:', e);
-    alert('이의제기 제출에 실패했습니다.');
-  }
-}
-
-watch(currentPage, () => handleSearch(filterValues.value));
-
-onMounted(async () => {
-  try {
-    const res = await getEvaluationRounds({ page: 1, size: 100 }); // 최대 100개까지
-    roundOptions.value = res.list.map(round => ({
-      label: `${round.roundNo} 회`,
-      value: round.roundNo
-    }));
-  } catch (e) {
-    console.error('회차 목록 로딩 실패:', e);
-  }
-
-  handleSearch({});
-});
-
-</script>
-
 <template>
   <main>
     <HeaderWithTabs
@@ -271,3 +58,236 @@ onMounted(async () => {
 
   </main>
 </template>
+
+<script setup>
+import { ref, onMounted, computed, watch } from 'vue';
+import {
+  getEvaluationRounds,
+  getMyHrEvaluations,
+  getMyHrEvaluationDetail,
+  submitHrObjection,
+} from '@/features/performance/api.js';
+
+import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
+import EmployeeFilter from '@/components/common/Filter.vue';
+import Pagination from '@/components/common/Pagination.vue';
+import BaseTable from '@/components/common/BaseTable.vue';
+import SideModal from '@/components/common/SideModal.vue';
+
+
+// 상태 변수
+const currentPage = ref(1);
+const filterValues = ref({});
+const tableData = ref([]);
+const pagination = ref({ currentPage: 1, totalPage: 1 });
+
+const isOpen = ref(false);
+const isRejecting = ref(false);
+const createForm = ref({ reason: '' });
+const formSections = ref([]);
+const selectedRow = ref(null);
+const roundOptions = ref([]);
+
+// 필터 옵션 정의
+const filterOptions = ref([
+  {
+    key: 'date',
+    label: '평가일',
+    icon: 'fa-calendar-day',
+    type: 'date-range',
+  }
+]);
+
+
+// 필터 파라미터 정규화
+function normalizeFilterParams(values) {
+  const normalized = { ...values };
+
+  if (normalized.date_start) {
+    normalized.startDate = normalized.date_start;
+    delete normalized.date_start;
+  }
+  if (normalized.date_end) {
+    normalized.endDate = normalized.date_end;
+    delete normalized.date_end;
+  }
+
+  return normalized;
+}
+
+
+// 평가 목록 조회
+async function handleSearch(values) {
+  const params = {
+    ...normalizeFilterParams(values),
+    page: currentPage.value,
+    size: 10,
+  };
+
+  try {
+    const res = await getMyHrEvaluations(params);
+    const items = res.items ?? [];
+
+    // 항목이 하나뿐이면 상세 요인 점수 포함
+    if (items.length === 1 && Array.isArray(res.factorScores)) {
+      items[0].factorScores = res.factorScores;
+    }
+
+    tableData.value = items;
+
+    pagination.value = {
+      currentPage: res.pagination?.currentPage || 1,
+      totalPage: res.pagination?.totalPage || 1,
+    };
+  } catch (e) {
+    console.error('인사 평가 내역 조회 실패:', e);
+    tableData.value = [];
+  }
+}
+
+
+// 표 데이터 가공
+const mappedTableData = computed(() =>
+    tableData.value.map(row => {
+      const baseRow = {
+        ...row,
+        evaluatedAt: row.evaluatedAt?.split('T')[0] ?? '',
+      };
+
+      // 요인별 점수 병합
+      if (row.factorScores) {
+        row.factorScores.forEach(f => {
+          baseRow[f.propertyName] = f.score;
+        });
+      }
+
+      return baseRow;
+    })
+);
+
+
+// 상세 모달 열기
+async function openModalHandler(row) {
+  try {
+    const res = await getMyHrEvaluationDetail(row.resultId);
+    const { content, factorScores } = res;
+
+    selectedRow.value = row;
+    isOpen.value = true;
+    isRejecting.value = false;
+    createForm.value = { reason: '' };
+
+    // 기본 정보 섹션
+    const baseSection = {
+      title: '인사 평가 정보',
+      icon: 'fa-clipboard-check',
+      layout: 'two-column',
+      fields: [
+        { label: '회차', value: row.roundNo, type: 'input', editable: false },
+        { label: '사원명', value: `${content.empName} (${content.empNo})`, type: 'input', editable: false },
+        { label: '등급', value: content.overallGrade, type: 'input', editable: false },
+        { label: '평가일', value: content.evaluatedAt?.split('T')[0], type: 'input', editable: false }
+      ]
+    };
+
+    // 요인별 레이더 차트 섹션
+    const radarSection = {
+      title: '요인별 평가 결과',
+      icon: 'fa-star-half-alt',
+      layout: 'one-column',
+      fields: [
+        {
+          label: '',
+          type: 'radarChart',
+          editable: false,
+          value: {
+            labels: factorScores.map(f => f.propertyName),
+            scores: factorScores.map(f => f.score)
+          }
+        }
+      ]
+    };
+
+    formSections.value = [baseSection, radarSection];
+  } catch (err) {
+    console.error('상세 조회 실패:', err);
+    isOpen.value = false;
+  }
+}
+
+
+// 이의제기 모드 진입
+function handleReject() {
+  if (isRejecting.value) return;
+  isRejecting.value = true;
+
+  formSections.value.push({
+    title: '이의제기 사유',
+    icon: 'fa-comment-dots',
+    layout: 'one-column',
+    fields: [
+      {
+        label: '사유',
+        type: 'textarea',
+        key: 'reason',
+        required: true,
+        editable: true,
+        placeholder: '이의제기 사유를 입력하세요.',
+      },
+    ],
+  });
+}
+
+
+// 이의제기 취소
+function handleCancel() {
+  isRejecting.value = false;
+  createForm.value.reason = '';
+
+  formSections.value = formSections.value.filter(
+      section => section.title !== '이의제기 사유'
+  );
+}
+
+
+// 이의제기 제출
+async function handleSubmit() {
+  const reason = createForm.value.reason?.trim();
+  if (!reason) {
+    alert('이의제기 사유를 입력해주세요.');
+    return;
+  }
+
+  try {
+    await submitHrObjection(selectedRow.value.resultId, { reason });
+
+    alert('이의제기가 성공적으로 제출되었습니다.');
+    isOpen.value = false;
+    isRejecting.value = false;
+    createForm.value = { reason: '' };
+  } catch (e) {
+    console.error('이의제기 제출 실패:', e);
+    alert('이의제기 제출에 실패했습니다.');
+  }
+}
+
+
+// 페이지 변경 감지
+watch(currentPage, () => handleSearch(filterValues.value));
+
+
+//  초기 로딩
+onMounted(async () => {
+  try {
+    const res = await getEvaluationRounds({ page: 1, size: 100 });
+    roundOptions.value = res.list.map(round => ({
+      label: `${round.roundNo} 회`,
+      value: round.roundNo
+    }));
+  } catch (e) {
+    console.error('회차 목록 로딩 실패:', e);
+  }
+
+  handleSearch({});
+});
+</script>
