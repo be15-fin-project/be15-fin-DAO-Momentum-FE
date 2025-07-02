@@ -29,3 +29,8 @@ export const createContract = async (req) => {
     const resp = await api.post('/contracts', req);
     return resp.data.data;
 }
+
+export const getAppoints = async (params) => {
+    const resp = await api.get("/employees/appoints", {params})
+    return resp.data.data;
+}
