@@ -4,7 +4,6 @@ import { ref } from 'vue'
 import ReceivedApproval from "@/features/approvals/components/ReceivedApproval.vue"
 import SentApproval from "@/features/approvals/components/SentApproval.vue"
 import ApprovalHeader from "@/features/approvals/components/ApprovalHeader.vue";
-import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 
 /* 현재 활성화 되어 있는 탭 */
 const currentTab = ref('RECEIVED')
