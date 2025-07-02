@@ -6,10 +6,7 @@ import BaseTable from "@/components/common/BaseTable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import {getPositions} from "@/features/works/api.js";
-import {useRouter} from "vue-router";
-import {getAppoints} from "@/features/employee/api.js";
-
-const router = useRouter();
+import {createAppoint, getAppoints} from "@/features/employee/api.js";
 
 const currentPage = ref(1);
 const pagination = ref({currentPage: 1, totalPage: 1});
@@ -20,7 +17,6 @@ const positionFilterOptions = ref([]);
 const departmentFilterOptions = ref([]);
 
 const deptOptions = ref([
-  {label: '전체', value: null},
   {label: '테크놀로지(주)', value: 1},
   {label: '경영지원본부', value: 2},
   {label: '인사팀', value: 10},
@@ -58,7 +54,7 @@ const columns = [
 const baseFilterOptions = computed(() => [
   {key: 'empNo', type: 'input', label: '사번', icon: 'fa-id-badge', placeholder: '사번 입력'},
   {key: 'empName', type: 'input', label: '사원명', icon: 'fa-user', placeholder: '이름 입력'},
-  {key: 'deptId', type: 'select', label: '발령 부서', icon: 'fa-building', options: deptOptions.value},
+  {key: 'deptId', type: 'select', label: '발령 부서', icon: 'fa-building', options: departmentFilterOptions.value},
   {key: 'positionId', type: 'select', label: '발령 직위', icon: 'fa-user-tie', options: positionFilterOptions.value},
   {key: 'appointDate', type: 'date-range', label: '발령일', icon: 'fa-calendar-day'},
   {
@@ -115,7 +111,9 @@ const handleSearch = () => {
 
 onMounted(async () => {
   const positions = await getPositions();
-//   departmentFilterOptions.value = [{label: '전체', value: null}, ...departments.map(p => ({
+  departmentFilterOptions.value = [{label: '전체', value: null}, ...deptOptions.value
+  ];
+  //   departmentFilterOptions.value = [{label: '전체', value: null}, ...departments.map(p => ({
 //   label: p.name,
 //   value: p.deptId
 // }))]
@@ -129,11 +127,6 @@ onMounted(async () => {
 });
 
 watch(currentPage, () => fetchSummary(filterValues.value));
-
-const goToDetailsPage = (emp) => {
-  // const empId = emp.empId;
-  // router.push(`/employees/${empId}`);
-};
 
 const positionOptions = ref({});
 
@@ -154,7 +147,6 @@ const req = {
 };
 
 const openCreateModal = () => {
-  formData.value = {...req};
   showModal.value = true;
 }
 
@@ -168,22 +160,23 @@ const modalSections = computed(() => [
     icon: 'fa-user',
     layout: 'two-column',
     fields: [
-      {key: 'name', label: '이름', type: 'input', editable: true, required: true, placeholder: '홍길동'},
+        /* TODO: 트리에서 가져오는 것으로 수정 */
+      {key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1'},
       {
-        key: 'gender', label: '성별', type: 'select', editable: true, required: true, options: [
+        key: 'type', label: '발령 종류', type: 'select', editable: true, required: true, options: [
           {label: '선택', value: null},
-          {label: '남성', value: 'M'},
-          {label: '여성', value: 'F'}
+          {label: '소속 이동', value: 'DEPARTMENT_TRANSFER'},
+          {label: '승진', value: 'PROMOTION'}
         ]
       },
-      {key: 'birthDate', label: '생년월일', type: 'date', editable: true, required: true},
-      {key: 'email', label: '이메일', type: 'input', editable: true, required: true, placeholder: 'gildong@example.com'},
-      {key: 'contact', label: '연락처', type: 'input', editable: true, required: true, placeholder: '010-0000-0000'},
-      {key: 'address', label: '주소', type: 'input', editable: true, required: true, placeholder: '도로명 주소를 입력하세요.'},
+      {key: 'positionId', label: '발령 직위', type: 'select', editable: true, required: true, options: positionOptions.value || []},
+      {key: 'deptId', label: '발령 부서', type: 'select', editable: true, required: true, options: deptOptions.value || []},
+      {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
     ]
   }
 ]);
 
+/* TODO: 프론트 예외 처리, 토스트 알림 추가 */
 const handleRegisterSubmit = async (req) => {
   try {
     const resp = await createAppoint(req);
@@ -207,7 +200,7 @@ const handleRegisterSubmit = async (req) => {
     <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch"/>
 
     <!-- Table Section -->
-    <BaseTable :columns="columns" :rows="appoints" @click-detail=""/>
+    <BaseTable :columns="columns" :rows="appoints" @click-detail="handleRegisterSubmit"/>
 
     <!-- Pagination -->
     <Pagination

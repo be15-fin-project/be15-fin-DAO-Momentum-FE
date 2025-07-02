@@ -34,3 +34,8 @@ export const getAppoints = async (params) => {
     const resp = await api.get("/employees/appoints", {params})
     return resp.data.data;
 }
+
+export const createAppoint = async (req) => {
+    const resp = await api.post('/employees/appoints', req);
+    return resp.data.data;
+}
