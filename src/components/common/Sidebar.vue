@@ -10,14 +10,17 @@
       </div>
       <span class="top-icons">
         <button class="side-btn">출근</button>
-        <button class="sidebar-toggle">
-          <span class="material-symbols-rounded notification-icon">notifications</span>
-        </button>
+        <button class="sidebar-toggle" @click="toggleAlertPanel">
+  <span class="material-symbols-rounded notification-icon">notifications</span>
+</button>
       </span>
       <button class="sidebar-toggle" @click="toggleSidebar">
         <span class="material-symbols-rounded">menu</span>
       </button>
     </div>
+
+    <!-- Alert Panel -->
+    <AlertPanel :visible="showAlertPanel" @close="toggleAlertPanel" />
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
@@ -92,6 +95,7 @@ import { useAuthStore } from '@/stores/auth.js'
 import { logoutUser } from '@/features/common/api.js'
 import router from '@/router/index.js'
 import { useRoute } from 'vue-router'
+import AlertPanel from "@/components/common/AlertPanel.vue";
 
 const authStore = useAuthStore()
 const route = useRoute()
@@ -100,6 +104,8 @@ const { userRole } = storeToRefs(authStore)
 const collapsed = ref(false)
 const openSubmenu = ref(null)
 const currentUserRoles = ref(['HR_MANAGER', 'MANAGER'])
+
+const showAlertPanel = ref(false)
 
 const menuItems = [
   {
@@ -114,7 +120,7 @@ const menuItems = [
     label: '사원 관리',
     icon: 'group',
     subItems: [
-      { label: '사원 목록 조회', hrefs: ['../employee/employees'] },
+      { label: '사원 목록 조회', hrefs: ['../employees'] },
       { label: '인사 발령 내역', hrefs: ['../employee/appointment'] },
       { label: '계약서 내역', hrefs: ['../employee/contracts-admin'] }
     ],
@@ -164,7 +170,7 @@ const menuItems = [
       },
       {
         label: '평가 관리',
-        hrefs: ['../eval/manage'],
+        hrefs: ['../eval/manage', '../eval/manage-org', '../eval/manage-self', '../eval/round'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       { label: '다면 평가 제출', hrefs: ['../eval/submit'] },
@@ -299,6 +305,10 @@ const handleLogout = async () => {
   }
   authStore.clearAuth()
   router.push('/login')
+}
+
+function toggleAlertPanel() {
+  showAlertPanel.value = !showAlertPanel.value
 }
 </script>
 

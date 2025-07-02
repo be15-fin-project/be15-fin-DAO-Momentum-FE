@@ -4,11 +4,31 @@
       {{ field.label }}
     </label>
 
-    <!-- FormField.vue -->
-    <div v-if="readonly || !field.editable" class="form-input readonly">
-      {{ field.value ?? model[field.key] ?? '' }}
+    <!-- scoreChart 시각화 우선 -->
+    <div v-if="field.type === 'scoreChart'" class="score-bar-wrapper">
+      <div class="score-bar" :style="{ width: scoreWidth + '%' }">
+        <span class="score-value">{{ field.value }}</span>
+      </div>
     </div>
 
+    <SliderGroup
+        v-else-if="field.type === 'sliderGroup'"
+        v-model="model[field.key]"
+        :handles="field.handles"
+        :initial="model[field.key] ?? field.initial"
+        :labels="field.labels"
+        :icons="field.icons"
+        :readonly="readonly"
+        :editable="!readonly && field.editable"
+        :disabled="readonly || !field.editable"
+    />
+
+
+
+    <!-- 읽기 전용 -->
+    <div v-else-if="readonly || !field.editable" class="form-input readonly">
+      {{ field.value ?? model[field.key] ?? '' }}
+    </div>
 
     <!-- 입력 가능 -->
     <template v-else>
@@ -56,6 +76,7 @@
 
 <script setup>
 import { computed } from 'vue';
+import SliderGroup from "@/components/common/SliderGroup.vue";
 
 const props = defineProps({
   field: Object,
@@ -81,6 +102,11 @@ const onPositiveIntegerInput = (key) => {
   // model[key] = cleaned !== '' ? parseInt(cleaned, 10) : '';
 };
 
+const scoreWidth = computed(() => {
+  const raw = props.field.value ?? props.model?.[props.field.key];
+  const num = parseInt(raw);
+  return isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
+});
 </script>
 
 <style scoped>
@@ -103,7 +129,7 @@ const onPositiveIntegerInput = (key) => {
 
 .form-label.required::after {
   content: '*';
-  color: #ef4444;
+  color: var(--error-500);
   margin-left: 4px;
 }
 
@@ -135,8 +161,31 @@ const onPositiveIntegerInput = (key) => {
 }
 
 .form-input::placeholder {
-  color: #9ca3af;
+  color: var(--gray-400);
   font-style: italic;
 }
+.score-bar-wrapper {
+  background: var(--color-muted-light);
+  border-radius: var(--radius-ss);
+  height: 36px;
+  position: relative;
+  overflow: hidden;
+}
 
+.score-bar {
+  background: var(--icon-gradient);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  color: var(--basic);
+  font-weight: 600;
+  transition: width 0.3s ease;
+  border-radius: var(--radius-ss);
+}
+
+.score-value {
+  position: relative;
+  z-index: 2;
+}
 </style>

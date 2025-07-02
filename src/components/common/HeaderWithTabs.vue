@@ -35,8 +35,9 @@
               v-for="tab in tabs"
               :key="tab.label"
               class="tab-button"
-              :class="{ active: activeTab === tab.label }"
+              :class="{ active: tab.label === activeTab }"
               :to="tab.to"
+              @click="$emit('tabSelected', tab.label)"
           >
             <i :class="['fas', tab.icon]" v-if="tab.icon"></i>
             <span>{{ tab.label }}</span>
@@ -44,11 +45,12 @@
         </div>
       </div>
     </nav>
+
   </div>
 </template>
 
 <script setup>
-import { ref, defineEmits } from 'vue';
+import { ref, defineEmits, defineProps, watch } from 'vue';
 
 const props = defineProps({
   headerItems: {
@@ -66,12 +68,14 @@ const props = defineProps({
   tabs: {
     type: Array,
     default: () => []
+  },
+  activeTab: {
+    type: String,
+    default: ''
   }
 });
 
 const emit = defineEmits(['tabSelected', 'openModal']);
-
-const activeTab = ref(props.tabs[0]?.label || '');
 
 function resolveButtonClass(variant) {
   switch (variant) {
@@ -81,6 +85,7 @@ function resolveButtonClass(variant) {
   }
 }
 </script>
+
 
 
 <style scoped>

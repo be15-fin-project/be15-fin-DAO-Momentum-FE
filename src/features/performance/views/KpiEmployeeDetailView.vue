@@ -70,35 +70,6 @@ function normalizeFilterParams(values) {
     delete normalized.date_end;
   }
 
-  // 직위 라벨 → ID 매핑
-  const positionMap = {
-    '전체': null,
-    '대표이사': 1,
-    '이사': 2,
-    '부장': 3,
-    '과장': 4,
-    '대리': 5,
-    '사원': 6
-  };
-  if (normalized.positionId) {
-    normalized.positionId = positionMap[normalized.positionId] ?? null;
-  }
-
-  // 부서 라벨 → ID 매핑
-  const deptMap = {
-    '전체': null,
-    '인사팀': 10,
-    '재무팀': 11,
-    '프론트엔드팀': 12,
-    '백엔드팀': 13,
-    '데이터팀': 14,
-    '영업팀': 15,
-    '디지털마케팅팀': 16
-  };
-  if (normalized.deptId) {
-    normalized.deptId = deptMap[normalized.deptId] ?? null;
-  }
-
   // 상태 탭 필터 → statusId + isDeleted 매핑
   switch (values.status) {
     case '대기':
@@ -351,8 +322,8 @@ async function openModalHandler(kpiId) {
 
     <!-- 페이지네이션 -->
     <Pagination
-        v-if="pagination.totalPage"
-        :pages="Array.from({ length: pagination.totalPage }, (_, i) => i + 1)"
+        v-if="pagination.totalPage >= 1"
+        :total-pages="pagination.totalPage"
         v-model="currentPage"
     />
 

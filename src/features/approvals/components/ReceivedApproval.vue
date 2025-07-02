@@ -2,14 +2,10 @@
 import {ref, onMounted, computed, watch} from 'vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import Pagination from "@/components/common/Pagination.vue"
-import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue"
 import Filter from "@/components/common/Filter.vue"
 import TabNav from '@/components/common/NavigationTab.vue'
-import {getApprovals} from "@/features/approvals/api.js";
-import { useRouter } from 'vue-router'
-
-/* 경로 이동을 의한 부분 */
-const router = useRouter();
+import {getReceivedApprovals} from "@/features/approvals/api.js";
+import NotExistApproval from "@/features/approvals/components/NotExistApproval.vue";
 
 /* 결재 목록 데이터 */
 const approvals = ref([])
@@ -241,7 +237,7 @@ const displayApprovals = computed(() => {
 const handleTabClick = () => {
   resetFilters(); // 필터들 다 초기화 하기
   currentPage.value = 1 // 1번재 페이지로 넘어가기
-  fetchApprovals(); // 결재 문서 가져오기
+  fetchReceivedApprovals()// (); // 결재 문서 가져오기
 }
 
 // 필터 조건을 초기화
@@ -262,11 +258,11 @@ const resetFilters = () => {
 /* 필터 검색 이벤트 */
 const handleSearch = (filters) => {
   currentPage.value = 1;
-  fetchApprovals();
+  fetchReceivedApprovals();
 }
 
 /* 결재 문서를 가져오는 api  */
-async function fetchApprovals() {
+async function fetchReceivedApprovals() {
   try {
     const approveListRequest = {
       tab: selectedTab.value,
@@ -286,8 +282,7 @@ async function fetchApprovals() {
       size: 10
     }
 
-    console.log(approveListRequest.approveType);
-    const res = await getApprovals(approveListRequest, pageRequest);
+    const res = await getReceivedApprovals(approveListRequest, pageRequest);
     approvals.value = res.data.data.approveDTO;
     pagination.value.totalPage = res.data.data.pagination.totalPage;
 
@@ -297,48 +292,32 @@ async function fetchApprovals() {
 }
 
 watch(currentPage, () => {
-  fetchApprovals();
+  fetchReceivedApprovals();
 });
 
 /* api 호출하기 */
-onMounted(fetchApprovals);
-//
-// function handleDetailClick(row) {
-//   router.push(`/approvals/detail/${row.approveId}`)
-// }
-
+onMounted(fetchReceivedApprovals);
 </script>
 
 <template>
   <section>
-    <!-- 1. 전체 결재 내역 헤더 -->
-    <HeaderWithTabs
-      :headerItems="[{ label: '전체 결재', active: true }]"
-      :showTabs="false"
-    />
-
-    <!-- 2. 탭 조건 (전체, 근태, 영수증, 품의, 취소) -->
     <TabNav
       :tabs="tabItems"
       v-model:selected="selectedTab"
       @tab-click="handleTabClick"
     />
 
-    <!-- 3. 필터 -->
     <Filter
       :filters="visibleFilterOptions"
       v-model="filterValues"
       @search="handleSearch"
     />
 
-    <!-- 4. 표 -->
-    <BaseTable
-      :columns="columns"
-      :rows="displayApprovals"
-      @click-detail="handleDetailClick"
-    />
+    <div>
+      <NotExistApproval v-if="approvals.length === 0" message="받은 문서가 없습니다." />
+      <BaseTable v-else :columns="columns" :rows="displayApprovals"/>
+    </div>
 
-    <!-- 5. 페이징 처리 -->
     <Pagination
       v-if="pagination.totalPage"
       :totalPages="pagination.totalPage"

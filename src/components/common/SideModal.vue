@@ -34,6 +34,15 @@
 
       <div class="modal-footer" v-if="showFooter">
         <BaseButton
+            v-if="showCancel"
+            variant="cancel"
+            icon="rotate-left"
+            :disabled="cancelDisabled"
+            @click="$emit('cancel')"
+        >
+          {{ cancelText }}
+        </BaseButton>
+        <BaseButton
             v-if="showReject"
             variant="reject"
             icon="warning"
@@ -84,11 +93,14 @@ const props = defineProps({
   icon: String,
   readonly: { type: Boolean, default: false },
   showFooter: { type: Boolean, default: true },
+  showCancel: { type: Boolean, default: false },
   showReject: { type: Boolean, default: false },
   showEdit: { type: Boolean, default: false },
   showSubmit: { type: Boolean, default: true },
+  cancelDisabled: { type: Boolean, default: false },
   submitDisabled: { type: Boolean, default: false },
   rejectDisabled: { type: Boolean, default: false },
+  cancelText: { type: String, default: '취소' },
   rejectText: { type: String, default: '반려' },
   editText: { type: String, default: '수정' },
   submitText: { type: String, default: '저장' },
