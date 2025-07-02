@@ -4,6 +4,7 @@ import {
   getEvaluationRounds,
   getMyHrEvaluations,
   getMyHrEvaluationDetail,
+  submitHrObjection,
 } from '@/features/performance/api.js';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
@@ -143,9 +144,32 @@ async function openModalHandler(row) {
 function handleCancel() {
   isRejecting.value = false;
   createForm.value.reason = '';
-  formSections.value = formSections.value.filter(s => s.title !== '이의제기 사유');
+
+  formSections.value = formSections.value.filter(
+      section => section.title !== '이의제기 사유'
+  );
 }
 
+function handleReject() {
+  if (isRejecting.value) return;
+  isRejecting.value = true;
+
+  formSections.value.push({
+    title: '이의제기 사유',
+    icon: 'fa-comment-dots',
+    layout: 'one-column',
+    fields: [
+      {
+        label: '사유',
+        type: 'textarea',
+        key: 'reason',
+        required: true,
+        editable: true,
+        placeholder: '이의제기 사유를 입력하세요.',
+      },
+    ],
+  });
+}
 
 async function handleSubmit() {
   const reason = createForm.value.reason?.trim();
@@ -153,18 +177,21 @@ async function handleSubmit() {
     alert('이의제기 사유를 입력해주세요.');
     return;
   }
+  console.log('제출 ID:', selectedRow.value?.resultId);
+  console.log('제출 사유:', reason);
 
   try {
-    // TODO: API 호출
-    console.log('이의제기 제출:', selectedRow.value.resultId, reason);
+    await submitHrObjection(selectedRow.value.resultId, { reason });
+
+    alert('이의제기가 성공적으로 제출되었습니다.');
     isOpen.value = false;
     isRejecting.value = false;
+    createForm.value = { reason: '' };
   } catch (e) {
     console.error('이의제기 제출 실패:', e);
-    alert('제출 실패');
+    alert('이의제기 제출에 실패했습니다.');
   }
 }
-
 
 watch(currentPage, () => handleSearch(filterValues.value));
 
@@ -229,8 +256,9 @@ onMounted(async () => {
         icon="fa-star-half-stroke"
 
         :sections="formSections"
-        :showReject="!isRejecting"
+        :showReject="!isRejecting && !selectedRow?.objectionSubmitted"
         :showSubmit="isRejecting"
+        :showCancel="isRejecting"
         :submitText="'제출'"
         :rejectText="'이의제기'"
 

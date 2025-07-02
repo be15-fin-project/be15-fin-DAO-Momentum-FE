@@ -92,9 +92,9 @@
 
 <script setup>
 import { computed } from 'vue';
-import SliderGroup from "@/components/common/SliderGroup.vue";
-import LikertScale from "@/components/common/LikertScale.vue";
-import RadarChart from "@/components/common/RadarChart.vue";
+import SliderGroup from "@/components/common/form/SliderGroup.vue";
+import LikertScale from "@/components/common/form/LikertScale.vue";
+import RadarChart from "@/components/common/form/RadarChart.vue";
 
 const props = defineProps({
   field: Object,

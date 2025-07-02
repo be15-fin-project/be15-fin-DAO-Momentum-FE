@@ -287,3 +287,19 @@ export async function getMyHrEvaluationDetail(resultId) {
     const res = await api.get(`/evaluations/hr/${resultId}`);
     return res.data.data;
 }
+
+// ==================================================
+// 인사 평가 이의제기 API
+// ==================================================
+
+// 인사 평가 이의 제기 제출
+export async function submitHrObjection(evaluationId, payload) {
+    const res = await api.post(`/hr-objections/${evaluationId}`, payload);
+    return res.data.data;
+}
+
+// 인사 평가 이의 제기 삭제
+export async function deleteHrObjection(objectionId) {
+    const res = await api.delete(`/hr-objections/${objectionId}`);
+    return res.data.data;
+}
