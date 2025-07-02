@@ -68,11 +68,11 @@
         <template v-if="filter.type === 'select'">
           <button
               v-for="option in filter.options"
-              :key="option"
+              :key="typeof option === 'object' ? option.value : option"
               :class="{ active: String(localValues[filter.key]) === String(option) }"
               @click="selectOption(filter.key, option)"
           >
-            {{ option }}
+            {{ typeof option === 'object' ? option.label : option }}
           </button>
         </template>
 

@@ -122,7 +122,7 @@ const menuItems = [
     subItems: [
       { label: '사원 목록 조회', hrefs: ['../employees'] },
       { label: '인사 발령 내역', hrefs: ['../employee/appointment'] },
-      { label: '계약서 내역', hrefs: ['../employee/contracts-admin'] }
+      { label: '계약서 목록 조회', hrefs: ['../contracts'] }
     ],
     requireRole: ['MASTER', 'HR_MANAGER']
   },
