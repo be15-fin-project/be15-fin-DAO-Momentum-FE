@@ -310,6 +310,12 @@ export async function getHrObjectionRequests(params) {
     return res.data.data;
 }
 
+// 이의제기 요청 상세 조회 (팀장)
+export async function getHrObjectionRequestDetail(objectionId) {
+    const res = await api.get(`/hr-objections/requests/${objectionId}`);
+    return res.data.data;
+}
+
 // 나의 이의제기 목록 조회 (사원)
 export async function getMyHrObjections(params) {
     const res = await api.get('/hr-objections/my', { params });

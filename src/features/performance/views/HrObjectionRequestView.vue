@@ -29,8 +29,11 @@
         title="인사 평가 상세 정보"
         icon="fa-star-half-stroke"
         :showSubmit="false"
+        :showReject="isPending"
+        :rejectText="`이의제기 삭제`"
         :sections="formSections"
         @close="isOpen = false"
+        @reject="handleReject"
         v-model:form="createForm"
     />
   </main>
@@ -42,9 +45,9 @@ import { ref, onMounted, computed, watch } from 'vue';
 import {
   getEvaluationRounds,
   getEvaluationRoundNos,
-  getMyHrObjections,
-  getMyHrObjectionDetail,
-  deleteHrObjection,
+  getHrObjectionRequests,
+  getHrObjectionRequestDetail,
+  processHrObjection,
 } from '@/features/performance/api.js';
 
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
@@ -59,7 +62,7 @@ import { useRoute } from 'vue-router';
 
 /* ========== State ========== */
 const currentPage = ref(1);
-const filterValues = ref({ status: null });
+const filterValues = ref({ status: 'PENDING' });
 const tableData = ref([]);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
 
@@ -79,12 +82,15 @@ const { userRole } = storeToRefs(authStore);
 
 const tableColumns = [
   { key: 'roundNo', label: '회차' },
-  { key: 'statusType', label: '상태' },
-  { key: 'createdAt', label: '작성일' },
-  { key: 'overallGrade', label: '등급' },
+  { key: 'status', label: '상태' },
+  { key: 'createdAt', label: '평가일' },
+  { key: 'score', label: '등급' },
   { key: 'action', label: '상세' },
 ];
 
+const isPending = computed(() =>
+    selectedRow.value?.statusType === '대기 중' || selectedRow.value?.statusType === 'PENDING'
+);
 
 /* ========== Computed ========== */
 const mappedTableData = computed(() =>
@@ -118,11 +124,8 @@ const normalizeFilterParams = (values) => {
     case 'REJECTED':
       normalized.statusId = 3;
       break;
-    case 'PENDING':
-      normalized.statusId = 1;
-      break;
     default:
-      normalized.statusId = null;
+      normalized.statusId = 1;
   }
   delete normalized.status;
 
@@ -142,9 +145,11 @@ const headerTabs = computed(() => {
 
 const handleSearch = async (values) => {
   const params = { ...normalizeFilterParams(values), page: currentPage.value, size: 10 };
+
   try {
-    const res = await getMyHrObjections(params);
-    const items = res.content ?? [];
+    const res = await getHrObjectionRequests(params);
+
+    const items = res.list ?? [];
     if (items.length === 1 && Array.isArray(res.factorScores)) {
       items[0].factorScores = res.factorScores;
     }
@@ -161,7 +166,7 @@ const handleSearch = async (values) => {
 
 const openModalHandler = async (row) => {
   try {
-    const { itemDto: content, factorScores, weightInfo, rateInfo } = await getMyHrObjectionDetail(row.objectionId);
+    const { itemDto: content, factorScores, weightInfo, rateInfo } = await getHrObjectionRequestDetail(row.objectionId);
 
     selectedRow.value = row;
     isOpen.value = true;
@@ -246,13 +251,15 @@ const openModalHandler = async (row) => {
           },
           {
             label: '관리자 답변',
-            value: content.responseReason ?? '답변 대기 중',
-            type: 'textarea',
+            value: content.responseReason
+                ? content.responseReason
+                : '<i class="fas fa-hourglass-half" style="color: #999;"></i>',
+            type: 'html',
             editable: false,
           },
           {
             label: '처리 상태',
-            value: getStatusLabel(content.statusType),
+            value: getStatusWithIcon(content.statusType),
             type: 'input',
             editable: false,
           }
@@ -265,6 +272,24 @@ const openModalHandler = async (row) => {
     isOpen.value = false;
   }
 };
+
+const handleReject = async () => {
+  if (!selectedRow.value) return;
+
+  const confirmed = window.confirm('정말로 이의제기를 삭제하시겠습니까?');
+  if (!confirmed) return;
+
+  try {
+    await processHrObjection(selectedRow.value.objectionId);
+    alert('이의제기가 삭제되었습니다.');
+    isOpen.value = false;
+    await handleSearch(filterValues.value);
+  } catch (e) {
+    console.error('이의제기 삭제 실패:', e);
+    alert('삭제 중 오류가 발생했습니다.');
+  }
+};
+
 
 const fetchRoundNos = async () => {
   roundList.value = await getEvaluationRoundNos();
@@ -287,7 +312,6 @@ const initFilters = () => {
     }
   ];
   tabOptions.value = [
-    { key: 'status', label: '전체', value: null },
     { key: 'status', label: '대기', value: 'PENDING' },
     { key: 'status', label: '승인', value: 'ACCEPTED' },
     { key: 'status', label: '반려', value: 'REJECTED' }
@@ -307,6 +331,20 @@ function getStatusLabel(statusType) {
       return '-';
   }
 }
+
+function getStatusWithIcon(statusType) {
+  switch (statusType) {
+    case 'PENDING':
+      return '<i class="fas fa-hourglass-half" style="color: #999; margin-right: 6px;"></i> 대기 중';
+    case 'ACCEPTED':
+      return '<i class="fas fa-circle-check" style="color: #4caf50; margin-right: 6px;"></i> 승인됨';
+    case 'REJECTED':
+      return '<i class="fas fa-circle-xmark" style="color: #f44336; margin-right: 6px;"></i> 반려됨';
+    default:
+      return '-';
+  }
+}
+
 
 /* ========== Lifecycle ========== */
 watch(currentPage, () => handleSearch(filterValues.value));

@@ -83,7 +83,7 @@ const { userRole } = storeToRefs(authStore);
 const tableColumns = [
   { key: 'roundNo', label: '회차' },
   { key: 'statusType', label: '상태' },
-  { key: 'createdAt', label: '작성일' },
+  { key: 'createdAt', label: '평가일' },
   { key: 'overallGrade', label: '등급' },
   { key: 'action', label: '상세' },
 ];
