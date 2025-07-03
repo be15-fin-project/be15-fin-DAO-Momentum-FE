@@ -113,6 +113,10 @@ const selectedFormComponent = computed(() => {
   color: var(--blue-100)
 }
 
+.form-section:nth-of-type(2) {
+  margin-top: 32px;
+}
+
 .section-title {
   margin: 0 0 20px 0;
   font-size: 1.1rem;
