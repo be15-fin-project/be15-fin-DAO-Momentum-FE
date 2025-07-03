@@ -30,7 +30,8 @@ export default [
         children: [
             { path: '', redirect: 'hr-list' },
             { path: 'hr-list', name: 'MyHrEvaluationView', component: () => import('@/features/performance/views/MyHrEvaluationView.vue') },
-            { path: 'my-objection', name: 'MyHrObjectionListView', component: () => import('@/features/performance/views/MyHrObjectionListView.vue') }
+            { path: 'my-objection', name: 'MyHrObjectionListView', component: () => import('@/features/performance/views/HrObjectionListView.vue') },
+            { path: 'objection-requests', name: 'HrObjectionRequestView', component: () => import('@/features/performance/views/HrObjectionRequestView.vue') }
         ]
     }
 ];

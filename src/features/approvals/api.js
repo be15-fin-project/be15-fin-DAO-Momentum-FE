@@ -29,3 +29,8 @@ export function getSentApprovals(draftApproveListRequest, pageRequest = {}) {
         }
     });
 }
+
+/* 4. 결재 문서 상세 조회  */
+export function getApprovalDetail(documentId) {
+    return api.get(`/approval/documents/${documentId}`);
+}

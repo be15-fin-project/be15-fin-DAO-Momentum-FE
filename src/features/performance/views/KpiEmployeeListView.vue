@@ -1,4 +1,4 @@
-template>
+<template>
   <main>
     <HeaderWithTabs
         :headerItems="[

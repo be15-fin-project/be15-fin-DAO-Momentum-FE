@@ -119,7 +119,7 @@ watchEffect(() => {
   border-radius: 50%;
   background: var(--color-surface);
   border: 1px solid var(--color-muted);
-  color: var(--basic);
+  color: var(--color-surface);
   cursor: pointer;
   transition: transform 0.2s ease;
 }

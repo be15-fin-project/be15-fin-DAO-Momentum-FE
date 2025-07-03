@@ -214,8 +214,7 @@ const menuItems = [
       { label: '인사 평가 조회', hrefs: ['../hr/hr-list'] },
       {
         label: '이의 제기 관리',
-        hrefs: ['../hr/my-objection'],
-        requireRole: ['MANAGER']
+        hrefs: ['../hr/my-objection', '../hr/objection-requests'],
       }
     ]
   },
@@ -417,7 +416,7 @@ onMounted(async () => {
   min-width: 23rem;
   max-width: 25rem;
   background: var(--side-background);
-  color: var(--basic);
+  color: var(--color-surface);
   height: 100vh;
   padding: 1.5rem;
   display: flex;
@@ -434,7 +433,7 @@ onMounted(async () => {
 
 .side-btn {
   background: var(--main-color);
-  color: var(--basic);
+  color: var(--color-surface);
   padding: 8px 16px;
   border: none;
   border-radius: 6px;
@@ -478,7 +477,7 @@ onMounted(async () => {
 .sidebar-toggle {
   background: none;
   border: none;
-  color: var(--basic);
+  color: var(--color-surface);
   cursor: pointer;
   font-size: 1rem;
 }
@@ -510,17 +509,17 @@ onMounted(async () => {
 .sidebar-item:hover {
   cursor: pointer;
   background-color: var(--gray-600);
-  color: var(--basic);
+  color: var(--color-surface);
 }
 
 .sidebar-item.active {
   background-color: var(--gray-600);
-  color: var(--basic);
+  color: var(--color-surface);
 }
 
 .sidebar-item.highlighted {
   background-color: var(--blue-300);
-  color: var(--basic);
+  color: var(--color-surface);
 }
 
 /* 서브 메뉴의 active (더 연하게) */
