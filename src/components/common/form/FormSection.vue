@@ -54,7 +54,7 @@ const layoutClass = props.layout || '';
   width: 44px;
   height: 44px;
   background: var(--icon-gradient);
-  color: var(--basic);
+  color: var(--color-surface);
   border-radius: var(--form-radius);
   display: flex;
   align-items: center;

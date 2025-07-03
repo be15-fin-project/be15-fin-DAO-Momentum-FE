@@ -93,7 +93,7 @@ const filterOptions = [
   { key: 'date', label: '등록일', icon: 'fa-calendar-day', type: 'date-range' }
 ];
 
-const tabOpstions = [
+const tabOptions = [
   { key: 'status', label: '승인', value: '승인' },
   { key: 'status', label: '대기', value: '대기' },
   { key: 'status', label: '반려', value: '반려' },
@@ -251,8 +251,16 @@ async function openModalHandler(kpiId) {
       deadline: detail.deadline,
       reason: detail.reason,
       cancelReason: detail.cancelReason,
-      cancelResponse: detail.cancelResponse
+      cancelResponse: detail.cancelResponse,
+      timeline: {
+        kpiProgress: detail.kpiProgress,
+        progress25: detail.progress25,
+        progress50: detail.progress50,
+        progress75: detail.progress75,
+        progress100: detail.progress100
+      }
     };
+
     formSections.value = [
       {
         title: 'KPI 정보',
@@ -272,12 +280,15 @@ async function openModalHandler(kpiId) {
         layout: 'one-column',
         outerClass: 'kpi-detail-section',
         fields: [
-          { label: '25% 달성', value: detail.progress25, editable: false, type: 'input'  },
-          { label: '50% 달성', value: detail.progress50, editable: false, type: 'input'  },
-          { label: '75% 달성', value: detail.progress75, editable: false, type: 'input'  },
-          { label: '100% 달성', value: detail.progress100, editable: false, type: 'input'  }
+          {
+            label: '진척도 타임라인',
+            key: 'timeline',
+            type: 'progressTimeline',
+            editable: false
+          }
         ]
-      },
+      }
+      ,
       {
         title: '처리 사유',
         icon: 'fa-comment-dots',
@@ -316,7 +327,15 @@ async function openModalHandler(kpiId) {
 
 // KPI 등록 모달 열기
 function handleSubmitModal() {
-  createForm.value.kpiProgress = 0;
+  createForm.value.timeline = {
+    kpiProgress: 0,
+    progress25: '',
+    progress50: '',
+    progress75: '',
+    progress100: ''
+  };
+  console.log('createForm timeline:', createForm.value.timeline);
+
   createFormSections.value = [
     {
       title: 'KPI 정보',
@@ -331,13 +350,15 @@ function handleSubmitModal() {
     },
     {
       title: '진척 기준',
-      icon: 'fa-chart-line',
+      icon: 'fa-chart-bar',
       layout: 'one-column',
       fields: [
-        { label: '25% 달성', key: 'progress25', editable: true, type: 'input' },
-        { label: '50% 달성', key: 'progress50', editable: true, type: 'input' },
-        { label: '75% 달성', key: 'progress75', editable: true, type: 'input' },
-        { label: '100% 달성', key: 'progress100', editable: true, type: 'input' }
+        {
+          label: '진척도 타임라인',
+          type: 'progressTimeline',
+          key: 'timeline',
+          editable: true
+        }
       ]
     }
   ];
@@ -529,7 +550,7 @@ function handleBack() {
     </section>
 
     <!-- 필터 컴포넌트 -->
-    <EmployeeFilter :filters="filterOptions" :tabs="tabOpstions" v-model="filterValues" @search="handleSearch"/>
+    <EmployeeFilter :filters="filterOptions" :tabs="tabOptions" v-model="filterValues" @search="handleSearch"/>
 
     <!-- KPI 테이블 -->
     <BaseTable

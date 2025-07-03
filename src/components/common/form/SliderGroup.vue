@@ -162,7 +162,7 @@ watch(
   font-weight: 700;
   font-size: 0.875rem;
   color: var(--gray-700);
-  background: var(--basic);
+  background: var(--color-surface);
   border: 1px solid var(--gray-300);
 }
 </style>

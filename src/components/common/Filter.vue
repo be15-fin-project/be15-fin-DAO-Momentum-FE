@@ -69,7 +69,7 @@
           <button
               v-for="option in filter.options"
               :key="typeof option === 'object' ? option.value : option"
-              :class="{ active: String(localValues[filter.key]) === String(option) }"
+              :class="{ active: String(localValues[filter.key]) === String(typeof option === 'object' ? option.value : option) }"
               @click="selectOption(filter.key, option)"
           >
             {{ typeof option === 'object' ? option.label : option }}
@@ -178,10 +178,20 @@ function handleSearchClick() {
 }
 
 function handleResetClick() {
-  // 초기값 재설정
-  localValues.value = {};
-  emit('update:modelValue', {}); // 부모 컴포넌트에도 반영
-  emit('search', {}); // 바로 검색도 실행 (필요 없다면 이 줄 제거)
+  const preservedTabValues = {};
+
+  // 탭 관련 값 유지
+  if (props.tabs?.length) {
+    props.tabs.forEach(tab => {
+      preservedTabValues[tab.key] = localValues.value[tab.key];
+    });
+  }
+
+  // 초기화하면서 탭 값은 유지
+  localValues.value = { ...preservedTabValues };
+
+  emit('update:modelValue', { ...localValues.value });
+  emit('search', { ...localValues.value });
 }
 
 
@@ -219,7 +229,7 @@ onUnmounted(() => {
   font-weight: 500;
   border: 1px solid var(--color-muted);
   border-radius: var(--radius-sm);
-  background-color: var(--basic);
+  background-color: var(--color-surface);
   color: var(--color-text-sub);
   cursor: pointer;
 }
@@ -232,20 +242,20 @@ onUnmounted(() => {
 .tabs {
   display: flex;
   border-radius: var(--radius-lg);
-  background-color: var(--basic);
+  background-color: var(--color-surface);
   border: 1px solid var(--gray-300);
 }
 .tabs button {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--basic);
-  background-color: var(--basic);
+  border: 1px solid var(--color-surface);
+  background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   cursor: pointer;
 }
 .tabs button.active {
   background: var(--blue-400);
   border-radius: var(--radius-lg);
-  color: var(--basic);
+  color: var(--color-surface);
   border-color: var(--blue-200);
 }
 
@@ -256,7 +266,7 @@ onUnmounted(() => {
   left: 0;
   z-index: 1000;
   min-width: 160px;
-  background: var(--basic);
+  background: var(--color-surface);
   border: 1px solid var(--color-muted);
   border-radius: var(--radius-ss);
   box-shadow: var(--dropdown-shadow);
@@ -301,7 +311,7 @@ onUnmounted(() => {
   font-weight: 400;
   border: 1px solid var(--color-muted);
   border-radius: var(--radius-sm);
-  background-color: var(--basic);
+  background-color: var(--color-surface);
   color: var(--gray-700);
   min-width: 140px;
   height: 38px;

@@ -160,7 +160,7 @@ const scrollToBottom = () => {
   width: 64px;
   height: 64px;
   background: var(--chatbot-gradient);
-  color: var(--basic);
+  color: var(--color-surface);
   border-radius: var(--round-radius);
   font-size: 1.25rem;
   display: flex;
@@ -192,13 +192,13 @@ const scrollToBottom = () => {
   height: 40rem;
   display: flex;
   flex-direction: column;
-  background: var(--basic);
+  background: var(--color-surface);
   border-radius: var(--chatbot-radius);
   box-shadow: 0 4px 30px rgba(0,0,0,0.15);
 }
 .chat-header {
   background: var(--chatbot-gradient);
-  color: var(--basic);
+  color: var(--color-surface);
   padding: 16px;
   border-radius: var(--chatbot-radius);
   display: flex;
@@ -220,7 +220,7 @@ const scrollToBottom = () => {
 }
 #closeChat {
   background: transparent;
-  color: var(--basic);
+  color: var(--color-surface);
   border: none;
   width: 32px;
   height: 32px;
@@ -275,7 +275,7 @@ const scrollToBottom = () => {
 }
 .chat-bubble-user {
   background: var(--purple-100);
-  color: var(--basic);
+  color: var(--color-surface);
   padding: 10px 14px;
   border-radius: 16px;
   max-width: 75%;
@@ -313,7 +313,7 @@ const scrollToBottom = () => {
   width: 40px;
   height: 40px;
   background: var(--chatbot-gradient);
-  color: var(--basic);
+  color: var(--color-surface);
   border-radius: 50%;
   border: none;
   cursor: pointer;

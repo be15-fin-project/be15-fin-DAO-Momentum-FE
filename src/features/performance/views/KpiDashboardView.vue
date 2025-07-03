@@ -296,11 +296,20 @@ const openModalHandler = async (kpiId) => {
         icon: 'fa-chart-bar',
         layout: 'one-column',
         fields: [
-          { label: '25% 달성', value: detail.progress25, type: 'input', editable: false },
-          { label: '50% 달성', value: detail.progress50, type: 'input', editable: false },
-          { label: '75% 달성', value: detail.progress75, type: 'input', editable: false },
-          { label: '100% 달성', value: detail.progress100, type: 'input', editable: false },
-        ],
+          {
+            label: '진척도 타임라인',
+            type: 'progressTimeline',
+            key: 'timeline',
+            editable: false,
+            value: {
+              kpiProgress: detail.kpiProgress,
+              progress25: detail.progress25,
+              progress50: detail.progress50,
+              progress75: detail.progress75,
+              progress100: detail.progress100
+            }
+          }
+        ]
       },
       {
         title: '작성 정보',
