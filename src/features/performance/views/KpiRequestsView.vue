@@ -187,7 +187,14 @@ async function openModalHandler(kpiId) {
       reason: detail.reason,
       cancelReason: detail.cancelReason,
       cancelResponse: detail.cancelResponse,
-      isDeleted: detail.isDeleted
+      isDeleted: detail.isDeleted,
+      timeline: {
+        kpiProgress: detail.kpiProgress,
+        progress25: detail.progress25,
+        progress50: detail.progress50,
+        progress75: detail.progress75,
+        progress100: detail.progress100
+      }
     };
 
     formSections.value = [
@@ -206,13 +213,17 @@ async function openModalHandler(kpiId) {
         title: '진척 기준',
         icon: 'fa-chart-bar',
         layout: 'one-column',
+        outerClass: 'kpi-detail-section',
         fields: [
-          { label: '25% 달성', key: 'progress25', value: detail.progress25, editable: false, type: 'input' },
-          { label: '50% 달성', key: 'progress50', value: detail.progress50, editable: false, type: 'input' },
-          { label: '75% 달성', key: 'progress75', value: detail.progress75, editable: false, type: 'input' },
-          { label: '100% 달성', key: 'progress100', value: detail.progress100, editable: false, type: 'input' }
+          {
+            label: '진척도 타임라인',
+            key: 'timeline',
+            type: 'progressTimeline',
+            editable: false
+          }
         ]
-      },
+      }
+      ,
       {
         title: '작성 정보',
         icon: 'fa-user-edit',

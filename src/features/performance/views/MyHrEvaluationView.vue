@@ -124,6 +124,12 @@ function normalizeFilterParams(values) {
     normalized.roundNo = null;
   }
 
+  if (normalized.roundNo !== undefined && normalized.roundNo !== null) {
+    normalized.roundId = Number(normalized.roundNo);
+  }
+  delete normalized.roundNo;
+
+
   if (normalized.date_start) {
     normalized.startDate = normalized.date_start;
     delete normalized.date_start;

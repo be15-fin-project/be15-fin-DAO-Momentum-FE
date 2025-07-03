@@ -264,13 +264,20 @@ async function openModalHandler(kpiId) {
         title: '진척 기준',
         icon: 'fa-chart-bar',
         layout: 'one-column',
-        outerClass: 'kpi-detail-section',
         fields: [
-          { label: '25% 달성', value: detail.progress25 },
-          { label: '50% 달성', value: detail.progress50 },
-          { label: '75% 달성', value: detail.progress75 },
-          { label: '100% 달성', value: detail.progress100 },
-        ],
+          {
+            label: '진척도 타임라인',
+            type: 'progressTimeline',
+            editable: false,
+            value: {
+              kpiProgress: detail.kpiProgress,
+              progress25: detail.progress25,
+              progress50: detail.progress50,
+              progress75: detail.progress75,
+              progress100: detail.progress100
+            }
+          }
+        ]
       },
       {
         title: '처리 사유',

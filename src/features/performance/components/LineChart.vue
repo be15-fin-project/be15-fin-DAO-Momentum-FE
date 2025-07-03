@@ -90,7 +90,7 @@ watch(() => props.datasets, renderChart, { deep: true });
 
 <style>
 .chart-box {
-  background: var(--basic);
+  background: var(--color-surface);
   padding: 24px;
   border-radius: var(--radius-lg);
   box-shadow: var(--chart-shadow);
@@ -122,7 +122,7 @@ watch(() => props.datasets, renderChart, { deep: true });
   font-weight: 300;
   border: 1px solid var(--gray-300);
   border-radius: var(--radius-ss);
-  background-color: var(--basic);
+  background-color: var(--color-surface);
   color: var(--font-main);
   cursor: pointer;
 }

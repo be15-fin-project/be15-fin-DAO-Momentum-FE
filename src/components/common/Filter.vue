@@ -219,7 +219,7 @@ onUnmounted(() => {
   font-weight: 500;
   border: 1px solid var(--color-muted);
   border-radius: var(--radius-sm);
-  background-color: var(--basic);
+  background-color: var(--color-surface);
   color: var(--color-text-sub);
   cursor: pointer;
 }
@@ -232,20 +232,20 @@ onUnmounted(() => {
 .tabs {
   display: flex;
   border-radius: var(--radius-lg);
-  background-color: var(--basic);
+  background-color: var(--color-surface);
   border: 1px solid var(--gray-300);
 }
 .tabs button {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--basic);
-  background-color: var(--basic);
+  border: 1px solid var(--color-surface);
+  background-color: var(--color-surface);
   border-radius: var(--radius-lg);
   cursor: pointer;
 }
 .tabs button.active {
   background: var(--blue-400);
   border-radius: var(--radius-lg);
-  color: var(--basic);
+  color: var(--color-surface);
   border-color: var(--blue-200);
 }
 
@@ -256,7 +256,7 @@ onUnmounted(() => {
   left: 0;
   z-index: 1000;
   min-width: 160px;
-  background: var(--basic);
+  background: var(--color-surface);
   border: 1px solid var(--color-muted);
   border-radius: var(--radius-ss);
   box-shadow: var(--dropdown-shadow);
@@ -301,7 +301,7 @@ onUnmounted(() => {
   font-weight: 400;
   border: 1px solid var(--color-muted);
   border-radius: var(--radius-sm);
-  background-color: var(--basic);
+  background-color: var(--color-surface);
   color: var(--gray-700);
   min-width: 140px;
   height: 38px;

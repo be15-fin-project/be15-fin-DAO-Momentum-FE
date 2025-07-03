@@ -27,8 +27,15 @@ function convertLevelsToScores(levels) {
     '주의': 60,
     '위험': 50,
   };
-  return levels.map(level => levelMap[level] ?? 0);
+
+  return levels.map(level => {
+    if (typeof level === 'string' && /^[0-9]+$/.test(level)) {
+      return parseInt(level, 10);
+    }
+    return levelMap[level] ?? 0;
+  });
 }
+
 
 
 onMounted(async () => {
