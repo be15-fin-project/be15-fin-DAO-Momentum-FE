@@ -7,6 +7,10 @@ import TabNav from '@/components/common/NavigationTab.vue'
 import {getReceivedApprovals} from "@/features/approvals/api.js";
 import NotExistApproval from "@/features/approvals/components/NotExistApproval.vue";
 import {getDepartments} from "@/features/works/api.js";
+import { useRouter } from 'vue-router'
+
+/* 경로 이동을 의한 부분 */
+const router = useRouter();
 
 /* 결재 목록 데이터 */
 const approvals = ref([]);
@@ -276,11 +280,17 @@ async function fetchReceivedApprovals() {
     const res = await getReceivedApprovals(approveListRequest, pageRequest);
     approvals.value = res.data.data.approveDTO;
     pagination.value.totalPage = res.data.data.pagination.totalPage;
-
   } catch (e) {
     console.error('결재 내역 불러오기 실패:', e)
   }
 }
+
+/* 결재 내역 상세 보기로 이동 */
+function handleDetailClick(row) {
+  router.push({
+    name: 'ApprovalDetail',
+    params: { documentId: row.approveId }
+  })}
 
 /* 페이지와 관련된 부분 */
 watch(currentPage, () => {
@@ -320,7 +330,11 @@ onMounted(fetchReceivedApprovals);
 
     <div>
       <NotExistApproval v-if="approvals.length === 0" message="받은 문서가 없습니다." />
-      <BaseTable v-else :columns="columns" :rows="displayApprovals"/>
+      <BaseTable v-else
+                 :columns="columns"
+                 :rows="displayApprovals"
+                 @click-detail="handleDetailClick"
+      />
     </div>
 
     <Pagination
