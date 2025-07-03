@@ -224,10 +224,11 @@ const displayApprovals = computed(() => {
   return approvals.value.map(item => ({
     ...item,
     statusType: statusTypeMap[item.statusType] || item.statusType,
-    approveType: approveTypeMap[item.approveType] || item.approveType
+    approveType: approveTypeMap[item.approveType] || item.approveType,
+    createAt: item.createAt ? item.createAt.replace('T', ' ').slice(0, 16) : '',
+    completeAt: item.completeAt? item.completeAt.replace('T', ' ').slice(0, 16) : ''
   }));
 });
-
 
 /* 탭 클릭 시 로직 */
 // 탭 클릭
