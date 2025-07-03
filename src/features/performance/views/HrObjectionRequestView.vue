@@ -1,7 +1,7 @@
 <template>
   <main>
     <HeaderWithTabs
-        :headerItems="[{ label: '이의 제기 내역', to: '/hr/my-objection', active: true }]"
+        :headerItems="headerTabs"
         :showTabs="false"
     />
 
@@ -53,6 +53,10 @@ import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
 
+import { storeToRefs } from 'pinia';
+import { useAuthStore } from '@/stores/auth.js';
+import { useRoute } from 'vue-router';
+
 /* ========== State ========== */
 const currentPage = ref(1);
 const filterValues = ref({ status: null });
@@ -68,6 +72,10 @@ const selectedRow = ref(null);
 const roundList = ref([]);
 const filterOptions = ref([]);
 const tabOptions = ref([]);
+
+const route = useRoute();
+const authStore = useAuthStore();
+const { userRole } = storeToRefs(authStore);
 
 const tableColumns = [
   { key: 'roundNo', label: '회차' },
@@ -122,6 +130,16 @@ const normalizeFilterParams = (values) => {
 };
 
 /* ========== Actions ========== */
+const headerTabs = computed(() => {
+  const tabs = [
+    { label: '이의 제기 내역', to: '/hr/my-objection', active: route.path === '/hr/my-objection' }
+  ];
+  if (userRole.value.includes('MANAGER')) {
+    tabs.push({ label: '이의 제기 요청', to: '/hr/objection-requests', active: route.path === '/hr/objection-requests' });
+  }
+  return tabs;
+});
+
 const handleSearch = async (values) => {
   const params = { ...normalizeFilterParams(values), page: currentPage.value, size: 10 };
   try {

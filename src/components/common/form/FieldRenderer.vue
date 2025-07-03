@@ -67,9 +67,9 @@
     <div
         v-else-if="(readonly || !field.editable) && !['sliderGroup', 'scoreChart', 'likert', 'radarChart', 'progressTimeline'].includes(field.type)"
         class="form-input readonly"
-    >
-      {{ field.value ?? model[field.key] ?? '' }}
-    </div>
+        v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
+    ></div>
+
 
 
     <!-- 입력 가능 -->
@@ -81,6 +81,9 @@
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
       />
+      <template v-if="field.type === 'html'">
+        <div class="html-field" v-html="field.value" />
+      </template>
       <input
           v-else-if="field.type === 'number'"
           type="number"
@@ -233,4 +236,11 @@ const scoreWidth = computed(() => {
   position: relative;
   z-index: 2;
 }
+.html-field {
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
 </style>

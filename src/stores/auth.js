@@ -17,7 +17,7 @@ export const useAuthStore = defineStore('auth', () => {
         try {
             const payload = JSON.parse(atob(at.split('.')[1]));
             console.log('payload', payload);
-            userRole.value = payload.role;
+            userRole.value = Array.isArray(payload.role) ? payload.role : [payload.role];
             expirationTime.value = payload.exp * 1000;
             userId.value = parseInt(payload.sub);
         } catch (e) {
