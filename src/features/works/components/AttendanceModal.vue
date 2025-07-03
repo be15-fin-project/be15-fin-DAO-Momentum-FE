@@ -1,6 +1,8 @@
 <script setup>
-import {computed, defineEmits, defineProps, watch} from 'vue'
+import {computed, reactive, watch} from 'vue'
 import CommonModal from '@/components/common/CommonModal.vue'
+import FieldRenderer from "@/components/common/FieldRenderer.vue";
+import FormSection from "@/components/common/form/FormSection.vue";
 
 const props = defineProps({
   visible: Boolean,
@@ -21,6 +23,37 @@ watch(() => props.clockInfo, (newVal) => {
 })
 
 const emit = defineEmits(['confirm', 'cancel'])
+
+const readonly = true
+const model = reactive({
+  now: '',
+  startTime: '',
+  endTime: '',
+  breakTime: '',
+  workTime: '',
+})
+
+watch(() => props.clockInfo, () => {
+  model.now = props.formatTime(now.value) || '-'
+  model.startTime = props.formatTime(startTime.value) || '-'
+  model.endTime = props.formatTime(endTime.value) || '-'
+  model.breakTime = props.formatDuration(breakTime.value)
+  model.workTime = props.formatDuration(workTime.value)
+}, { immediate: true , deep: true})
+
+const fields = computed(() =>
+    props.isAttended
+        ? [
+          { key: 'startTime', label: '출근 일시', type: 'input' },
+          { key: 'endTime', label: '퇴근 일시', type: 'input' },
+          { key: 'breakTime', label: '휴게시간', type: 'input' },
+          { key: 'workTime', label: '근무시간', type: 'input' },
+        ]
+        : [
+          { key: 'now', label: '현재 시각', type: 'input' },
+          { key: 'endTime', label: '예상 퇴근 일시', type: 'input' },
+        ]
+)
 </script>
 
 <template>
@@ -33,20 +66,24 @@ const emit = defineEmits(['confirm', 'cancel'])
       @cancel="$emit('cancel')"
   >
     <template #default>
-      <div v-if="!isAttended" class="attendance-text">
-        <h3>출근을 등록합니다.</h3>
-        현재 시각: {{ formatTime(now) }}
-      </div>
+      <FormSection
+          :fields="fields"
+          :layout="'two-column'"
+      >
+        <template #title>
+          <h3 class="section-title">{{ isAttended ? '퇴근' : '출근' }} 등록</h3>
+        </template>
 
-      <div v-else class="attendance-text">
-        <h3>퇴근을 등록합니다.</h3>
-        <p>
-          출근 일시: {{ formatTime(startTime) || '-' }} <br/>
-          퇴근 일시: {{ formatTime(endTime) || '-' }} <br/>
-          휴게시간: {{ formatDuration(breakTime) }} <br/>
-          근무시간: {{ formatDuration(workTime) }}
-        </p>
-      </div>
+        <FieldRenderer
+          v-for="field in fields"
+          :key="field.key"
+          :field="field"
+          :model="model"
+          :readonly="readonly"
+          >
+          {{ field.key }} : {{ model[field.key] }}
+        </FieldRenderer>
+      </FormSection>
     </template>
   </CommonModal>
 </template>
@@ -60,10 +97,31 @@ const emit = defineEmits(['confirm', 'cancel'])
   padding: 0.5rem 1rem;
 }
 
+.form-grid {
+  display: grid;
+  gap: 1rem;
+}
+
 :deep(.modal-buttons) {
   display: flex;
   gap: 12px;                   /* 버튼 사이 간격 */
   width: 100%;
   margin-top: 8px;             /* 버튼 위 여백 */
+}
+
+:deep(.modal-content) {
+  /*display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+
+  background-color: #fff;
+  margin: 15% auto;
+
+  border-radius: 12px;*/
+  padding: 40px;
+  width: 500px;
+  /*
+  text-align: center;*/
 }
 </style>

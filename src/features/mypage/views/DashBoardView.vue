@@ -120,6 +120,8 @@ const calendarOptions = computed(() => ({
   headerToolbar: {
     left: 'prev,next today',
     center: 'title',
+    /* 주간 일간도 지원 가능하나, "월간 일정" 수정 필요 */
+    // right: 'dayGridMonth dayGridWeek dayGridDay'
     right: ''
   },
   buttonText: {
@@ -191,7 +193,6 @@ const calendarOptions = computed(() => ({
             </div>
           </div>
         </aside>
-
 
         <!-- 메인 콘텐츠 -->
         <section class="dashboard-main">

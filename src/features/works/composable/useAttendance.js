@@ -56,11 +56,21 @@ export function useAttendance() {
     }
 
     async function updateClockInfo(referenceTime = new Date()) {
+        const companyStartTime = await getStartTime()
+        const [h, m] = companyStartTime.split(':').map(Number)
+
+        let companyEndAt = new Date()
+        if (hasPmHalfDayoff.value) {
+            companyEndAt.setHours(h + 4, m + 30, 0, 0)
+        } else {
+            companyEndAt.setHours(h + 9, m, 0, 0)
+        }
+
         if (!todaysWork.value || !todaysWork.value.startAt) {
             Object.assign(clockInfo, {
                 now: referenceTime,
                 startTime: null,
-                endTime: null,
+                endTime: companyEndAt, // 예상 퇴근 일시
                 breakTime: 0,
                 workTime: 0
             })
@@ -71,16 +81,6 @@ export function useAttendance() {
         start.setSeconds(0, 0)
         const now = new Date(referenceTime)
         now.setSeconds(0, 0)
-
-        const companyStartTime = await getStartTime()
-        const [h, m] = companyStartTime.split(':').map(Number)
-
-        let companyEndAt = new Date()
-        if (hasPmHalfDayoff.value) {
-            companyEndAt.setHours(h + 4, m + 30, 0, 0)
-        } else {
-            companyEndAt.setHours(h + 9, m, 0, 0)
-        }
 
         const endAt = new Date(Math.min(now, companyEndAt))
         const diffMins = Math.floor((endAt - start) / 60000)
