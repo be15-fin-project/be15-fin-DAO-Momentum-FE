@@ -110,18 +110,7 @@ const fields = computed(() =>
 }
 
 :deep(.modal-content) {
-  /*display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-
-  background-color: #fff;
-  margin: 15% auto;
-
-  border-radius: 12px;*/
   padding: 40px;
   width: 500px;
-  /*
-  text-align: center;*/
 }
 </style>
