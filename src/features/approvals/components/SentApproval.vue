@@ -193,14 +193,16 @@ function convertReceipt(receiptType) {
   return statusMap[receiptType] || null;
 }
 
+/* 보여지는 부분 수저하는 로직 */
 const displayApprovals = computed(() => {
   return sentApprovals.value.map(item => ({
     ...item,
     statusType: statusTypeMap[item.statusType] || item.statusType,
-    approveType: approveTypeMap[item.approveType] || item.approveType
+    approveType: approveTypeMap[item.approveType] || item.approveType,
+    createAt: item.createAt ? item.createAt.replace('T', ' ').slice(0, 16) : '',
+    completeAt: item.completeAt? item.completeAt.replace('T', ' ').slice(0, 16) : ''
   }));
 });
-
 
 /* 탭 클릭 시 로직 */
 // 탭 클릭
