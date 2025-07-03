@@ -12,3 +12,8 @@ export async function fetchDepartments() {
 export function fetchDepartmentInfo(deptId){
     return api.get(`/departments/${deptId}`)
 }
+
+export async function getHolidaysPerMonth(yearMonth) {
+    const resp = await api.get(`/holiday/calendar/${yearMonth}`)
+    return resp.data.data;
+}

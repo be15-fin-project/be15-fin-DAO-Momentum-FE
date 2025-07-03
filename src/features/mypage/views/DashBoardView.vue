@@ -1,44 +1,135 @@
 <script setup>
-import {onMounted, ref} from 'vue'
+import {computed, nextTick, onMounted, ref} from 'vue'
 import FullCalendar from '@fullcalendar/vue3'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import koLocale from '@fullcalendar/core/locales/ko'
-// import '@/assets/css/daygrid-event.css'
-// import '@/assets/css/daygrid.css'
+import {getMyWorks} from "@/features/works/api.js";
+import {getHolidaysPerMonth} from "@/features/company/api.js";
+
+const BLUE = "#3b82f6"
+const RED = "#ef4444"
+const GREEN = "#10b981"
 
 const calendarRef = ref(null)
 
+const events = ref([]);
+const params = ref({
+  searchStartDate: null,
+  searchEndDate: null
+})
+const holidays = ref([])
+
+// 휴일 데이터를 이벤트로 변환하는 함수
+const convertHolidayToEvent = (holiday) => ({
+  title: holiday.holidayName,
+  start: holiday.date,
+  allDay: true,
+  color: RED
+})
+
+const fetchHolidaysForMonth = async (yearMonth) => {
+  const response = await getHolidaysPerMonth(yearMonth)
+
+  holidays.value = response.holidayGetDTOList || []
+}
+
+const parseTitle = (item) => {
+  if (item.typeName === 'VACATION') {
+    return vacationType(item.vacationType)
+  } else if (item.typeName === 'ADDITIONAL') {
+    return workType(item.childTypeName)
+  } else {
+    return workType(item.typeName)
+  }
+}
+
+const getColor = (item) => {
+  switch (item.typeName) {
+    case 'VACATION':
+      return GREEN;
+    default:
+      return BLUE;
+  }
+}
+
+const convertToEvent = (item) => ({
+  title: parseTitle(item),
+  start: item.startAt,
+  end: item.endAt,
+  color: getColor(item)
+})
+
+// 날짜 바뀔 때마다 데이터 다시 불러와서 이벤트 채워주는 함수
+const handleDatesSet = async (info) => {
+  params.value.searchStartDate = info.startStr
+  params.value.searchEndDate = info.endStr
+
+  const yearMonth = info.startStr.slice(0, 7) // yyyy-MM 형식
+  await fetchHolidaysForMonth(yearMonth)
+
+  const resp = await getMyWorks(params.value)
+  const workEvents = resp.works.map(convertToEvent)
+  const holidayEvents = holidays.value.map(convertHolidayToEvent)
+
+  events.value = [...workEvents, ...holidayEvents]
+}
+
+const workType = (type) => ({
+  WORK: '근무',
+  REMOTE_WORK: '재택 근무',
+  BUSINESS_TRIP: '출장',
+  ADDITIONAL: '초과근무',
+  OVERTIME: '연장근무',
+  NIGHT: '야간근무',
+  HOLIDAY: '휴일근무',
+}[type] || type)
+
+const vacationType = (type) => ({
+  PAID_ETC: '기타 유급휴가',
+  UNPAID_ETC: '기타 무급휴가',
+  DAYOFF: '연차',
+  AM_HALF_DAYOFF: '오전 반차',
+  PM_HALF_DAYOFF: '오후 반차',
+  REFRESH: '리프레시 휴가',
+  MILITARY_TRAINING: '군 소집 훈련',
+  LIFE_EVENT: '경조사',
+}[type] || type)
+
+onMounted(async () => {
+  await nextTick();
+  if (calendarRef.value) {
+    calendarRef.value.getApi().updateSize();
+  }
+  // 초기에 첫 fetch를 위해 날짜 강제 세팅
+  const calendarApi = calendarRef.value?.getApi();
+  if (calendarApi) {
+    const view = calendarApi.view;
+    await handleDatesSet(view);
+  }
+});
+
 // FullCalendar 옵션
-const calendarOptions = ref({
+const calendarOptions = computed(() => ({
   plugins: [dayGridPlugin, interactionPlugin],
   initialView: 'dayGridMonth',
   locale: koLocale,
   selectable: true,
   height: 420,
-  aspectRatio: 1.4, // ✅ 셀 너비/높이 비율 조절
+  aspectRatio: 1.4,
   headerToolbar: {
     left: 'prev,next today',
     center: 'title',
     right: ''
-    // right: 'dayGridMonth dayGridWeek dayGridDay' 월단위, 주단위, 일단위 제공 가능
   },
   buttonText: {
     today: '오늘',
     month: '월'
   },
-  events: [
-    { title: '팀 회의', start: '2025-06-13T10:00:00', color: '#3b5bdb' },
-    { title: '고객사 미팅', start: '2025-06-19T15:00:00', color: '#ffb43a' },
-    { title: '워크샵', start: '2025-06-25', color: '#4ea685' },
-    { title: '반차', start: '2025-06-28', color: '#e8594a' }
-  ]
-})
+  events: events.value,
+  datesSet: handleDatesSet
+}));
 
-onMounted(() => {
-  // ✅ 강제로 크기 업데이트
-  calendarRef.value.getApi().updateSize()
-})
 </script>
 
 <template>
@@ -66,11 +157,13 @@ onMounted(() => {
           <div class="card attendance-info">
             <div class="side-section-title"><span class="material-icons">schedule</span>출퇴근 정보</div>
             <p><strong>출근 시간:</strong> 2025.06.08 오전 9:05</p>
-            <p><strong>예상 퇴근 시간:</strong> 오후 6:30 <span style="color:var(--success); font-weight:500;">(초과근무 승인 반영)</span>
+            <p><strong>예상 퇴근 시간:</strong> 오후 6:30 <span
+                style="color:var(--success); font-weight:500;">(초과근무 승인 반영)</span>
             </p>
           </div>
           <div class="card leave-info">
-            <div class="side-section-title"><span class="material-icons" style="color:var(--warning);">beach_access</span>잔여
+            <div class="side-section-title"><span class="material-icons"
+                                                  style="color:var(--warning);">beach_access</span>잔여
               연차
             </div>
             <p><strong>남은 일수:</strong> <span style="color:var(--warning);font-weight:600;">15일</span></p>
@@ -107,7 +200,7 @@ onMounted(() => {
             <div class="side-section-title">
               <span class="material-icons">event_note</span>월간 일정
             </div>
-            <FullCalendar :options="calendarOptions" />
+            <FullCalendar ref="calendarRef" :options="calendarOptions"/>
           </div>
 
           <!-- 결재문서 카드 -->
@@ -466,32 +559,6 @@ onMounted(() => {
 .calendar-card .side-section-title {
   margin-bottom: 12px;
 }
-
-/*
-.fc {
-  background: var(--gray-50);
-  border-radius: 14px;
-  box-shadow: 0 1.5px 8px 0 rgba(69, 111, 230, 0.04);
-  font-size: 15px;
-}
-
-.fc .fc-daygrid-day.fc-day-today {
-  background: var(--blue-100);
-  border-radius: 8px;
-}
-
-.fc .fc-event {
-  background: var(--blue-400);
-  border: none;
-  border-radius: 8px;
-  font-size: 13.2px;
-  padding: 2px 7px;
-}
-
-.fc .fc-event-title {
-  white-space: normal;
-}
-*/
 
 /* KPI */
 .kpi-card {
