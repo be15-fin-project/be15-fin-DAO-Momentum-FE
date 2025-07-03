@@ -155,7 +155,7 @@ function normalizeFilter(values) {
 async function handleSearch(values) {
   const params = {
     ...normalizeFilter(values),
-    empNo: route.query.empNo,
+    empNo: values.empNo ?? route.query.empNo,
     page: currentPage.value,
     size: 10
   };
