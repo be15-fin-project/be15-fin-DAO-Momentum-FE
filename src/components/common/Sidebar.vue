@@ -151,9 +151,9 @@ const menuItems = [
     label: '사원 관리',
     icon: 'group',
     subItems: [
-      {label: '사원 목록 조회', hrefs: ['../employees']},
-      {label: '인사 발령 내역', hrefs: ['../employee/appointment']},
-      {label: '계약서 목록 조회', hrefs: ['../contracts']}
+      { label: '사원 목록 조회', hrefs: ['../employees'] },
+      { label: '인사 발령 내역', hrefs: ['../appoints'] },
+      { label: '계약서 목록 조회', hrefs: ['../contracts'] }
     ],
     requireRole: ['MASTER', 'HR_MANAGER']
   },
