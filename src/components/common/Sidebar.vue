@@ -11,8 +11,8 @@
       <span class="top-icons">
         <button class="side-btn">출근</button>
         <button class="sidebar-toggle" @click="toggleAlertPanel">
-  <span class="material-symbols-rounded notification-icon">notifications</span>
-</button>
+        <span class="material-symbols-rounded notification-icon">notifications</span>
+      </button>
       </span>
       <button class="sidebar-toggle" @click="toggleSidebar">
         <span class="material-symbols-rounded">menu</span>
@@ -20,7 +20,7 @@
     </div>
 
     <!-- Alert Panel -->
-    <AlertPanel :visible="showAlertPanel" @close="toggleAlertPanel" />
+    <AlertPanel :visible="showAlertPanel" @close="toggleAlertPanel"/>
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
@@ -90,22 +90,22 @@
 
 <script setup>
 import {ref, computed, onMounted} from 'vue'
-import { storeToRefs } from 'pinia'
-import { useAuthStore } from '@/stores/auth.js'
-import { logoutUser } from '@/features/common/api.js'
+import {storeToRefs} from 'pinia'
+import {useAuthStore} from '@/stores/auth.js'
+import {logoutUser} from '@/features/common/api.js'
 import router from '@/router/index.js'
-import { useRoute } from 'vue-router'
+import {useRoute} from 'vue-router'
 import AlertPanel from "@/components/common/AlertPanel.vue";
-import { getEvaluationRoundStatus } from '@/features/performance/api.js'
+import {getEvaluationRoundStatus} from '@/features/performance/api.js'
 
 const authStore = useAuthStore()
 const route = useRoute()
-const { userRole } = storeToRefs(authStore)
+const {userRole} = storeToRefs(authStore)
 
 const collapsed = ref(false)
 const openSubmenu = ref(null)
 const currentUserRoles = ref(['HR_MANAGER', 'MANAGER'])
-const roundStatus = ref({ inProgress: false, roundId: null })
+const roundStatus = ref({inProgress: false, roundId: null})
 
 const showAlertPanel = ref(false)
 
@@ -114,17 +114,17 @@ const menuItems = [
     label: '회사 정보',
     icon: 'apartment',
     subItems: [
-      { label: '회사 정보', hrefs: ['../company/company-info'] },
-      { label: '조직도', hrefs: ['../company/org-chart'] }
+      {label: '회사 정보', hrefs: ['../company/company-info']},
+      {label: '조직도', hrefs: ['../company/org-chart']}
     ]
   },
   {
     label: '사원 관리',
     icon: 'group',
     subItems: [
-      { label: '사원 목록 조회', hrefs: ['../employees'] },
-      { label: '인사 발령 내역', hrefs: ['../employee/appointment'] },
-      { label: '계약서 목록 조회', hrefs: ['../contracts'] }
+      {label: '사원 목록 조회', hrefs: ['../employees']},
+      {label: '인사 발령 내역', hrefs: ['../employee/appointment']},
+      {label: '계약서 목록 조회', hrefs: ['../contracts']}
     ],
     requireRole: ['MASTER', 'HR_MANAGER']
   },
@@ -138,9 +138,9 @@ const menuItems = [
     label: '내 정보',
     icon: 'person',
     subItems: [
-      { label: '대시보드', hrefs: ['../mypage/dashboard'] },
-      { label: '내 정보 조회', hrefs: ['../mypage/profile'] },
-      { label: '계약서 내역 조회', hrefs: ['../mypage/contracts'] }
+      {label: '대시보드', hrefs: ['../mypage/dashboard']},
+      {label: '내 정보 조회', hrefs: ['../mypage/profile']},
+      {label: '계약서 내역 조회', hrefs: ['../mypage/contracts']}
     ]
   },
   {
@@ -152,7 +152,7 @@ const menuItems = [
         hrefs: ['../approvals'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      { label: '문서함', hrefs: ['../approval/inbox'] }
+      {label: '문서함', hrefs: ['../approval/inbox']}
     ]
   },
   {
@@ -164,7 +164,7 @@ const menuItems = [
         hrefs: ['../kpi/statics', '../kpi/employee-kpis', '../kpi/employee-detail'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      { label: 'KPI 조회', hrefs: ['../kpi/kpi-list'] },
+      {label: 'KPI 조회', hrefs: ['../kpi/kpi-list']},
       {
         label: 'KPI 요청 관리',
         hrefs: ['../kpi/requests'],
@@ -180,7 +180,7 @@ const menuItems = [
         hrefs: ['../eval/submit'],
         required: () => roundStatus.value.inProgress === true
       },
-      { label: '인사 평가 조회', hrefs: ['../hr/hr-list'] },
+      {label: '인사 평가 조회', hrefs: ['../hr/hr-list']},
       {
         label: '이의 제기 관리',
         hrefs: ['../hr/my-objection'],
@@ -235,7 +235,7 @@ function resolveRoute(hrefs) {
       // roundId 함께 넘기기
       return {
         path: resolved[0],
-        state: { roundId: roundStatus.value.roundId }
+        state: {roundId: roundStatus.value.roundId}
       }
     }
     return '/'
@@ -304,7 +304,6 @@ function isAllowed(item) {
 }
 
 
-
 function hasVisibleSubItems(menu) {
   if (!menu?.subItems) return false
   return menu.subItems.some((sub) => isAllowed(sub))
@@ -328,14 +327,12 @@ function toggleAlertPanel() {
 onMounted(async () => {
   try {
     const result = await getEvaluationRoundStatus()
-    roundStatus.value = result || { inProgress: false, roundId: null }
+    roundStatus.value = result || {inProgress: false, roundId: null}
   } catch (e) {
     console.error('평가 진행 여부 조회 실패', e)
   }
 })
 </script>
-
-
 
 
 <style scoped>
@@ -416,7 +413,6 @@ onMounted(async () => {
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   flex: 1;
   overflow-y: auto; /* 이 영역만 스크롤 */
   padding: 20px 0;
@@ -435,6 +431,7 @@ onMounted(async () => {
   color: var(--gray-300);
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
+  margin-bottom: 0.5rem;
 }
 
 .sidebar-item:hover {
