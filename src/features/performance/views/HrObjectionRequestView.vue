@@ -26,16 +26,26 @@
 
     <SideModal
         :visible="isOpen"
-        title="인사 평가 상세 정보"
+        title="이의 제기 상세 정보"
         icon="fa-star-half-stroke"
-        :showSubmit="false"
-        :showReject="isPending"
-        :rejectText="`이의제기 삭제`"
-        :sections="formSections"
-        @close="isOpen = false"
-        @reject="handleReject"
+
+        :showReject="!isEditing && isPending"
+        :showSubmit="(!isEditing && isPending) || isSubmit"
+        :showCancel="isSubmit"
+
+        :submitText="isSubmit ? '처리' : '승인'"
+        :rejectText="isEditing ? '취소' : '반려'"
+
+        @submit="onSubmit"
+        @reject="onReject"
+        @cancel="handleCancel"
+        @close="handleClose"
+
         v-model:form="createForm"
+        :sections="formSections"
     />
+
+
   </main>
 </template>
 
@@ -80,9 +90,20 @@ const route = useRoute();
 const authStore = useAuthStore();
 const { userRole } = storeToRefs(authStore);
 
+const isSubmit = ref(false); // 승인 시 사용
+const isEditing = ref(false); // 승인/반려 공통
+const isApproval = ref(); // true면 승인, false면 반려
+
+const selectedContent = ref(null);
+const selectedFactorScores = ref([]);
+const selectedWeightInfo = ref(null);
+const selectedRateInfo = ref(null);
+
+
+
 const tableColumns = [
   { key: 'roundNo', label: '회차' },
-  { key: 'status', label: '상태' },
+  { key: 'statusType', label: '상태' },
   { key: 'createdAt', label: '평가일' },
   { key: 'score', label: '등급' },
   { key: 'action', label: '상세' },
@@ -97,7 +118,8 @@ const mappedTableData = computed(() =>
     tableData.value.map(row => ({
       ...row,
       createdAt: row.createdAt?.split(' ')[0] ?? '',
-      statusType: getStatusLabel(row.statusType),
+      statusType: getStatusLabel(row.status),
+      statusHtml: getStatusWithIcon(row.status),
     }))
 );
 
@@ -173,122 +195,118 @@ const openModalHandler = async (row) => {
     isRejecting.value = false;
     createForm.value = { reason: '' };
 
-    formSections.value = [
-      {
-        title: '인사 평가 정보',
-        icon: 'fa-clipboard-check',
-        layout: 'two-column',
-        fields: [
-          { label: '회차', value: row.roundNo, type: 'input', editable: false },
-          { label: '사원명', value: `${content.empName} (${content.empNo})`, type: 'input', editable: false },
-          { label: '등급', value: row.overallGrade, type: 'input', editable: false },
-          { label: '평가일', value: content.evaluatedAt?.split(' ')[0], type: 'input', editable: false },
-        ]
-      },
-      {
-        title: '요인별 평가 결과',
-        icon: 'fa-star-half-alt',
-        layout: 'one-column',
-        fields: [ {
-          label: '',
-          type: 'radarChart',
-          editable: false,
-          value: {
-            labels: factorScores.map(f => f.propertyName),
-            scores: factorScores.map(f => f.score),
-          }
-        }]
-      },
-      {
-        title: '항목 가중치 (%)',
-        icon: 'fa-weight-hanging',
-        layout: 'one-column',
-        fields: [ {
-          key: 'weightSegments',
-          type: 'sliderGroup',
-          initial: [
-            weightInfo?.weightPerform,
-            weightInfo?.weightTeam,
-            weightInfo?.weightAttitude,
-            weightInfo?.weightGrowth,
-            weightInfo?.weightEngagement,
-            weightInfo?.weightResult
-          ],
-          labels: ['성과', '팀워크', '태도', '성장', '몰입', '결과'],
-          icons: ['fa-chart-line', 'fa-people-group', 'fa-thumbs-up', 'fa-seedling', 'fa-fire', 'fa-award'],
-          editable: false
-        }]
-      },
-      {
-        title: '등급 비율 (%)',
-        icon: 'fa-percent',
-        layout: 'one-column',
-        fields: [ {
-          key: 'gradeRatios',
-          type: 'sliderGroup',
-          initial: [
-            rateInfo?.rateS,
-            rateInfo?.rateA,
-            rateInfo?.rateB,
-            rateInfo?.rateC,
-            rateInfo?.rateD
-          ],
-          labels: ['S등급', 'A등급', 'B등급', 'C등급', 'D등급'],
-          icons: ['fa-star', 'fa-medal', 'fa-user', 'fa-user-alt', 'fa-user-slash'],
-          editable: false
-        }]
-      },
-      {
-        title: '이의제기 현황',
-        icon: 'fa-comments',
-        layout: 'one-column',
-        fields: [
-          {
-            label: '이의제기 사유',
-            value: content.objectionReason,
-            type: 'textarea',
-            editable: false,
-          },
-          {
-            label: '관리자 답변',
-            value: content.responseReason
-                ? content.responseReason
-                : '<i class="fas fa-hourglass-half" style="color: #999;"></i>',
-            type: 'html',
-            editable: false,
-          },
-          {
-            label: '처리 상태',
-            value: getStatusWithIcon(content.statusType),
-            type: 'input',
-            editable: false,
-          }
-        ]
-      }
+    selectedContent.value = content;
+    selectedFactorScores.value = factorScores;
+    selectedWeightInfo.value = weightInfo;
+    selectedRateInfo.value = rateInfo;
 
-    ];
+    formSections.value = buildFormSections(content, factorScores, weightInfo, rateInfo);
+
   } catch (e) {
     console.error('상세 조회 실패:', e);
     isOpen.value = false;
   }
 };
 
-const handleReject = async () => {
+
+const onSubmit = () => {
+  if (isSubmit.value) {
+    handleSubmit();
+  } else {
+    handleSubmitClick();
+  }
+};
+
+const onReject = () => {
+  if (isEditing.value) {
+    handleCancel();
+  } else {
+    handleReject();
+  }
+};
+
+const handleReject = () => {
+  isEditing.value = true;
+  isApproval.value = false;
+  isSubmit.value = true;
+  formSections.value = buildFormSections(selectedContent.value, selectedFactorScores.value, selectedWeightInfo.value, selectedRateInfo.value, true, false);
+};
+
+const handleSubmitClick = () => {
+  isEditing.value = true;
+  isApproval.value = true;
+  isSubmit.value = true;
+  formSections.value = buildFormSections(selectedContent.value, selectedFactorScores.value, selectedWeightInfo.value, selectedRateInfo.value, true, true);
+};
+
+const handleCancel = () => {
+  isEditing.value = false;
+  isApproval.value = false;
+  isSubmit.value = false;
+  createForm.value = { reason: '' };
+  openModalHandler(selectedRow.value); // 값 초기화
+};
+
+
+const handleSubmit = async () => {
   if (!selectedRow.value) return;
 
-  const confirmed = window.confirm('정말로 이의제기를 삭제하시겠습니까?');
-  if (!confirmed) return;
+  const reasonField = formSections.value
+      .find(s => s.title === '이의제기 현황')?.fields
+      .find(f => f.key === 'reason');
+
+  const reason = reasonField?.value || '';
+
+  const payload = {
+    objectionId: selectedRow.value.objectionId,
+    approved: isApproval.value,
+    rejectReason: reason,
+  };
+
+  if (isApproval.value) {
+    const factorSection = formSections.value.find(s => s.title === '요인별 평가 결과');
+    const scoreField = factorSection?.fields?.find(f => f.type === 'scoreChart');
+
+    // ✅ 여기 넣으세요
+    console.log('[DEBUG] scoreField.value:', scoreField?.value);
+
+    payload.factorScores = scoreField?.value?.map(f => ({
+      propertyId: f.propertyId,
+      score: f.score
+    })) || [];
+
+    // ✅ 여기도 넣으세요
+    console.log('[DEBUG] payload:', payload);
+  }
 
   try {
-    await processHrObjection(selectedRow.value.objectionId);
-    alert('이의제기가 삭제되었습니다.');
+    await processHrObjection(payload);
+    alert(isApproval.value ? '승인 처리되었습니다.' : '반려 처리되었습니다.');
     isOpen.value = false;
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('이의제기 삭제 실패:', e);
-    alert('삭제 중 오류가 발생했습니다.');
+    console.error('[ERROR] 이의제기 처리 실패:', e);
+    alert('처리 중 오류가 발생했습니다.');
   }
 };
+
+
+const handleClose = () => {
+  isOpen.value = false;
+
+  // 상태 리셋
+  isEditing.value = false;
+  isSubmit.value = false;
+  isApproval.value = false;
+  isRejecting.value = false;
+  createForm.value = { reason: '' };
+  selectedContent.value = null;
+  selectedFactorScores.value = [];
+  selectedWeightInfo.value = null;
+  selectedRateInfo.value = null;
+  formSections.value = [];
+};
+
 
 
 const fetchRoundNos = async () => {
@@ -343,6 +361,99 @@ function getStatusWithIcon(statusType) {
     default:
       return '-';
   }
+}
+
+function buildFormSections(content, factorScores, weightInfo, rateInfo, editable = false, approvalMode = false) {
+  return [
+    {
+      title: '인사 평가 정보',
+      icon: 'fa-clipboard-check',
+      layout: 'two-column',
+      fields: [
+        { label: '회차', value: content.roundNo, type: 'input', editable: false },
+        { label: '사원명', value: `${content.empName} (${content.empNo})`, type: 'input', editable: false },
+        { label: '등급', value: content.overallGrade, type: 'input', editable: false },
+        { label: '평가일', value: content.evaluatedAt?.split(' ')[0], type: 'input', editable: false },
+      ]
+    },
+    {
+      title: '요인별 평가 결과',
+      icon: 'fa-star-half-alt',
+      layout: 'one-column',
+      fields: [
+        {
+          type: 'scoreChart',
+          value: factorScores.map(f => ({ label: f.propertyName, score: f.score, propertyId: f.propertyId })),
+          editable: editable && approvalMode,
+        }
+      ],
+    },
+    {
+      title: '항목 가중치 (%)',
+      icon: 'fa-weight-hanging',
+      layout: 'one-column',
+      fields: [{
+        key: 'weightSegments',
+        type: 'sliderGroup',
+        initial: [
+          weightInfo?.weightPerform,
+          weightInfo?.weightTeam,
+          weightInfo?.weightAttitude,
+          weightInfo?.weightGrowth,
+          weightInfo?.weightEngagement,
+          weightInfo?.weightResult
+        ],
+        labels: ['성과', '팀워크', '태도', '성장', '몰입', '결과'],
+        icons: ['fa-chart-line', 'fa-people-group', 'fa-thumbs-up', 'fa-seedling', 'fa-fire', 'fa-award'],
+        editable: false
+      }]
+    },
+    {
+      title: '등급 비율 (%)',
+      icon: 'fa-percent',
+      layout: 'one-column',
+      fields: [{
+        key: 'gradeRatios',
+        type: 'sliderGroup',
+        initial: [
+          rateInfo?.rateS,
+          rateInfo?.rateA,
+          rateInfo?.rateB,
+          rateInfo?.rateC,
+          rateInfo?.rateD
+        ],
+        labels: ['S등급', 'A등급', 'B등급', 'C등급', 'D등급'],
+        icons: ['fa-star', 'fa-medal', 'fa-user', 'fa-user-alt', 'fa-user-slash'],
+        editable: false
+      }]
+    },
+    {
+      title: '이의제기 현황',
+      icon: 'fa-comments',
+      layout: 'one-column',
+      fields: [
+        {
+          label: '이의제기 사유',
+          value: content.objectionReason,
+          type: 'textarea',
+          editable: false,
+        },
+        {
+          label: '처리 사유',
+          key: 'reason',
+          value: content.responseReason || '',
+          type: 'textarea',
+          editable: editable,
+        },
+        {
+          label: '처리 상태',
+          value: getStatusWithIcon(content.statusType),
+          type: 'input',
+          editable: false,
+        }
+      ]
+    }
+  ];
 }
 
 
