@@ -141,10 +141,10 @@
 import {ref, onMounted} from "vue";
 import {fetchDepartmentInfo, fetchDepartments} from "@/features/company/api.js";
 import '@/assets/css/index.css'
+import '@/assets/css/orgChartTransition.css'
 import "vue3-treeview/dist/style.css";
 import Tree from "vue3-treeview";
 
-const orgTree = ref([]); // 조직 트리 구조
 const nodes = ref({});
 const config = ref({
     roots: []
@@ -187,7 +187,7 @@ function convertDeptTreeToMap(data) {
       text: node.name,
       children,
       state: {
-        opened: true,
+        opened: true
       }
     };
 

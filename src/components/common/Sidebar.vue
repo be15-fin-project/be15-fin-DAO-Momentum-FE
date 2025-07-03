@@ -408,7 +408,6 @@ onMounted(async () => {
 })
 </script>
 
-
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Pretendard&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded');
