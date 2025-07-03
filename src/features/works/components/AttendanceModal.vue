@@ -1,7 +1,7 @@
 <script setup>
 import {computed, reactive, watch} from 'vue'
 import CommonModal from '@/components/common/CommonModal.vue'
-import FieldRenderer from "@/components/common/FieldRenderer.vue";
+import FieldRenderer from "@/components/common/form/FieldRenderer.vue";
 import FormSection from "@/components/common/form/FormSection.vue";
 
 const props = defineProps({
