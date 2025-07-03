@@ -1,12 +1,70 @@
+<template>
+  <main>
+    <HeaderWithTabs
+        :headerItems="[
+            { label: '평가 내역', to: '/eval/manage-peer', active: true },
+            { label: '평가 회차', to: '/eval/round', active: false }]"
+        :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
+        :tabs="[
+            { label: '사원 간 평가', icon: 'fa-building', to: '/eval/manage-peer' },
+            { label: '조직 평가', icon: 'fa-sitemap', to: '/eval/manage-org' },
+            { label: '자가 진단', icon: 'fa-user-tie', to: '/eval/manage-self' }
+            ]"
+        :showTabs="true"
+        :activeTab="currentTab"
+        @tabSelected="currentTab = $event"
+        @download="handleDownload"
+
+    />
+
+    <EmployeeFilter
+        :filters="filterOptions"
+        v-model="filterValues"
+        @search="handleSearch"
+    />
+
+    <BaseTable
+        :columns="[
+          { key: 'roundNo', label: '회차' },
+          { key: 'formDisplayName', label: '평가 유형' },
+          { key: 'evalName', label: '평가자' },
+          { key: 'targetName', label: '피평가자' },
+          { key: 'score', label: '점수' },
+          { key: 'action', label: '상세' },
+        ]"
+        :rows="mappedTableData"
+        @click-detail="openModalHandler"
+    />
+
+    <Pagination
+        v-if="pagination.totalPage >= 1"
+        :total-pages="pagination.totalPage"
+        v-model="currentPage"
+    />
+
+    <SideModal
+        :visible="isOpen"
+        :title="'평가 상세 정보'"
+        icon="fa-chart-line"
+        :sections="formSections"
+        :showSubmit="false"
+        @close="isOpen = false"
+    />
+  </main>
+</template>
+
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue';
-import { getDepartments, getPositions } from '@/features/works/api.js';
+import {
+  getDepartments,
+  getPositions
+} from '@/features/works/api.js';
 import {
   getEvaluationFormTypes,
   getEvaluationRoundNos,
   getPeerEvaluations,
-  getPeerExcelDownload,
-  getPeerEvaluationDetail
+  getPeerEvaluationDetail,
+  getPeerExcelDownload
 } from '@/features/performance/api.js';
 
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
@@ -15,30 +73,54 @@ import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
 
+// ======================= 상태 변수 =======================
 const currentPage = ref(1);
 const filterValues = ref({});
 const tableData = ref([]);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
+
 const isOpen = ref(false);
+const selectedRow = ref(null);
+const formSections = ref([]);
+
 const departmentTree = ref([]);
 const positionList = ref([]);
-const formSections = ref([]);
-const selectedRow = ref(null);
 const formTypeList = ref([]);
 const roundList = ref([]);
+
+const filterOptions = ref([]);
 const currentTab = ref('사원 간 평가');
 
+// ======================= 초기화 =======================
+onMounted(async () => {
+  try {
+    const [deptRes, posRes] = await Promise.all([
+      getDepartments(),
+      getPositions()
+    ]);
+    departmentTree.value = deptRes.data?.departmentInfoDTOList || [];
+    positionList.value = posRes;
 
+    await Promise.all([fetchFormTypes(), fetchRoundNos()]);
+    initFilters();
+    await handleSearch({});
+  } catch (e) {
+    console.error('초기화 실패:', e);
+  }
+});
+
+watch(currentPage, () => handleSearch(filterValues.value));
+
+// ======================= 필터 =======================
 const fetchFormTypes = async () => {
-  formTypeList.value = await getEvaluationFormTypes({ typeId: 1 });
+  formTypeList.value = await getEvaluationFormTypes({ typeId: 1 }); // 사원 간 평가
 };
 
 const fetchRoundNos = async () => {
   roundList.value = await getEvaluationRoundNos();
 };
 
-// 필터
-function initFilters() {
+const initFilters = () => {
   filterOptions.value = [
     {
       key: 'formId',
@@ -89,12 +171,9 @@ function initFilters() {
       type: 'date-range',
     },
   ];
-}
+};
 
-
-const filterOptions = ref([]);
-
-function normalizeFilterParams(values) {
+const normalizeFilterParams = (values) => {
   const normalized = { ...values };
 
   if (normalized.date_start) {
@@ -106,7 +185,6 @@ function normalizeFilterParams(values) {
     delete normalized.date_end;
   }
 
-  // 직위 변환 (이름 → ID)
   if (normalized.positionId && normalized.positionId !== '전체') {
     const match = positionList.value.find(p => p.name === normalized.positionId);
     normalized.positionId = match?.positionId ?? null;
@@ -114,20 +192,19 @@ function normalizeFilterParams(values) {
     normalized.positionId = null;
   }
 
-  // 부서 ID 변환 (string → number)
   if (typeof normalized.deptId === 'string') {
     normalized.deptId = Number(normalized.deptId);
   }
 
-  // 폼 ID 변환 (form name → formId)
   if (normalized.formId && normalized.formId !== '전체') {
-    const match = formTypeList.value.find(f => f.name === normalized.formId || f.description === normalized.formId);
+    const match = formTypeList.value.find(f =>
+        f.name === normalized.formId || f.description === normalized.formId
+    );
     normalized.formId = match?.formId ?? null;
   } else {
     normalized.formId = null;
   }
 
-// 회차 변환 (roundNo → roundId)
   if (normalized.roundId && normalized.roundId !== '전체') {
     normalized.roundNo = normalized.roundId;
   } else {
@@ -135,12 +212,11 @@ function normalizeFilterParams(values) {
   }
   delete normalized.roundId;
 
-
   return normalized;
-}
+};
 
-
-async function handleSearch(values) {
+// ======================= 조회 =======================
+const handleSearch = async (values) => {
   const params = {
     ...normalizeFilterParams(values),
     page: currentPage.value,
@@ -152,34 +228,33 @@ async function handleSearch(values) {
   try {
     const resData = await getPeerEvaluations(params);
     tableData.value = resData.list ?? [];
-
-    const current = resData.pagination?.currentPage || 1;
-    const total = resData.pagination?.totalPage > 0 ? resData.pagination.totalPage : 1;
-    pagination.value = { currentPage: current, totalPage: total };
+    pagination.value = {
+      currentPage: resData.pagination?.currentPage || 1,
+      totalPage: Math.max(resData.pagination?.totalPage || 1, 1),
+    };
   } catch (e) {
     console.error('평가 목록 조회 실패:', e);
     tableData.value = [];
   }
-}
+};
 
-// 가공된 테이블 row 목록
 const mappedTableData = computed(() =>
     tableData.value.map(row => {
       const form = formTypeList.value.find(f => f.name === row.formName);
       return {
         ...row,
-        formDisplayName: form?.description || row.formName, // 매핑 실패 시 원본 fallback
+        formDisplayName: form?.description || row.formName,
       };
     })
 );
 
-async function openModalHandler(row) {
+// ======================= 상세 보기 =======================
+const openModalHandler = async (row) => {
   selectedRow.value = row;
   isOpen.value = true;
 
   try {
     const { detail, factorScores } = await getPeerEvaluationDetail(row.resultId);
-
     const form = formTypeList.value.find(f => f.name === detail.formName);
     const formDisplayName = form?.description || detail.formName;
     const formattedDate = detail.createdAt?.split('T')[0];
@@ -226,7 +301,7 @@ async function openModalHandler(row) {
             value: f.score,
             type: 'scoreChart',
             editable: false,
-          }))
+          })),
         }]
         : [];
 
@@ -235,17 +310,13 @@ async function openModalHandler(row) {
     console.error('상세 조회 실패:', err);
     isOpen.value = false;
   }
-}
+};
 
-
-// 엑셀 다운로드
-async function handleDownload() {
+// ======================= 엑셀 다운로드 =======================
+const handleDownload = async () => {
   try {
     const normalized = normalizeFilterParams(filterValues.value);
-
-    const blob = await getPeerExcelDownload({
-      ...normalized
-    });
+    const blob = await getPeerExcelDownload({ ...normalized });
 
     const url = window.URL.createObjectURL(new Blob([blob]));
     const link = document.createElement('a');
@@ -259,81 +330,5 @@ async function handleDownload() {
     console.error('엑셀 다운로드 오류:', err);
     alert('엑셀 다운로드 실패');
   }
-}
-
-watch(currentPage, () => handleSearch(filterValues.value));
-
-onMounted(async () => {
-  try {
-    const [deptRes, posRes] = await Promise.all([
-      getDepartments(),
-      getPositions(),
-    ]);
-    departmentTree.value = deptRes.data?.departmentInfoDTOList || [];
-    positionList.value = posRes;
-
-    await Promise.all([fetchFormTypes(), fetchRoundNos()]);
-
-    initFilters();
-    await handleSearch({});
-  } catch (e) {
-    console.error('초기화 실패:', e);
-  }
-});
-
+};
 </script>
-
-<template>
-  <main>
-    <HeaderWithTabs
-        :headerItems="[
-            { label: '평가 내역', to: '/eval/manage', active: true },
-            { label: '평가 회차', to: '/eval/round', active: false }]"
-        :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
-        :tabs="[
-            { label: '사원 간 평가', icon: 'fa-building', to: '/eval/manage' },
-            { label: '조직 평가', icon: 'fa-sitemap', to: '/eval/manage-org' },
-            { label: '자가 진단', icon: 'fa-user-tie', to: '/eval/manage-self' }
-            ]"
-        :showTabs="true"
-        :activeTab="currentTab"
-        @tabSelected="currentTab = $event"
-        @download="handleDownload"
-
-    />
-
-    <EmployeeFilter
-        :filters="filterOptions"
-        v-model="filterValues"
-        @search="handleSearch"
-    />
-
-    <BaseTable
-        :columns="[
-          { key: 'roundNo', label: '회차' },
-          { key: 'formDisplayName', label: '폼 이름' },
-          { key: 'evalName', label: '평가자' },
-          { key: 'targetName', label: '피평가자' },
-          { key: 'score', label: '점수' },
-          { key: 'action', label: '상세' },
-        ]"
-        :rows="mappedTableData"
-        @click-detail="openModalHandler"
-    />
-
-    <Pagination
-        v-if="pagination.totalPage >= 1"
-        :total-pages="pagination.totalPage"
-        v-model="currentPage"
-    />
-
-    <SideModal
-        :visible="isOpen"
-        :title="'평가 상세 정보'"
-        icon="fa-chart-line"
-        :sections="formSections"
-        :showSubmit="false"
-        @close="isOpen = false"
-    />
-  </main>
-</template>

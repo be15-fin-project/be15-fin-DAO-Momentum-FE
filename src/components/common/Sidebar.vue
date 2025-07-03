@@ -102,13 +102,14 @@
 </template>
 
 <script setup>
-import {onMounted, onUnmounted, ref} from 'vue'
+import {onMounted, onUnmounted, ref, computed} from 'vue'
 import {storeToRefs} from 'pinia'
 import {useAuthStore} from '@/stores/auth.js'
 import {logoutUser} from '@/features/common/api.js'
 import router from '@/router/index.js'
 import {useRoute} from 'vue-router'
 import AlertPanel from "@/components/common/AlertPanel.vue";
+import { getEvaluationRoundStatus } from '@/features/performance/api.js'
 import {endWork, startWork} from "@/features/works/api.js";
 import AttendanceModal from "@/features/works/components/AttendanceModal.vue";
 import {useToast} from "vue-toastification";
@@ -122,6 +123,7 @@ const toast = useToast()
 const collapsed = ref(false)
 const openSubmenu = ref(null)
 const currentUserRoles = ref(['HR_MANAGER', 'MANAGER'])
+const roundStatus = ref({ inProgress: false, roundId: null })
 
 /* 출퇴근 관련 */
 const {
@@ -193,7 +195,7 @@ const menuItems = [
         hrefs: ['../kpi/statics', '../kpi/employee-kpis', '../kpi/employee-detail'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      {label: 'KPI 조회', hrefs: ['../kpi/list']},
+      { label: 'KPI 조회', hrefs: ['../kpi/kpi-list'] },
       {
         label: 'KPI 요청 관리',
         hrefs: ['../kpi/requests'],
@@ -201,11 +203,15 @@ const menuItems = [
       },
       {
         label: '평가 관리',
-        hrefs: ['../eval/manage', '../eval/manage-org', '../eval/manage-self', '../eval/round'],
+        hrefs: ['/eval/manage-peer', '../eval/manage-org', '../eval/manage-self', '../eval/round'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      {label: '다면 평가 제출', hrefs: ['../eval/submit']},
-      {label: '인사 평가 조회', hrefs: ['../hr/list']},
+      {
+        label: '다면 평가 제출',
+        hrefs: ['../eval/submit'],
+        required: () => roundStatus.value.inProgress === true
+      },
+      { label: '인사 평가 조회', hrefs: ['../hr/hr-list'] },
       {
         label: '이의 제기 관리',
         hrefs: ['../hr/objections'],
@@ -264,18 +270,19 @@ function toggleSubmenu(index) {
 
 function resolveRoute(hrefs) {
   if (typeof hrefs === 'function') {
-    for (const role of userRole.value) {
-      try {
-        const resolved = hrefs(role)
-        if (resolved?.length > 0) return resolved[0]
-      } catch (e) {
-        console.warn('resolveRoute error:', e)
+    const resolved = hrefs()
+    if (resolved?.length > 0) {
+      // roundId 함께 넘기기
+      return {
+        path: resolved[0],
+        state: { roundId: roundStatus.value.roundId }
       }
     }
     return '/'
   }
   return Array.isArray(hrefs) && hrefs.length > 0 ? hrefs[0] : '/'
 }
+
 
 function resolveRouteList(hrefs) {
   if (typeof hrefs === 'function') {
@@ -322,12 +329,17 @@ function isSubmenuActive(subItems) {
 function isAllowed(item) {
   if (!item) return false;
 
-  // 권한 없으면 모두 허용
+  // 1. 추가 조건 (required 함수) → false면 표시 안 함
+  if (typeof item.required === 'function' && !item.required()) {
+    return false
+  }
+
+  // 2. 권한 조건 없으면 허용
   if (!item.requireRole || item.requireRole.length === 0) {
     return true;
   }
 
-  // 현재 사용자 역할이 하나라도 포함되면 true
+  // 3. 현재 사용자 권한이 하나라도 포함되면 허용
   return item.requireRole.some((required) => userRole.value.includes(required));
 }
 
@@ -384,6 +396,16 @@ function formatDuration(minutes) {
   if (m > 0) parts.push(`${m}분`);
   return parts.length ? parts.join(' ') : '0분';
 }
+
+
+onMounted(async () => {
+  try {
+    const result = await getEvaluationRoundStatus()
+    roundStatus.value = result || { inProgress: false, roundId: null }
+  } catch (e) {
+    console.error('평가 진행 여부 조회 실패', e)
+  }
+})
 </script>
 
 <style scoped>
