@@ -30,3 +30,18 @@ export const getWorkDetails = async (workId) => {
     const resp = await api.get(`/works/${workId}`);
     return resp.data.data.workDetails;
 }
+
+export const getMyTodaysAttendance = async () => {
+    const resp = await api.get("/works/me/today");
+    return resp.data.data;
+}
+
+export const startWork = async () => {
+    const resp = await api.post('/works');
+    return resp.data.data;
+}
+
+export const endWork = async () => {
+    const resp = await api.put('/works');
+    return resp.data.data;
+}
