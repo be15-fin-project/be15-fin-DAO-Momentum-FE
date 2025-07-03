@@ -29,7 +29,8 @@ export default [
         meta: { requiresAuth: true },
         children: [
             { path: '', redirect: 'hr-list' },
-            { path: 'hr-list', name: 'MyHrEvaluationView', component: () => import('@/features/performance/views/MyHrEvaluationView.vue') }
+            { path: 'hr-list', name: 'MyHrEvaluationView', component: () => import('@/features/performance/views/MyHrEvaluationView.vue') },
+            { path: 'my-objection', name: 'MyHrObjectionListView', component: () => import('@/features/performance/views/MyHrObjectionListView.vue') }
         ]
     }
 ];

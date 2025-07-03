@@ -11,8 +11,8 @@
       <span class="top-icons">
         <button class="side-btn">출근</button>
         <button class="sidebar-toggle" @click="toggleAlertPanel">
-  <span class="material-symbols-rounded notification-icon">notifications</span>
-</button>
+        <span class="material-symbols-rounded notification-icon">notifications</span>
+      </button>
       </span>
       <button class="sidebar-toggle" @click="toggleSidebar">
         <span class="material-symbols-rounded">menu</span>
@@ -20,7 +20,7 @@
     </div>
 
     <!-- Alert Panel -->
-    <AlertPanel :visible="showAlertPanel" @close="toggleAlertPanel" />
+    <AlertPanel :visible="showAlertPanel" @close="toggleAlertPanel"/>
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
@@ -183,7 +183,7 @@ const menuItems = [
       { label: '인사 평가 조회', hrefs: ['../hr/hr-list'] },
       {
         label: '이의 제기 관리',
-        hrefs: ['../hr/objections'],
+        hrefs: ['../hr/my-objection'],
         requireRole: ['MANAGER']
       }
     ]
@@ -304,7 +304,6 @@ function isAllowed(item) {
 }
 
 
-
 function hasVisibleSubItems(menu) {
   if (!menu?.subItems) return false
   return menu.subItems.some((sub) => isAllowed(sub))
@@ -334,8 +333,6 @@ onMounted(async () => {
   }
 })
 </script>
-
-
 
 
 <style scoped>
@@ -416,7 +413,6 @@ onMounted(async () => {
 .sidebar-nav {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   flex: 1;
   overflow-y: auto; /* 이 영역만 스크롤 */
   padding: 20px 0;
@@ -435,6 +431,7 @@ onMounted(async () => {
   color: var(--gray-300);
   text-decoration: none;
   transition: background 0.2s, color 0.2s;
+  margin-bottom: 0.5rem;
 }
 
 .sidebar-item:hover {
