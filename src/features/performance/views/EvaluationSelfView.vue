@@ -129,7 +129,10 @@ const initFilters = () => {
       label: '회차',
       icon: 'fa-list-ol',
       type: 'select',
-      options: ['전체', ...roundList.value.map(r => r.roundNo)],
+      options: ['전체', ...roundList.value.map(r => ({
+        label: `${r.roundNo} 회차`,
+        value: r.roundNo
+      }))]
     },
     {
       key: 'deptId',

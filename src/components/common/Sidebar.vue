@@ -183,7 +183,7 @@ const menuItems = [
       { label: '인사 평가 조회', hrefs: ['../hr/hr-list'] },
       {
         label: '이의 제기 관리',
-        hrefs: ['../hr/objections'],
+        hrefs: ['../hr/my-objection'],
         requireRole: ['MANAGER']
       }
     ]

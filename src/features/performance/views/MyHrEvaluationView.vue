@@ -60,12 +60,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue';
+import {ref, onMounted, computed, watch} from 'vue';
 import {
   getEvaluationRounds,
   getMyHrEvaluations,
   getMyHrEvaluationDetail,
-  submitHrObjection,
+  submitHrObjection, getEvaluationRoundNos,
 } from '@/features/performance/api.js';
 
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
@@ -79,29 +79,50 @@ import SideModal from '@/components/common/SideModal.vue';
 const currentPage = ref(1);
 const filterValues = ref({});
 const tableData = ref([]);
-const pagination = ref({ currentPage: 1, totalPage: 1 });
+const pagination = ref({currentPage: 1, totalPage: 1});
 
 const isOpen = ref(false);
 const isRejecting = ref(false);
-const createForm = ref({ reason: '' });
+const createForm = ref({reason: ''});
 const formSections = ref([]);
 const selectedRow = ref(null);
 const roundOptions = ref([]);
+const roundList = ref([]);
+const filterOptions = ref([]);
+
+const fetchRoundNos = async () => {
+  roundList.value = await getEvaluationRoundNos();
+};
 
 // 필터 옵션 정의
-const filterOptions = ref([
-  {
-    key: 'date',
-    label: '평가일',
-    icon: 'fa-calendar-day',
-    type: 'date-range',
-  }
-]);
-
+const initFilters = () => {
+  filterOptions.value = [
+    {
+      key: 'roundNo',
+      label: '회차',
+      icon: 'fa-list-ol',
+      type: 'select',
+      options: ['전체', ...roundList.value.map(r => ({
+        label: `${r.roundNo} 회차`,
+        value: r.roundNo
+      }))]
+    },
+    {
+      key: 'date',
+      label: '평가일',
+      icon: 'fa-calendar-day',
+      type: 'date-range',
+    }
+  ];
+};
 
 // 필터 파라미터 정규화
 function normalizeFilterParams(values) {
-  const normalized = { ...values };
+  const normalized = {...values};
+
+  if (normalized.roundNo === '전체') {
+    normalized.roundNo = null;
+  }
 
   if (normalized.date_start) {
     normalized.startDate = normalized.date_start;
@@ -170,12 +191,12 @@ const mappedTableData = computed(() =>
 async function openModalHandler(row) {
   try {
     const res = await getMyHrEvaluationDetail(row.resultId);
-    const { content, factorScores } = res;
+    const {content, factorScores} = res;
 
     selectedRow.value = row;
     isOpen.value = true;
     isRejecting.value = false;
-    createForm.value = { reason: '' };
+    createForm.value = {reason: ''};
 
     // 기본 정보 섹션
     const baseSection = {
@@ -183,10 +204,10 @@ async function openModalHandler(row) {
       icon: 'fa-clipboard-check',
       layout: 'two-column',
       fields: [
-        { label: '회차', value: row.roundNo, type: 'input', editable: false },
-        { label: '사원명', value: `${content.empName} (${content.empNo})`, type: 'input', editable: false },
-        { label: '등급', value: content.overallGrade, type: 'input', editable: false },
-        { label: '평가일', value: content.evaluatedAt?.split('T')[0], type: 'input', editable: false }
+        {label: '회차', value: row.roundNo, type: 'input', editable: false},
+        {label: '사원명', value: `${content.empName} (${content.empNo})`, type: 'input', editable: false},
+        {label: '등급', value: content.overallGrade, type: 'input', editable: false},
+        {label: '평가일', value: content.evaluatedAt?.split('T')[0], type: 'input', editable: false}
       ]
     };
 
@@ -259,12 +280,12 @@ async function handleSubmit() {
   }
 
   try {
-    await submitHrObjection(selectedRow.value.resultId, { reason });
+    await submitHrObjection(selectedRow.value.resultId, {reason});
 
     alert('이의제기가 성공적으로 제출되었습니다.');
     isOpen.value = false;
     isRejecting.value = false;
-    createForm.value = { reason: '' };
+    createForm.value = {reason: ''};
   } catch (e) {
     console.error('이의제기 제출 실패:', e);
     alert('이의제기 제출에 실패했습니다.');
@@ -279,15 +300,17 @@ watch(currentPage, () => handleSearch(filterValues.value));
 //  초기 로딩
 onMounted(async () => {
   try {
-    const res = await getEvaluationRounds({ page: 1, size: 100 });
+    const res = await getEvaluationRounds({page: 1, size: 100});
     roundOptions.value = res.list.map(round => ({
       label: `${round.roundNo} 회`,
       value: round.roundNo
     }));
+    await fetchRoundNos();
+    initFilters();
   } catch (e) {
     console.error('회차 목록 로딩 실패:', e);
   }
 
-  handleSearch({});
+  await handleSearch({});
 });
 </script>
