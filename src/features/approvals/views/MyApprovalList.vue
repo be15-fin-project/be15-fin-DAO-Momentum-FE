@@ -4,7 +4,10 @@ import { ref } from 'vue'
 import ReceivedApproval from "@/features/approvals/components/ReceivedApproval.vue"
 import SentApproval from "@/features/approvals/components/SentApproval.vue"
 import ApprovalHeader from "@/features/approvals/components/ApprovalHeader.vue";
+import { useRouter } from 'vue-router'
 
+/* 경로 이동을 의한 부분 */
+const router = useRouter();
 /* 현재 활성화 되어 있는 탭 */
 const currentTab = ref('RECEIVED')
 
@@ -27,10 +30,10 @@ const handleTabClick = (tabLabel) => {
   />
 
   <!-- 받은 문서함 -->
-  <ReceivedApproval v-if="currentTab === 'RECEIVED'" />
+  <ReceivedApproval v-if="currentTab === 'RECEIVED'"/>
 
   <!-- 보낸 문서함 -->
-  <SentApproval v-else />
+  <SentApproval v-else/>
 </template>
 
 <style scoped>

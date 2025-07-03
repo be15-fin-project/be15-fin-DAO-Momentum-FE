@@ -46,7 +46,6 @@ const filterValues = ref({
 })
 
 // 기본 필터
-
 watch(departmentTree, () => {
   filterOptions.value = generateBaseFilters();
 }, { immediate: true });
@@ -280,7 +279,6 @@ async function fetchApprovals() {
       size: 10
     }
 
-    console.log(approveListRequest.approveType);
     const res = await getApprovals(approveListRequest, pageRequest);
     approvals.value = res.data.data.approveDTO;
     pagination.value.totalPage = res.data.data.pagination.totalPage;
@@ -310,11 +308,11 @@ onMounted(async () => {
 
 /* api 호출하기 */
 onMounted(fetchApprovals);
-//
-// function handleDetailClick(row) {
-//   router.push(`/approvals/detail/${row.approveId}`)
-// }
 
+/* 결재 내역 상세 보기로 이동 */
+function handleDetailClick(row) {
+  router.push(`/approval/detail/${row.approveId}`)
+}
 </script>
 
 <template>
