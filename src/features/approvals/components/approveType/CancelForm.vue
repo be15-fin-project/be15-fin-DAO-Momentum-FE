@@ -110,17 +110,17 @@ onMounted(async () => {
 .form-label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--gray-700);
   margin-bottom: 8px;
 }
 
 .form-textarea {
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--gray-200);
   border-radius: 10px;
   font-size: 0.95rem;
-  background: white;
-  color: #1f2937;
+  background: var(--basic);
+  color: var(--gray-800);
   font-family: inherit;
   resize: vertical;
   min-height: 100px;
@@ -129,33 +129,34 @@ onMounted(async () => {
 .form-textarea:focus {
   outline: none;
   border-color: #667eea;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 4px var(--form-shadow);
   transform: translateY(-1px);
 }
 
 .cancel-banner {
-  border: 2px solid #fecaca;
-  background-color: #fef2f2;
+  border: 2px solid var(--blue-100);
+  background-color: var(--blue-50);
   padding: 24px;
   border-radius: 12px;
+  margin-bottom: 20px;
 }
 
 .cancel-title {
   font-size: 1.1rem;
   font-weight: bold;
-  color: #b91c1c;
+  color: var(--blue-300);
   margin-bottom: 8px;
 }
 
 .cancel-subtitle {
   font-size: 0.95rem;
-  color: #991b1b;
+  color: var(--blue-400);
   margin-bottom: 16px;
 }
 
 .original-form-wrapper {
-  background-color: #ffffff;
-  border: 1px solid #fca5a5;
+  border: 1px solid var(--blue-100);
+  background-color: var(--basic);
   padding: 20px;
   border-radius: 10px;
 }
