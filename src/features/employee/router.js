@@ -18,5 +18,15 @@ export const employeeRoutes = [
                 component: () => import('@/features/employee/views/ContractListView.vue')
             }
         ],
+    },
+    {
+        path: "/appoints",
+        children: [
+            {
+                path: '',
+                name: 'AppointListView',
+                component: () => import('@/features/employee/views/AppointListView.vue')
+            }
+        ],
     }
 ];
