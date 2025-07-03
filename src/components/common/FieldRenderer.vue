@@ -25,7 +25,7 @@
 
     <LikertScale
         v-else-if="field.type === 'likert'"
-        v-model="model[field.key]"
+        v-model="field.value"
         labelClass="text-lg text-blue-600 mb-2"
         :min="field.min ?? 1"
         :max="field.max ?? 7"
@@ -33,8 +33,19 @@
         :readonly="readonly || !field.editable"
     />
 
+    <RadarChart
+        v-if="field.type === 'radarChart'"
+        :labels="field.value.labels"
+        :values="field.value.scores"
+        :editable="!readonly && field.editable"
+        :readonly="readonly"
+    />
+
     <!-- 읽기 전용 -->
-    <div v-else-if="readonly || !field.editable" class="form-input readonly">
+    <div
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'scoreChart', 'likert', 'radarChart'].includes(field.type)"
+        class="form-input readonly"
+    >
       {{ field.value ?? model[field.key] ?? '' }}
     </div>
 
@@ -84,8 +95,9 @@
 
 <script setup>
 import { computed } from 'vue';
-import SliderGroup from "@/components/common/SliderGroup.vue";
-import LikertScale from "@/components/common/LikertScale.vue";
+import SliderGroup from "@/components/common/form/SliderGroup.vue";
+import LikertScale from "@/components/common/form/LikertScale.vue";
+import RadarChart from "@/components/common/form/RadarChart.vue";
 
 const props = defineProps({
   field: Object,
