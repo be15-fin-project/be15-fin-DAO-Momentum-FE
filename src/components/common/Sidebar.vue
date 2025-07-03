@@ -9,7 +9,9 @@
         <h2 class="sidebar-title">Momentum</h2>
       </div>
       <span class="top-icons">
-        <button class="side-btn">출근</button>
+        <button class="side-btn" @click="handleCreateAttendance" :disabled="isLoading">
+  {{ isAttended ? '퇴근' : '출근' }}
+</button>
         <button class="sidebar-toggle" @click="toggleAlertPanel">
         <span class="material-symbols-rounded notification-icon">notifications</span>
       </button>
@@ -74,6 +76,17 @@
       </div>
     </nav>
 
+    <!--  출퇴근 모달  -->
+    <AttendanceModal
+        :visible="showAttendanceModal"
+        :is-attended="isAttended"
+        :clock-info="clockInfo"
+        :format-time="formatTime"
+        :format-duration="formatDuration"
+        @confirm="submitAttendance"
+        @cancel="closeAttendanceModal"
+    />
+
     <!-- Footer -->
     <div class="sidebar-footer">
       <router-link to="/setting" class="sidebar-item">
@@ -89,23 +102,41 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted} from 'vue'
-import { storeToRefs } from 'pinia'
-import { useAuthStore } from '@/stores/auth.js'
-import { logoutUser } from '@/features/common/api.js'
+import {onMounted, onUnmounted, ref, computed} from 'vue'
+import {storeToRefs} from 'pinia'
+import {useAuthStore} from '@/stores/auth.js'
+import {logoutUser} from '@/features/common/api.js'
 import router from '@/router/index.js'
-import { useRoute } from 'vue-router'
+import {useRoute} from 'vue-router'
 import AlertPanel from "@/components/common/AlertPanel.vue";
 import { getEvaluationRoundStatus } from '@/features/performance/api.js'
+import {endWork, startWork} from "@/features/works/api.js";
+import AttendanceModal from "@/features/works/components/AttendanceModal.vue";
+import {useToast} from "vue-toastification";
+import {useAttendance} from "@/features/works/composable/useAttendance.js";
 
 const authStore = useAuthStore()
 const route = useRoute()
-const { userRole } = storeToRefs(authStore)
+const {userRole} = storeToRefs(authStore)
+const toast = useToast()
 
 const collapsed = ref(false)
 const openSubmenu = ref(null)
 const currentUserRoles = ref(['HR_MANAGER', 'MANAGER'])
 const roundStatus = ref({ inProgress: false, roundId: null })
+
+/* 출퇴근 관련 */
+const {
+  isAttended,
+  isLoading,
+  showAttendanceModal,
+  clockInfo,
+  handleCreateAttendance,
+  closeAttendanceModal,
+  fetchTodayAttendance,
+  stopClockUpdater,
+  getStartTime
+} = useAttendance();
 
 const showAlertPanel = ref(false)
 
@@ -114,8 +145,8 @@ const menuItems = [
     label: '회사 정보',
     icon: 'apartment',
     subItems: [
-      { label: '회사 정보', hrefs: ['../company/company-info'] },
-      { label: '조직도', hrefs: ['../company/org-chart'] }
+      {label: '회사 정보', hrefs: ['../company/company-info']},
+      {label: '조직도', hrefs: ['../company/org-chart']}
     ]
   },
   {
@@ -138,9 +169,9 @@ const menuItems = [
     label: '내 정보',
     icon: 'person',
     subItems: [
-      { label: '대시보드', hrefs: ['../mypage/dashboard'] },
-      { label: '내 정보 조회', hrefs: ['../mypage/profile'] },
-      { label: '계약서 내역 조회', hrefs: ['../mypage/contracts'] }
+      {label: '대시보드', hrefs: ['../mypage/dashboard']},
+      {label: '내 정보 조회', hrefs: ['../mypage/profile']},
+      {label: '계약서 내역 조회', hrefs: ['../mypage/contracts']}
     ]
   },
   {
@@ -152,7 +183,7 @@ const menuItems = [
         hrefs: ['../approvals'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      { label: '문서함', hrefs: ['../approval/inbox'] }
+      {label: '문서함', hrefs: ['../approval/inbox']}
     ]
   },
   {
@@ -217,8 +248,17 @@ const menuItems = [
   }
 ]
 
-// Methods
+// 마운트
+onMounted(async () => {
+  await getStartTime()
+  await fetchTodayAttendance()
+})
 
+onUnmounted(() => {
+  stopClockUpdater()
+});
+
+// Methods
 function toggleSidebar() {
   collapsed.value = !collapsed.value
   openSubmenu.value = null
@@ -323,6 +363,40 @@ function toggleAlertPanel() {
   showAlertPanel.value = !showAlertPanel.value
 }
 
+/* 근태 로직 */
+const submitAttendance = async () => {
+  isLoading.value = true;
+  try {
+    if (!isAttended.value) {
+      await startWork();
+    } else {
+      await endWork();
+    }
+    await fetchTodayAttendance(); // 출/퇴근 상태 최신화
+    toast.success("출퇴근 등록 완료");
+    closeAttendanceModal()
+  } catch (e) {
+    toast.error("근태 처리 실패", e);
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+function formatTime(datetime) {
+  if (!datetime) return '-';
+
+  return datetime.toLocaleString().slice(0, -3);
+}
+
+function formatDuration(minutes) {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  const parts = [];
+  if (h > 0) parts.push(`${h}시간`);
+  if (m > 0) parts.push(`${m}분`);
+  return parts.length ? parts.join(' ') : '0분';
+}
+
 
 onMounted(async () => {
   try {
@@ -333,7 +407,6 @@ onMounted(async () => {
   }
 })
 </script>
-
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Pretendard&display=swap');
@@ -508,6 +581,4 @@ onMounted(async () => {
 .sidebar-item.active .sidebar-sub-toggle {
   transform: rotate(90deg); /* 열린 상태: 아래 방향 */
 }
-
-
 </style>
