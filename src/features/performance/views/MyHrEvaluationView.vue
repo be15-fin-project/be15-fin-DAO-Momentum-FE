@@ -198,6 +198,24 @@ async function openModalHandler(row) {
     isRejecting.value = false;
     createForm.value = {reason: ''};
 
+    // 등급 비율 및 가중치 변환
+    const weightSegments = [
+      res.weightInfo?.weightPerform ?? 0,
+      res.weightInfo?.weightTeam ?? 0,
+      res.weightInfo?.weightAttitude ?? 0,
+      res.weightInfo?.weightGrowth ?? 0,
+      res.weightInfo?.weightEngagement ?? 0,
+      res.weightInfo?.weightResult ?? 0,
+    ];
+
+    const gradeRatios = [
+      res.rateInfo?.rateS ?? 0,
+      res.rateInfo?.rateA ?? 0,
+      res.rateInfo?.rateB ?? 0,
+      res.rateInfo?.rateC ?? 0,
+      res.rateInfo?.rateD ?? 0,
+    ];
+
     // 기본 정보 섹션
     const baseSection = {
       title: '인사 평가 정보',
@@ -227,9 +245,38 @@ async function openModalHandler(row) {
           }
         }
       ]
+    }
+    // 인사 평가 기준 섹션
+    const weightSection = {
+      title: '항목 가중치 (%)',
+      icon: 'fa-weight-hanging',
+      layout: 'one-column',
+      fields: [{
+        key: 'weightSegments',
+        type: 'sliderGroup',
+        initial: weightSegments,
+        labels: ['성과', '팀워크', '태도', '성장', '몰입', '결과'],
+        icons: ['fa-chart-line', 'fa-people-group', 'fa-thumbs-up', 'fa-seedling', 'fa-fire', 'fa-award'],
+        editable: false
+      }]
     };
 
-    formSections.value = [baseSection, radarSection];
+    const gradeSection = {
+      title: '등급 비율 (%)',
+      icon: 'fa-percent',
+      layout: 'one-column',
+      fields: [{
+        key: 'gradeRatios',
+        type: 'sliderGroup',
+        initial: gradeRatios,
+        labels: ['S등급', 'A등급', 'B등급', 'C등급', 'D등급'],
+        icons: ['fa-star', 'fa-medal', 'fa-user', 'fa-user-alt', 'fa-user-slash'],
+        editable: false
+      }]
+    };
+
+
+    formSections.value = [baseSection, radarSection, weightSection, gradeSection];
   } catch (err) {
     console.error('상세 조회 실패:', err);
     isOpen.value = false;
