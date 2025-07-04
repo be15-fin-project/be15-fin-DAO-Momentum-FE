@@ -41,25 +41,36 @@
 
 
 <script setup>
-import {ref, onMounted, watch} from 'vue';
-import {useRouter} from 'vue-router';
+import { ref, onMounted, watch } from 'vue';
+import { useRouter } from 'vue-router';
 
 import Filter from '@/components/common/Filter.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import Pagination from '@/components/common/Pagination.vue';
-
-import {getDepartments} from '@/features/works/api.js';
-import {getAnnouncementList} from '@/features/announcement/api.js';
+import { getDepartments } from '@/features/works/api.js';
+import { getAnnouncementList } from '@/features/announcement/api.js';
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 
 // 상태
 const router = useRouter();
 const filterValues = ref({});
 const tableData = ref([]);
-const pagination = ref({currentPage: 1, totalPage: 1});
+const pagination = ref({ currentPage: 1, totalPage: 1 });
 
 const departmentTree = ref([]);
 const filterOptions = ref([]);
+
+// 날짜 포맷 함수
+function formatDateTime(isoString) {
+  if (!isoString) return '';
+  const date = new Date(isoString);
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, '0');
+  const dd = String(date.getDate()).padStart(2, '0');
+  const hh = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+}
 
 // 필터 초기화
 function initFilters() {
@@ -103,7 +114,7 @@ function initFilters() {
 
 // 필터 파라미터 정리
 function normalizeFilterParams(values) {
-  const normalized = {...values};
+  const normalized = { ...values };
 
   if (normalized.date_start) {
     normalized.startDate = normalized.date_start;
@@ -136,7 +147,11 @@ const handleSearch = async (values) => {
     const res = await getAnnouncementList(params);
     const responseData = res.data?.data;
 
-    tableData.value = responseData.announcements ?? [];
+    tableData.value = (responseData.announcements ?? []).map(item => ({
+      ...item,
+      createdAt: formatDateTime(item.createdAt) // 날짜 포맷 적용
+    }));
+
     pagination.value = {
       currentPage: responseData.pagination?.currentPage || 1,
       totalPage: responseData.pagination?.totalPage || 1,
@@ -144,7 +159,7 @@ const handleSearch = async (values) => {
   } catch (err) {
     console.error('공지사항 목록 조회 실패:', err);
     tableData.value = [];
-    pagination.value = {currentPage: 1, totalPage: 1};
+    pagination.value = { currentPage: 1, totalPage: 1 };
   }
 };
 
@@ -179,11 +194,11 @@ const goToCreate = () => {
 
 // 테이블 컬럼 정의
 const tableColumns = [
-  {key: 'announcementId', label: 'No'},
-  {key: 'title', label: '제목'},
-  {key: 'name', label: '작성자'},
-  {key: 'createdAt', label: '작성일시'},
-  {key: 'action', label: '상세', type: 'button', icon: 'fa-search'},
+  { key: 'announcementId', label: 'No' },
+  { key: 'title', label: '제목' },
+  { key: 'name', label: '작성자' },
+  { key: 'createdAt', label: '작성일시' },
+  { key: 'action', label: '상세', type: 'button', icon: 'fa-search' },
 ];
 </script>
 
