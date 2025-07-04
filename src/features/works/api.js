@@ -45,3 +45,8 @@ export const endWork = async () => {
     const resp = await api.put('/works');
     return resp.data.data;
 }
+
+export const getMyWorks = async (params) => {
+    const resp = await api.get("/works/me", {params});
+    return resp.data.data;
+}

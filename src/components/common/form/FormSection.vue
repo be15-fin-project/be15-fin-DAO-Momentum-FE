@@ -4,7 +4,9 @@
       <div class="section-icon">
         <i :class="['fas', icon]"></i>
       </div>
+      <slot name="title">
       <h3 class="section-title">{{ title }}</h3>
+      </slot>
     </div>
 
     <div :class="['form-grid', layoutClass]">
