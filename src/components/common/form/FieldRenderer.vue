@@ -11,10 +11,66 @@
       </div>
     </div>
 
+    <SliderGroup
+        v-else-if="field.type === 'sliderGroup'"
+        v-model="model[field.key]"
+        :handles="field.handles"
+        :initial="model[field.key] ?? field.initial"
+        :labels="field.labels"
+        :icons="field.icons"
+        :readonly="readonly"
+        :editable="!readonly && field.editable"
+        :disabled="readonly || !field.editable"
+    />
+
+    <LikertScale
+        v-else-if="field.type === 'likert'"
+        v-model="field.value"
+        labelClass="text-lg text-blue-600 mb-2"
+        :min="field.min ?? 1"
+        :max="field.max ?? 7"
+        :labels="field.labels ?? ['매우 불만족','매우 만족']"
+        :readonly="readonly || !field.editable"
+    />
+
+    <RadarChart
+        v-if="field.type === 'radarChart'"
+        :labels="field.value.labels"
+        :values="field.value.scores"
+        :editable="isEditMode"
+    />
+
+    <template v-if="field.type === 'progressTimeline'">
+      <ProgressTimeline
+          v-if="!readonly && field.editable"
+          :kpiProgress="model[field.key]?.kpiProgress"
+          v-model:progress25="model[field.key].progress25"
+          v-model:progress50="model[field.key].progress50"
+          v-model:progress75="model[field.key].progress75"
+          v-model:progress100="model[field.key].progress100"
+          :editable="true"
+      />
+      <ProgressTimeline
+          v-else
+          :kpiProgress="field.value?.kpiProgress"
+          :progress25="field.value?.progress25"
+          :progress50="field.value?.progress50"
+          :progress75="field.value?.progress75"
+          :progress100="field.value?.progress100"
+          :editable="false"
+      />
+    </template>
+
+
+
     <!-- 읽기 전용 -->
-    <div v-else-if="readonly || !field.editable" class="form-input readonly">
-      {{ field.value ?? model[field.key] ?? '' }}
-    </div>
+    <div
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'scoreChart', 'likert', 'radarChart', 'progressTimeline'].includes(field.type)"
+        class="form-input readonly"
+        v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
+    ></div>
+
+
 
     <!-- 입력 가능 -->
     <template v-else>
@@ -25,6 +81,9 @@
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
       />
+      <template v-if="field.type === 'html'">
+        <div class="html-field" v-html="field.value" />
+      </template>
       <input
           v-else-if="field.type === 'number'"
           type="number"
@@ -62,6 +121,10 @@
 
 <script setup>
 import { computed } from 'vue';
+import SliderGroup from "@/components/common/form/SliderGroup.vue";
+import LikertScale from "@/components/common/form/LikertScale.vue";
+import RadarChart from "@/components/common/form/RadarChart.vue";
+import ProgressTimeline from "@/components/common/form/ProgressTimeline.vue";
 
 const props = defineProps({
   field: Object,
@@ -114,7 +177,7 @@ const scoreWidth = computed(() => {
 
 .form-label.required::after {
   content: '*';
-  color: #ef4444;
+  color: var(--error-500);
   margin-left: 4px;
 }
 
@@ -163,7 +226,7 @@ const scoreWidth = computed(() => {
   display: flex;
   align-items: center;
   padding-left: 12px;
-  color: var(--basic);
+  color: var(--color-surface);
   font-weight: 600;
   transition: width 0.3s ease;
   border-radius: var(--radius-ss);
@@ -173,4 +236,11 @@ const scoreWidth = computed(() => {
   position: relative;
   z-index: 2;
 }
+.html-field {
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
 </style>

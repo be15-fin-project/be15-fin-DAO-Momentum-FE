@@ -139,7 +139,7 @@ function resolveButtonClass(variant) {
   padding: 8px 16px;
   border-radius: var(--radius-ss);
   border: 1px solid var(--gray-300);
-  background: var(--basic);
+  background: var(--color-surface);
   color: var(--gray-700);
   cursor: pointer;
   font-size: 1rem;
@@ -152,7 +152,7 @@ function resolveButtonClass(variant) {
 .header-buttons button.bg-green-600 {
   background: var(--green-100);
   border: none;
-  color: var(--basic);
+  color: var(--color-surface);
 }
 .header-buttons button.bg-green-600:hover {
   background: var(--green-200);
@@ -160,7 +160,7 @@ function resolveButtonClass(variant) {
 .header-buttons button.bg-blue-600 {
   background: var(--blue-300);
   border: none;
-  color: var(--basic);
+  color: var(--color-surface);
 }
 .header-buttons button.bg-blue-600:hover {
   background: var(--blue-450);

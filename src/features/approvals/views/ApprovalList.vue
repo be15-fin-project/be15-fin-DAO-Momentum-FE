@@ -7,18 +7,21 @@ import Filter from "@/components/common/Filter.vue"
 import TabNav from '@/components/common/NavigationTab.vue'
 import {getApprovals} from "@/features/approvals/api.js";
 import { useRouter } from 'vue-router'
+import {getDepartments} from "@/features/works/api.js";
 
 /* 경로 이동을 의한 부분 */
 const router = useRouter();
 
 /* 결재 목록 데이터 */
-const approvals = ref([])
-const pagination = ref({ totalPage: 0 })
-const currentPage = ref(1)
+const approvals = ref([]);
+const pagination = ref({ totalPage: 0 });
+const departmentTree = ref([]);
+const currentPage = ref(1);
 
 /* 탭 항목 정의 */
 // 현재 선택된 탭
 const selectedTab = ref('ALL');
+const filterOptions = ref([]);
 
 // 탭의 종류
 const tabItems = [
@@ -37,55 +40,61 @@ const filterValues = ref({
   statusType: null,
   title: '',
   employeeName: '',
-  departmentName: null,
+  deptId: null,
   completeAt: null,
   sort: null
 })
 
 // 기본 필터
-const baseFilterOptions = [
-  {
-    key: 'statusType',
-    label: '결재 상태',
-    icon: 'fa-clipboard-check',
-    type: 'select',
-    options: ['전체', '대기', '승인', '반려']
-  },
-  {
-    key: 'title',
-    label: '제목',
-    icon: 'fa-heading',
-    type: 'input',
-    placeholder: '제목 검색'
-  },
-  {
-    key: 'employeeName',
-    label: '기안자',
-    icon: 'fa-user',
-    type: 'input',
-    placeholder: '기안자 이름 입력'
-  },
-  {
-    key: 'departmentName',
-    label: '부서',
-    icon: 'fa-building',
-    type: 'select',
-    options: ['전체', '기획팀', '인사팀', '재무팀', '프론트엔드팀', '백엔드팀', '데이터팀', '영업팀', '디지털마케팅팀']
-  },
-  {
-    key: 'completeAt',
-    label: '등록일',
-    icon: 'fa-calendar-day',
-    type: 'date-range'
-  },
-  {
-    key: 'sort',
-    label: '처리일',
-    icon: 'fa-sort',
-    type: 'select',
-    options: ['최신순', '오래된순']
-  }
-]
+watch(departmentTree, () => {
+  filterOptions.value = generateBaseFilters();
+}, { immediate: true });
+
+function generateBaseFilters() {
+  return [
+    {
+      key: 'statusType',
+      label: '결재 상태',
+      icon: 'fa-clipboard-check',
+      type: 'select',
+      options: ['전체', '대기', '승인', '반려']
+    },
+    {
+      key: 'title',
+      label: '제목',
+      icon: 'fa-heading',
+      type: 'input',
+      placeholder: '제목 검색'
+    },
+    {
+      key: 'employeeName',
+      label: '기안자',
+      icon: 'fa-user',
+      type: 'input',
+      placeholder: '기안자 이름 입력'
+    },
+    {
+      key: 'deptId',
+      label: '부서',
+      icon: 'fa-building',
+      type: 'tree',
+      options: departmentTree.value
+    },
+    {
+      key: 'completeAt',
+      label: '등록일',
+      icon: 'fa-calendar-day',
+      type: 'date-range'
+    },
+    {
+      key: 'sort',
+      label: '처리일',
+      icon: 'fa-sort',
+      type: 'select',
+      options: ['최신순', '오래된순']
+    }
+  ];
+}
 
 /* 동적 필터 */
 // 영수증 필터
@@ -108,12 +117,12 @@ const attendanceTypeFilter = {
 
 // 동적 필터 조합
 const visibleFilterOptions = computed(() => {
-  const filters = [...baseFilterOptions]
+  const filters = [...filterOptions.value];
 
   if (selectedTab.value === 'RECEIPT') {
-    filters.splice(1, 0, receiptTypeFilter)
+    filters.splice(1, 0, receiptTypeFilter);
   } else if (selectedTab.value === 'ATTENDANCE') {
-    filters.splice(1, 0, attendanceTypeFilter)
+    filters.splice(1, 0, attendanceTypeFilter);
   }
 
   return filters
@@ -125,7 +134,7 @@ const columns = [
   { key: 'approveTitle', label: '제목' },
   { key: 'approveType', label: '종류' },
   { key: 'employeeName', label: '작성자' },
-  { key: 'departmentName', label: '부서' },
+  { key: 'deptId', label: '부서' },
   { key: 'createAt', label: '작성일' },
   { key: 'completeAt', label: '처리일' },
   { key: 'action', label: '상세' }
@@ -211,30 +220,15 @@ function convertReceipt(receiptType) {
   return statusMap[receiptType] || null;
 }
 
-// 부서 변환
-function convertDepartment(departmentName) {
-  const statusMap = {
-    '전체': null,
-    '인사팀': 10,
-    '재무팀': 11,
-    '프론트엔드팀': 12,
-    '백엔드팀': 13,
-    '데이터팀': 14,
-    '영업팀': 15,
-    '디지털마케팅팀': 16
-  };
-
-  return statusMap[departmentName] || null;
-}
-
 const displayApprovals = computed(() => {
   return approvals.value.map(item => ({
     ...item,
     statusType: statusTypeMap[item.statusType] || item.statusType,
-    approveType: approveTypeMap[item.approveType] || item.approveType
+    approveType: approveTypeMap[item.approveType] || item.approveType,
+    createAt: item.createAt ? item.createAt.replace('T', ' ').slice(0, 16) : '',
+    completeAt: item.completeAt? item.completeAt.replace('T', ' ').slice(0, 16) : ''
   }));
 });
-
 
 /* 탭 클릭 시 로직 */
 // 탭 클릭
@@ -252,7 +246,7 @@ const resetFilters = () => {
     statusType: null,
     approveTitle: '',
     employeeName: '',
-    departmentName: null,
+    deptId: null,
     startDate: null,
     endDate: null,
     sort: null
@@ -275,7 +269,7 @@ async function fetchApprovals() {
       status: convertStatusToId(filterValues.value.statusType),
       title: filterValues.value.title || null,
       employeeName: filterValues.value.employeeName || null,
-      deptId: convertDepartment(filterValues.value.departmentName) || null,
+      deptId: filterValues.value.deptId || null,
       startDate: filterValues.value.completeAt_start || null,
       endDate: filterValues.value.completeAt_end || null,
       sort:  convertSort(filterValues.value.sort) || null
@@ -286,7 +280,6 @@ async function fetchApprovals() {
       size: 10
     }
 
-    console.log(approveListRequest.approveType);
     const res = await getApprovals(approveListRequest, pageRequest);
     approvals.value = res.data.data.approveDTO;
     pagination.value.totalPage = res.data.data.pagination.totalPage;
@@ -300,13 +293,27 @@ watch(currentPage, () => {
   fetchApprovals();
 });
 
+/* mount 될 때 실행하기 */
+onMounted(async () => {
+  try {
+    const deptRes = await getDepartments();
+    departmentTree.value =  deptRes.data?.departmentInfoDTOList || [];
+    console.log(departmentTree.value);
+  } catch (err) {
+    console.error('부서 불러오기 실패:', err);
+  }
+
+  filterValues.value = {};
+  handleSearch();
+});
+
 /* api 호출하기 */
 onMounted(fetchApprovals);
-//
-// function handleDetailClick(row) {
-//   router.push(`/approvals/detail/${row.approveId}`)
-// }
 
+/* 결재 내역 상세 보기로 이동 */
+function handleDetailClick(row) {
+  router.push(`/approval/detail/${row.approveId}`)
+}
 </script>
 
 <template>

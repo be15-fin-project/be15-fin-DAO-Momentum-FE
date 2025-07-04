@@ -53,7 +53,7 @@ export default {
 
 /* 취소 */
 .btn-cancel {
-  background: var(--basic);
+  background: var(--color-surface);
   color: var(--gray-500);
   border: 2px solid var(--color-muted);
 }
@@ -67,7 +67,7 @@ export default {
 /* 제출/승인 */
 .btn-submit {
   background: var(--approve-gradient);
-  color: var(--basic);
+  color: var(--color-surface);
   border: none;
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
@@ -80,7 +80,7 @@ export default {
 /* 반려 */
 .btn-reject {
   background: var(--reject-gradient);
-  color: var(--basic);
+  color: var(--color-surface);
   border: none;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }
@@ -93,7 +93,7 @@ export default {
 /* 수정 */
 .btn-edit {
   background: var(--edit-gradient);
-  color: var(--basic);
+  color: var(--color-surface);
   border: none;
   box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
 }

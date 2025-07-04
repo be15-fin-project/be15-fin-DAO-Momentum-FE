@@ -73,7 +73,7 @@ const emit = defineEmits(['click-detail']);
 
 <style scoped>
 .list-table-area {
-  background: var(--basic);
+  background: var(--color-surface);
   border-radius: 14px;
   box-shadow: var(--table-shadow);
   width: 100%;
@@ -144,7 +144,7 @@ const emit = defineEmits(['click-detail']);
 
 .action-button {
   background-color: var(--blue-400);
-  color: var(--basic);
+  color: var(--color-surface);
   border: none;
   border-radius: var(--radius-ss);
   padding: 6px 12px;

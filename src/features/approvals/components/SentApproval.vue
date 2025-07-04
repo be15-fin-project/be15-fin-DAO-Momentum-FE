@@ -6,6 +6,10 @@ import Filter from "@/components/common/Filter.vue"
 import TabNav from '@/components/common/NavigationTab.vue'
 import {getSentApprovals} from "@/features/approvals/api.js";
 import NotExistApproval from "@/features/approvals/components/NotExistApproval.vue";
+import {useRouter} from "vue-router";
+
+/* 경로 이동을 의한 부분 */
+const router = useRouter();
 
 /* 결재 목록 데이터 */
 const sentApprovals = ref([])
@@ -189,14 +193,16 @@ function convertReceipt(receiptType) {
   return statusMap[receiptType] || null;
 }
 
+/* 보여지는 부분 수저하는 로직 */
 const displayApprovals = computed(() => {
   return sentApprovals.value.map(item => ({
     ...item,
     statusType: statusTypeMap[item.statusType] || item.statusType,
-    approveType: approveTypeMap[item.approveType] || item.approveType
+    approveType: approveTypeMap[item.approveType] || item.approveType,
+    createAt: item.createAt ? item.createAt.replace('T', ' ').slice(0, 16) : '',
+    completeAt: item.completeAt? item.completeAt.replace('T', ' ').slice(0, 16) : ''
   }));
 });
-
 
 /* 탭 클릭 시 로직 */
 // 탭 클릭
@@ -253,6 +259,14 @@ async function fetchSentApprovals() {
   }
 }
 
+/* 결재 내역 상세 보기로 이동 */
+function handleDetailClick(row) {
+  router.push({
+    name: 'ApprovalDetail',
+    params: { documentId: row.approveId }
+  })}
+
+/* 페이지를 위한 부분 */
 watch(currentPage, () => {
   fetchSentApprovals();
 });
@@ -277,7 +291,12 @@ onMounted(fetchSentApprovals);
 
     <div>
       <NotExistApproval v-if="sentApprovals.length === 0" message="보낸 문서가 없습니다." />
-      <BaseTable v-else :columns="columns" :rows="displayApprovals"/>
+      <BaseTable
+        v-else
+        :columns="columns"
+        :rows="displayApprovals"
+        @click-detail = "handleDetailClick"
+      />
     </div>
 
     <Pagination
