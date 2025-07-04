@@ -6,7 +6,7 @@
         { label: '평가 회차', to: '/eval/round',  active: true  }
       ]"
         :submitButtons="[
-        { label: '회차 등록', icon: 'fa-file-signature', event: 'create', variant: 'blue' }
+        { label: '회차 등록', icon: 'fa-calendar-plus', event: 'create', variant: 'blue' }
       ]"
         :showTabs="false"
         @create="openCreateModal"
@@ -208,9 +208,9 @@ const openCreateModal = () => {
       icon: 'fa-calendar-plus',
       layout: 'two-column',
       fields: [
-        { label: '회차 번호', key: 'roundNo', type: 'number', editable: true },
-        { label: '시작일', key: 'startAt', type: 'date', editable: true },
-        { label: '종료일', key: 'endAt', type: 'date', editable: false }
+        { label: '회차 번호', key: 'roundNo', type: 'number', editable: true, required: true },
+        { label: '시작일', key: 'startAt', type: 'date', editable: true, required: true },
+        { label: '종료일', key: 'endAt', type: 'date', editable: false, required: true }
       ]
     },
     {
@@ -245,6 +245,18 @@ const openCreateModal = () => {
 const handleSubmit = async () => {
   const { roundNo, startAt, endAt, weightSegments, gradeRatios } = createFormModel.value;
 
+  // 필수값 유효성 검사
+  if (
+      !roundNo ||
+      !startAt ||
+      !endAt ||
+      !Array.isArray(weightSegments) || weightSegments.length !== 6 ||
+      !Array.isArray(gradeRatios) || gradeRatios.length !== 5
+  ) {
+    alert('모든 항목을 입력해주세요.');
+    return;
+  }
+
   const payload = {
     roundNo,
     startAt,
@@ -273,9 +285,6 @@ const handleSubmit = async () => {
   }
 };
 
-const handleCloseCreateModal = () => {
-  isOpenCreate.value = false;
-};
 
 // ──────────────── 상세/수정 모달 ────────────────
 const makeDetailSections = (editable = false) => [

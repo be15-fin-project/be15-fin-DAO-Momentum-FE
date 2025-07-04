@@ -231,7 +231,7 @@ const menuItems = [
     subItems: [
       {
         label: '근속 전망',
-        hrefs: ['../retention/prospect-dash'],
+        hrefs: ['../retention/prospect-dash', '../retention/prospect-employees', '../retention/prospect-rounds', ],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       {
