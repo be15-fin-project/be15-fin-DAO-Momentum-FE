@@ -330,7 +330,10 @@ function formatTime(datetime) {
 function formatDuration(minutes) {
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
-  return h || m ? `${h ? `${h}시간` : ''} ${m ? `${m}분` : ''}`.trim() : '0분'
+  const parts = [];
+  if (h > 0) parts.push(`${h}시간`);
+  if (m > 0) parts.push(`${m}분`);
+  return parts.length ? parts.join(' ') : '0분';
 }
 
 /* ======================== 로그아웃 ======================== */
