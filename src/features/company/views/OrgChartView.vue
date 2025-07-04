@@ -20,28 +20,7 @@
         <!-- Main Grid -->
         <div class="main-grid">
           <!-- Organization Tree -->
-          <section class="org-tree-section">
-            <div class="card slide-in">
-              <header class="card-header">
-                <i class="fas fa-folder-tree card-icon"></i>
-                <h2 class="card-title">조직 구조</h2>
-              </header>
-              <nav class="breadcrumb">
-                <span
-                    v-for="(crumb, index) in breadcrumb"
-                    :key="index"
-                    :class="['breadcrumb-item', { active: index === breadcrumb.length - 1 }]"
-                >
-                  {{ crumb }}
-                  <i
-                      v-if="index !== breadcrumb.length - 1"
-                      class="fas fa-chevron-right breadcrumb-separator"
-                  ></i>
-                </span>
-              </nav>
-              <Tree :nodes="nodes" :config = "config" @node-focus ="selectDepartment"/>
-            </div>
-          </section>
+          <OrgTree :dtoList = "departmentInfoDTOList" @selectDept = "selectDepartment"/>
 
           <!-- Department Info -->
           <section class="dept-info-section">
@@ -91,46 +70,7 @@
             </div>
           </section>
 
-          <!-- Members List -->
-          <section class="members-section">
-            <div class="card fade-in">
-              <header class="card-header">
-                <i class="fas fa-users card-icon"></i>
-                <h2 class="card-title">구성원</h2>
-              </header>
-              <div class="members-content">
-                <div v-if="members.length === 0" class="empty-state">
-                  <i class="fas fa-user-friends"></i>
-                  <p>구성원이 없습니다</p>
-                </div>
-                <div
-                    v-else
-                    v-for="member in members"
-                    :key="member.id"
-                    :class="['member-item', { manager: member.deptHead }]"
-                >
-                  <div v-if="member.deptHead" class="manager-badge">팀장</div>
-                  <div class="member-header">
-                    <div :class="['member-avatar', { manager: member.deptHead }]"></div>
-                    <div class="member-info">
-                      <h4 class="member-name">{{ member.name }}</h4>
-                      <p class="member-position">{{ member.position }}</p>
-                    </div>
-                  </div>
-                  <div class="member-contacts">
-                    <div class="member-contact">
-                      <i class="fas fa-envelope"></i>
-                      <span>{{ member.email }}</span>
-                    </div>
-                    <div class="member-contact">
-                      <i class="fas fa-phone"></i>
-                      <span>{{ member.contact }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
+         <MemberList :members="members" @click="clickEvent" :clickable="true"/>
         </div>
       </div>
     </div>
@@ -141,16 +81,13 @@
 import {ref, onMounted} from "vue";
 import {fetchDepartmentInfo, fetchDepartments} from "@/features/company/api.js";
 import '@/assets/css/index.css'
-import '@/assets/css/orgChartTransition.css'
 import "vue3-treeview/dist/style.css";
-import Tree from "vue3-treeview";
+import OrgTree from "@/features/company/components/OrgTree.vue";
+import MemberList from "@/features/company/components/MemberList.vue";
 
-const nodes = ref({});
-const config = ref({
-    roots: []
-});
+
+const departmentInfoDTOList = ref([])
 const selectedDeptId = ref(null);
-const breadcrumb = ref([]);
 const department = ref({
   name:'',
   contact:'',
@@ -158,69 +95,16 @@ const department = ref({
 });
 const members = ref([]);
 
-// 2. Breadcrumb 만들기 함수
-function getBreadcrumb() {
-  const breadcrumb = [];
 
-  console.log(nodes.value);
-  console.log(selectedDeptId.value)
-  console.log(nodes.value);
-  let current = nodes.value[selectedDeptId.value];
-  console.log(current);
-  while (current) {
-    breadcrumb.unshift(current.text);
-    current = nodes.value[current.parent];
-  }
-
-  return breadcrumb;
-}
-
-function convertDeptTreeToMap(data) {
-  const treeMap = {};
-  const rootIds = [];
-
-  function traverse(node) {
-    const id = String(node.deptId);
-    const children = (node.childDept || []).map(child => String(child.deptId));
-
-    treeMap[id] = {
-      text: node.name,
-      children,
-      state: {
-        opened: true
-      }
-    };
-
-    if (Array.isArray(node.childDept)) {
-      node.childDept.forEach(traverse);
-    }
-  }
-
-  data.forEach(rootNode => {
-    const rootId = String(rootNode.deptId);
-    rootIds.push(rootId);
-    traverse(rootNode);
-  });
-
-  return {
-    treeMap,
-    rootIds
-  };
-}
-
-const selectDepartment = (eventPayload) => {
-  selectedDeptId.value = eventPayload.id;
+const selectDepartment = (deptId) => {
+  selectedDeptId.value = deptId;
   getDepartmentInfo();
-  breadcrumb.value = getBreadcrumb();
-  console.log(breadcrumb.value);
 }
 
 const getDepartments = async () =>{
   try{
     const response = await fetchDepartments();
-    const { treeMap, rootIds } = convertDeptTreeToMap(response.data.departmentInfoDTOList);
-    nodes.value = treeMap;
-    config.value.roots = rootIds;
+    departmentInfoDTOList.value = response.data.departmentInfoDTOList;
   }catch(error){
     console.error("트리 에러 ",error)
   }
@@ -231,9 +115,14 @@ const getDepartmentInfo = async () => {
     const response = await fetchDepartmentInfo(selectedDeptId.value);
     department.value = response.data.data.departmentDetailDTO;
     members.value = response.data.data.departmentMemberDTOList;
+    console.log(members.value)
   }catch(error){
     console.error("부서 정보 조회 실패 : ", error);
   }
+}
+
+const clickEvent = (empId) =>{
+  console.log(empId);
 }
 
 onMounted(async () => {
@@ -282,14 +171,6 @@ onMounted(async () => {
   font-weight: 700;
   color: var(--font-main);
   margin: 0 0 0.2rem 0;
-}
-
-.header-description {
-  color: var(--font-sub);
-  font-size: 1.1rem;
-  margin: 0;
-  letter-spacing: 0.01em;
-  font-weight: 500;
 }
 
 .main-grid {
@@ -444,87 +325,6 @@ onMounted(async () => {
   font-weight: 600;
 }
 
-/* Members List Styles */
-.members-content {
-  overflow-y: auto;
-  height: calc(100% - 80px);
-  padding-right: 8px;
-}
-
-.member-item {
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 16px;
-  background: #fff;
-  border: 1px solid var(--blue-100);
-  transition: all 0.3s ease;
-  position: relative;
-  box-shadow: 0 8px 12px rgba(56, 104, 185, 0.10);
-}
-
-.member-item:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-soft);
-}
-
-.member-item.manager {
-  /*background: var(--blue-200);*/
-  border-color: var(--blue-400);
-}
-
-.member-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.member-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.875rem;
-  background: var(--blue-200);
-}
-
-.member-avatar.manager {
-  background: var(--blue-400);
-}
-
-.member-info {
-  flex: 1;
-}
-
-.member-name {
-  font-weight: 700;
-  color: var(--font-main);
-  margin-bottom: 2px;
-}
-
-.member-position {
-  color: var(--blue-400);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.member-contacts {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.member-contact {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.75rem;
-  color: var(--font-sub);
-}
 
 .member-contact i {
   width: 12px;
@@ -535,23 +335,6 @@ onMounted(async () => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.manager-badge {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--blue-400);
-  color: white;
-  font-size: 0.75rem;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-weight: 500;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 48px 0;
 }
 
 .empty-state i {
@@ -576,49 +359,6 @@ onMounted(async () => {
 
 .icon-green {
   color: var(--success);
-}
-
-/* Breadcrumb */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  padding: 8px 12px;
-  min-height:40px;
-  background: var(--blue-50);
-  border-radius: 8px;
-  font-size: 0.875rem;
-}
-
-.breadcrumb-item {
-  color: var(--font-sub);
-}
-
-.breadcrumb-item.active {
-  color: var(--blue-400);
-  font-weight: 600;
-}
-
-.breadcrumb-separator {
-  color: var(--gray-500);
-}
-.members-content::-webkit-scrollbar-track {
-  background: var(--gray-100);
-  border-radius: 3px;
-}
-.members-content::-webkit-scrollbar-thumb {
-  background: var(--gray-300);
-  border-radius: 3px;
-}
-
-.members-content::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-500);
-}
-
-/* Animation */
-.slide-in {
-  animation: slideIn 0.6s ease-out;
 }
 
 .fade-in {
