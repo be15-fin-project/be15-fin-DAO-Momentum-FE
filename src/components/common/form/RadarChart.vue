@@ -28,9 +28,10 @@ function convertLevelsToScores(levels) {
     '위험': 50,
   };
 
+
   return levels.map(level => {
-    if (typeof level === 'string' && /^[0-9]+$/.test(level)) {
-      return parseInt(level, 10);
+    if (!isNaN(Number(level))) {
+      return Number(level);
     }
     return levelMap[level] ?? 0;
   });
