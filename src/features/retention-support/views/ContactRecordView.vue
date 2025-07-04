@@ -44,10 +44,13 @@
         title="면담 기록 상세"
         icon="fa-comments"
         :sections="detailFormSections"
-        :showSubmit="false"
+        :showSubmit="showFeedbackButton"
+        submitText="피드백"
         @close="isOpen = false"
+        @submit="handleFeedbackSubmit"
         v-model:form="formData"
     />
+
 
   </main>
 </template>
@@ -61,7 +64,8 @@ import { useAuthStore } from '@/stores/auth.js';
 import {
   getRetentionContacts,
   getRetentionContactDetail,
-  createRetentionContact
+  createRetentionContact,
+  submitRetentionFeedback
 } from '@/features/retention-support/api.js';
 import { getDepartments, getPositions } from '@/features/works/api.js';
 
@@ -80,6 +84,7 @@ const pagination = ref({ currentPage: 1, totalPage: 1 });
 const isOpen = ref(false);
 const isSubmitModalOpen = ref(false);
 const selectedRow = ref(null);
+const showFeedbackButton = ref(false);
 
 const formData = ref({});
 const submitFormSections = ref([]);
@@ -230,6 +235,9 @@ const openModalHandler = async (row) => {
     selectedRow.value = row;
     isOpen.value = true;
 
+    // ✅ 버튼 노출 여부 설정
+    showFeedbackButton.value = detail.feedbackWritable === true;
+
     formData.value = {
       createdAt: detail.createdAt?.split('T')[0] ?? '',
       target: `${detail.targetName} (${detail.targetNo})`,
@@ -238,7 +246,9 @@ const openModalHandler = async (row) => {
       managerName: detail.managerName,
       reason: detail.reason,
       response: detail.response ?? '-',
-      responseAt: detail.responseAt?.split('T')[0] ?? '-',
+      responseAt: detail.responseAt
+          ? detail.responseAt.split('T')[0]
+          : new Date().toISOString().split('T')[0],
       feedback: detail.feedback ?? '-'
     };
 
@@ -276,9 +286,24 @@ const openModalHandler = async (row) => {
         icon: 'fa-comment-dots',
         layout: 'one-column',
         fields: [
-          { key: 'response', label: '면담 보고', type: 'textarea', editable: false },
-          { key: 'responseAt', label: '처리일시', type: 'input', editable: false },
-          { key: 'feedback', label: '인사팀 피드백', type: 'textarea', editable: false }
+          {
+            key: 'response',
+            label: '면담 보고',
+            type: 'textarea',
+            editable: false
+          },
+          {
+            key: 'responseAt',
+            label: '처리일시',
+            type: 'input',
+            editable: false
+          },
+          {
+            key: 'feedback',
+            label: '인사팀 피드백',
+            type: 'textarea',
+            editable: detail.feedbackWritable === true
+          }
         ]
       }
     ];
@@ -287,6 +312,27 @@ const openModalHandler = async (row) => {
     isOpen.value = false;
   }
 };
+
+const handleFeedbackSubmit = async () => {
+  const retentionId = selectedRow.value?.retentionId;
+  const feedback = formData.value.feedback?.trim();
+
+  if (!retentionId || !feedback) {
+    alert('피드백 내용을 입력해주세요.');
+    return;
+  }
+
+  try {
+    await submitRetentionFeedback(retentionId, feedback);
+    alert('피드백이 저장되었습니다.');
+    isOpen.value = false;
+    await handleSearch(filterValues.value); // 목록 새로고침
+  } catch (e) {
+    console.error('피드백 등록 실패:', e);
+    alert('피드백 저장 중 오류가 발생했습니다.');
+  }
+};
+
 
 /* ===== 등록 모달 열기 ===== */
 const handleSubmitModal = () => {
