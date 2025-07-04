@@ -6,9 +6,10 @@ import RemoteWorkForm from "@/features/approvals/components/approveType/RemoteWo
 import ProposalForm from "@/features/approvals/components/approveType/ProposalForm.vue";
 import VacationForm from "@/features/approvals/components/approveType/VacationForm.vue";
 import OvertimeForm from "@/features/approvals/components/approveType/OvertimeForm.vue";
-import WorkCorrectionForm from "@/features/approvals/components/approveTypeWrite/WorkCorrectionForm.vue";
+import WorkCorrectionForm from "@/features/approvals/components/approveType/WorkCorrectionForm.vue";
 import {getApprovalDetail} from "@/features/approvals/api.js";
 
+/* 부모에게서 값 받아오기 */
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: true },
@@ -17,12 +18,15 @@ const props = defineProps({
   }
 });
 
+/* 취소 사유 */
 const cancelForm = ref({
   cancelReason: ''
 });
 
+/* 부모 결재 내역 */
 const parentApprove = ref(null);
 
+/* 부모 결재 내역의 타입이 어딘지에 따라 안에 가져오는 폼이 달라짐 */
 const matchedComponent = computed(() => {
   switch (props.parentApproveDTO.approveType) {
     case 'BUSINESSTRIP':
@@ -42,7 +46,7 @@ const matchedComponent = computed(() => {
   }
 });
 
-
+/* 취소 사유 입력 - 수정 부분을 위해 필요한 부분 */
 function validateForm() {
   if (!cancelForm.value.cancelReason.trim()) {
     alert('취소 사유를 반드시 입력해주세요.');
@@ -51,6 +55,7 @@ function validateForm() {
   return true;
 }
 
+/* mount 하기 */
 onMounted(async () => {
   const parentId = props.parentApproveDTO.approveId;
   const response = await getApprovalDetail(parentId);
