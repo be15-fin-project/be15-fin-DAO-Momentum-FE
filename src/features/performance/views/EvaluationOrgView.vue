@@ -284,13 +284,15 @@ const openModalHandler = async (row) => {
           title: '평가 항목 점수',
           icon: 'fa-star-half-alt',
           layout: 'one-column',
-          fields: factorScores.map(f => ({
-            label: f.propertyName,
-            value: f.score,
-            type: 'scoreChart',
-            editable: false,
-          })),
-        }]
+          fields: [
+            {
+              type: 'scoreChart',
+              value: factorScores.map(f => ({ label: f.propertyName, score: f.score })),
+              editable: false,
+            }
+          ],
+        }
+        ]
         : [];
 
     formSections.value = [...baseSections, ...reasonSection, ...factorSection];

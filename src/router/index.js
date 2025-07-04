@@ -1,12 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LayoutDefault from "@/components/layout/LayoutDefault.vue";
-import evalRoutes from "@/features/performance/router.js"
+import {evalRoutes} from "@/features/performance/router.js"
+import {retentionRoutes} from "@/features/retention-support/router.js"
 import {commonRoutes} from "@/features/common/router.js";
 import {approvalsRoutes} from "@/features/approvals/router.js";
 import {worksRoutes} from "@/features/works/router.js";
 import {employeeRoutes} from "@/features/employee/router.js";
 import {useAuthStore} from "@/stores/auth.js";
 import {companyRoutes} from "@/features/company/router.js";
+import {myPageRoutes} from "@/features/mypage/router.js";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -21,6 +23,8 @@ const router = createRouter({
                 ...approvalsRoutes,
                 ...companyRoutes,
                 ...employeeRoutes,
+                ...myPageRoutes,
+                ...retentionRoutes
             ]
         },
         ...commonRoutes

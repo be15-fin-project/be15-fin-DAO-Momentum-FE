@@ -245,7 +245,7 @@ async function openModalHandler(kpiId) {
             label: '처리 사유',
             key: 'reason',
             editable: true,
-            type: 'input'
+            type: 'textarea'
           },
           ...(detail.cancelReason
               ? [

@@ -249,7 +249,7 @@ async function openSubmitModal(row) {
         {
           label: '사유',
           key: 'reason',
-          type: 'input',
+          type: 'textarea',
           editable: true,
           value: submitForm.value.reason
         }

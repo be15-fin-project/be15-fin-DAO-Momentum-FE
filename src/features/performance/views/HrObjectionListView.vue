@@ -176,7 +176,7 @@ const openModalHandler = async (row) => {
 
     formSections.value = [
       {
-        title: '인사 평가 정보',
+        title: '이의 제기 상세 정보',
         icon: 'fa-clipboard-check',
         layout: 'two-column',
         fields: [
@@ -251,7 +251,7 @@ const openModalHandler = async (row) => {
             editable: false,
           },
           {
-            label: '관리자 답변',
+            label: '처리 사유',
             value: content.responseReason
                 ? content.responseReason
                 : '<i class="fas fa-hourglass-half" style="color: #999;"></i>',

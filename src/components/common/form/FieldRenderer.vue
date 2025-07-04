@@ -1,15 +1,15 @@
-<template>
+<template xmlns="">
   <div class="form-group">
     <label class="form-label" :class="{ required: field.required }">
       {{ field.label }}
     </label>
 
-    <!-- scoreChart 시각화 우선 -->
-    <div v-if="field.type === 'scoreChart'" class="score-bar-wrapper">
-      <div class="score-bar" :style="{ width: scoreWidth + '%' }">
-        <span class="score-value">{{ field.value }}</span>
-      </div>
-    </div>
+    <template v-if="field.type === 'scoreChart'">
+      <ScoreBarChart
+          :scores="field.value"
+          :editable="!readonly && field.editable"
+      />
+    </template>
 
     <SliderGroup
         v-else-if="field.type === 'sliderGroup'"
@@ -65,10 +65,10 @@
 
     <!-- 읽기 전용 -->
     <div
-        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'scoreChart', 'likert', 'radarChart', 'progressTimeline'].includes(field.type)"
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart'].includes(field.type)"
         class="form-input readonly"
         v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
-    ></div>
+    />
 
 
 
@@ -80,6 +80,7 @@
           class="form-input"
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
+          :value="field.value"
       />
       <template v-if="field.type === 'html'">
         <div class="html-field" v-html="field.value" />
@@ -110,6 +111,7 @@
           v-else-if="field.type === 'select'"
           class="form-select"
           v-model="model[field.key]"
+          :value="field.value"
       >
         <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -125,6 +127,7 @@ import SliderGroup from "@/components/common/form/SliderGroup.vue";
 import LikertScale from "@/components/common/form/LikertScale.vue";
 import RadarChart from "@/components/common/form/RadarChart.vue";
 import ProgressTimeline from "@/components/common/form/ProgressTimeline.vue";
+import ScoreBarChart from "@/components/common/form/ScoreBarChart.vue";
 
 const props = defineProps({
   field: Object,

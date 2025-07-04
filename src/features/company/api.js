@@ -1,7 +1,7 @@
 import api from '@/api/axios.js'
 
-export function fetchCompanyInfo() {
-    return api.get('/company');
+export async function fetchCompanyInfo() {
+    return await api.get('/company');
 }
 
 export async function fetchDepartments() {
@@ -9,6 +9,11 @@ export async function fetchDepartments() {
     return res.data;
 }
 
-export function fetchDepartmentInfo(deptId){
-    return api.get(`/departments/${deptId}`)
+export async function fetchDepartmentInfo(deptId){
+    return await api.get(`/departments/${deptId}`)
+}
+
+export async function getHolidaysPerMonth(yearMonth) {
+    const resp = await api.get(`/holiday/calendar/${yearMonth}`)
+    return resp.data.data;
 }

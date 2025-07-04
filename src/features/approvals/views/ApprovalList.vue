@@ -46,7 +46,6 @@ const filterValues = ref({
 })
 
 // 기본 필터
-
 watch(departmentTree, () => {
   filterOptions.value = generateBaseFilters();
 }, { immediate: true });
@@ -225,10 +224,11 @@ const displayApprovals = computed(() => {
   return approvals.value.map(item => ({
     ...item,
     statusType: statusTypeMap[item.statusType] || item.statusType,
-    approveType: approveTypeMap[item.approveType] || item.approveType
+    approveType: approveTypeMap[item.approveType] || item.approveType,
+    createAt: item.createAt ? item.createAt.replace('T', ' ').slice(0, 16) : '',
+    completeAt: item.completeAt? item.completeAt.replace('T', ' ').slice(0, 16) : ''
   }));
 });
-
 
 /* 탭 클릭 시 로직 */
 // 탭 클릭
@@ -280,7 +280,6 @@ async function fetchApprovals() {
       size: 10
     }
 
-    console.log(approveListRequest.approveType);
     const res = await getApprovals(approveListRequest, pageRequest);
     approvals.value = res.data.data.approveDTO;
     pagination.value.totalPage = res.data.data.pagination.totalPage;
@@ -310,11 +309,11 @@ onMounted(async () => {
 
 /* api 호출하기 */
 onMounted(fetchApprovals);
-//
-// function handleDetailClick(row) {
-//   router.push(`/approvals/detail/${row.approveId}`)
-// }
 
+/* 결재 내역 상세 보기로 이동 */
+function handleDetailClick(row) {
+  router.push(`/approval/detail/${row.approveId}`)
+}
 </script>
 
 <template>

@@ -17,7 +17,7 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import SideModal from '@/components/common/SideModal.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
-import DoughnutChart from '@/features/performance/components/DoughnutChart.vue';
+import DonutChart from '@/features/performance/components/DonutChart.vue';
 import LineChart from '@/features/performance/components/LineChart.vue';
 
 
@@ -342,10 +342,10 @@ function handleSubmitModal() {
       icon: 'fa-bullseye',
       layout: 'two-column',
       fields: [
-        { label: '목표', key: 'goal', editable: true, type: 'input' },
-        { label: '목표 수치', key: 'goalValue', editable: true, type: 'number' },
-        { label: '진척도', key: 'kpiProgress', editable: false, type: 'number' },
-        { label: '마감일', key: 'deadline', editable: true, type: 'date' }
+        { label: '목표', key: 'goal', editable: true, type: 'input', required: true },
+        { label: '목표 수치', key: 'goalValue', editable: true, type: 'number', required: true },
+        { label: '진척도', key: 'kpiProgress', editable: false, type: 'number', required: true },
+        { label: '마감일', key: 'deadline', editable: true, type: 'date', required: true }
       ]
     },
     {
@@ -357,7 +357,8 @@ function handleSubmitModal() {
           label: '진척도 타임라인',
           type: 'progressTimeline',
           key: 'timeline',
-          editable: true
+          editable: true,
+          required: true
         }
       ]
     }
@@ -526,7 +527,7 @@ function handleBack() {
         :headerItems="[
         { label: 'KPI 조회', href: '#', active: true },
       ]"
-        :submitButtons="[{ label: 'KPI 제출', icon: 'fa-file-signature', event: 'openModal', variant: 'blue' }]"
+        :submitButtons="[{ label: 'KPI 제출', icon: 'fa-paper-plane', event: 'openModal', variant: 'blue' }]"
         :showTabs="false"
         @openModal="handleSubmitModal"
         @back="handleBack"
@@ -535,7 +536,7 @@ function handleBack() {
     <!-- KPI 통계 차트 영역 -->
     <section class="chart-row">
       <!-- 도넛 차트 -->
-      <DoughnutChart
+      <DonutChart
           :labels="donutChartData.labels"
           :data="donutChartData.data"
           :colors="donutChartData.colors"
