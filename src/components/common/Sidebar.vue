@@ -248,9 +248,9 @@ const menuItems = [
     requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
   },
   {
-    label: '공지 관리',
+    label: '공지사항',
     icon: 'fa-bullhorn',
-    hrefs: ['../notice/notice']
+    hrefs: ['../announcement']
   }
 ]
 
