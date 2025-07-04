@@ -5,7 +5,8 @@ export const retentionRoutes = [
         children: [
             { path: '', redirect: 'prospect-dash' },
             { path: 'prospect-dash', name: 'ProspectDashboardView', component: () => import('@/features/retention-support/views/ProspectDashboardView.vue') },
-            { path: 'prospect-employees', name: 'ProspectEmployeeList', component: () => import('@/features/retention-support/views/ProspectEmployeeList.vue') },
+            { path: 'prospect-employees', name: 'ProspectEmployeeList', component: () => import('@/features/retention-support/views/ProspectEmployeeListView.vue') },
+            { path: 'prospect-rounds', name: 'RetentionRoundView', component: () => import('@/features/retention-support/views/RetentionRoundView.vue') },
         ]
     },
 ];
