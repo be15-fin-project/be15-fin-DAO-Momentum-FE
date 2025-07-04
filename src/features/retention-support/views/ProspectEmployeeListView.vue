@@ -175,6 +175,7 @@ const handleSearch = async (values) => {
 };
 
 const tableColumns = [
+  { key: 'profile', label: '#' },
   { key: 'empNo', label: '사번' },
   { key: 'empName', label: '이름' },
   { key: 'deptName', label: '부서명' },
