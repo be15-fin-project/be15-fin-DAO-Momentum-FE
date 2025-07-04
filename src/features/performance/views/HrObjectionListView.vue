@@ -60,8 +60,41 @@ import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/stores/auth.js';
 import { useRoute } from 'vue-router';
 import { useToast } from 'vue-toastification';
+import DeleteConfirmToast from '@/components/common/DeleteConfirmToast.vue';
 
 const toast = useToast()
+
+const showDeleteConfirm = () => {
+  return new Promise((resolve) => {
+    const id = toast(
+        {
+          component: DeleteConfirmToast,
+          props: {
+            toastId: '', // placeholder
+            resolve
+          }
+        },
+        {
+          type: 'error',
+          timeout: false,
+          closeOnClick: false,
+          draggable: false
+        }
+    );
+
+    // update to inject the correct toastId
+    toast.update(id, {
+      content: {
+        component: DeleteConfirmToast,
+        props: {
+          toastId: id,
+          resolve
+        }
+      }
+    });
+  });
+};
+
 
 /* ========== State ========== */
 const currentPage = ref(1);
@@ -280,7 +313,7 @@ const openModalHandler = async (row) => {
 const handleReject = async () => {
   if (!selectedRow.value) return;
 
-  const confirmed = window.confirm('정말로 이의제기를 삭제하시겠습니까?');
+  const confirmed = await showDeleteConfirm();
   if (!confirmed) return;
 
   try {

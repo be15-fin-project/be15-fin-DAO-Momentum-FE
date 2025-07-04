@@ -92,8 +92,41 @@ import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
 import { useToast } from 'vue-toastification';
+import DeleteConfirmToast from '@/components/common/DeleteConfirmToast.vue';
 
 const toast = useToast()
+
+const showDeleteConfirm = () => {
+  return new Promise((resolve) => {
+    const id = toast(
+        {
+          component: DeleteConfirmToast,
+          props: {
+            toastId: '', // placeholder
+            resolve
+          }
+        },
+        {
+          type: 'error',
+          timeout: false,
+          closeOnClick: false,
+          draggable: false
+        }
+    );
+
+    // update to inject the correct toastId
+    toast.update(id, {
+      content: {
+        component: DeleteConfirmToast,
+        props: {
+          toastId: id,
+          resolve
+        }
+      }
+    });
+  });
+};
+
 
 // ──────────────── 상태 변수 ────────────────
 const currentPage = ref(1);
@@ -417,7 +450,9 @@ const handleEditSubmit = async () => {
 };
 
 const handleDelete = async () => {
-  if (!confirm('정말 삭제하시겠습니까?')) return;
+  const confirmed = await showDeleteConfirm();
+  if (!confirmed) return;
+
   try {
     await deleteEvaluationRound(selectedRoundId.value);
     toast.success('삭제가 완료되었습니다.');
