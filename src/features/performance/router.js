@@ -1,5 +1,4 @@
-// routes.js
-export default [
+export const evalRoutes = [
     {
         path: 'kpi',
         meta: { requiresAuth: true },

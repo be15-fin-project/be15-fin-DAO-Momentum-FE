@@ -39,7 +39,7 @@
                 @click.prevent="toggleSubmenu(index)"
                 :class="{ active: openSubmenu === index || isSubmenuActive(menu.subItems) }"
             >
-              <i :class="`fas ${getFaIconClass(menu.icon)}`"></i>
+              <i :class="['fas', menu.icon]"></i>
               <span class="sidebar-label">{{ menu.label }}</span>
               <i
                   class="fas fa-chevron-right sidebar-sub-toggle"
@@ -70,7 +70,7 @@
                 class="sidebar-item"
                 :class="{ active: isActive(resolveRouteList(menu.hrefs)) }"
             >
-              <i :class="`fas ${getFaIconClass(menu.icon)}`"></i>
+              <i :class="['fas', menu.icon]"></i>
               <span class="sidebar-label">{{ menu.label }}</span>
             </router-link>
           </template>
@@ -104,30 +104,36 @@
 </template>
 
 <script setup>
-import {onMounted, onUnmounted, ref, computed} from 'vue'
-import {storeToRefs} from 'pinia'
-import {useAuthStore} from '@/stores/auth.js'
-import {logoutUser} from '@/features/common/api.js'
-import router from '@/router/index.js'
-import {useRoute} from 'vue-router'
-import AlertPanel from "@/components/common/AlertPanel.vue";
-import { getEvaluationRoundStatus } from '@/features/performance/api.js'
-import {endWork, startWork} from "@/features/works/api.js";
-import AttendanceModal from "@/features/works/components/AttendanceModal.vue";
-import {useToast} from "vue-toastification";
-import {useAttendance} from "@/features/works/composable/useAttendance.js";
+/* ======================== 공통 모듈 ======================== */
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { storeToRefs } from 'pinia'
+import router from '@/router'
+import { useToast } from 'vue-toastification'
 
+/* ======================== 외부 컴포넌트 ======================== */
+import AlertPanel from '@/components/common/AlertPanel.vue'
+import AttendanceModal from '@/features/works/components/AttendanceModal.vue'
+
+/* ======================== 스토어 & API ======================== */
+import { useAuthStore } from '@/stores/auth.js'
+import { logoutUser } from '@/features/common/api.js'
+import { startWork, endWork } from '@/features/works/api.js'
+import { getEvaluationRoundStatus } from '@/features/performance/api.js'
+import { useAttendance } from '@/features/works/composable/useAttendance.js'
+
+/* ======================== 기본 상태 ======================== */
 const authStore = useAuthStore()
+const { userRole } = storeToRefs(authStore)
 const route = useRoute()
-const {userRole} = storeToRefs(authStore)
 const toast = useToast()
 
 const collapsed = ref(false)
 const openSubmenu = ref(null)
-const currentUserRoles = ref(['HR_MANAGER', 'MANAGER'])
+const showAlertPanel = ref(false)
 const roundStatus = ref({ inProgress: false, roundId: null })
 
-/* 출퇴근 관련 */
+/* ======================== 출퇴근 상태 ======================== */
 const {
   isAttended,
   isLoading,
@@ -138,22 +144,21 @@ const {
   fetchTodayAttendance,
   stopClockUpdater,
   getStartTime
-} = useAttendance();
+} = useAttendance()
 
-const showAlertPanel = ref(false)
-
+/* ======================== 메뉴 정의 (FA 아이콘 직접 입력) ======================== */
 const menuItems = [
   {
     label: '회사 정보',
-    icon: 'apartment',
+    icon: 'fa-city',
     subItems: [
-      {label: '회사 정보', hrefs: ['../company/company-info']},
-      {label: '조직도', hrefs: ['../company/org-chart']}
+      { label: '회사 정보', hrefs: ['../company/company-info'] },
+      { label: '조직도', hrefs: ['../company/org-chart'] }
     ]
   },
   {
     label: '사원 관리',
-    icon: 'group',
+    icon: 'fa-users',
     subItems: [
       { label: '사원 목록 조회', hrefs: ['../employees'] },
       { label: '인사 발령 내역', hrefs: ['../appoints'] },
@@ -163,34 +168,34 @@ const menuItems = [
   },
   {
     label: '근태 관리',
-    icon: 'schedule',
+    icon: 'fa-clock',
     hrefs: ['../works'],
     requireRole: ['MASTER', 'HR_MANAGER']
   },
   {
     label: '내 정보',
-    icon: 'person',
+    icon: 'fa-user',
     subItems: [
-      {label: '대시보드', hrefs: ['../mypage/dashboard']},
-      {label: '내 정보 조회', hrefs: ['../mypage/profile']},
-      {label: '계약서 내역 조회', hrefs: ['../mypage/contracts']}
+      { label: '대시보드', hrefs: ['../mypage/dashboard'] },
+      { label: '내 정보 조회', hrefs: ['../mypage/profile'] },
+      { label: '계약서 내역 조회', hrefs: ['../mypage/contracts'] }
     ]
   },
   {
     label: '결재 관리',
-    icon: 'task',
+    icon: 'fa-tasks',
     subItems: [
       {
         label: '전체 결재 내역',
         hrefs: ['../approvals'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      {label: '문서함', hrefs: ['../approval/inbox']}
+      { label: '문서함', hrefs: ['../approval/inbox'] }
     ]
   },
   {
     label: '평가 관리',
-    icon: 'bar_chart',
+    icon: 'fa-chart-bar',
     subItems: [
       {
         label: 'KPI 분석',
@@ -216,17 +221,17 @@ const menuItems = [
       { label: '인사 평가 조회', hrefs: ['../hr/hr-list'] },
       {
         label: '이의 제기 관리',
-        hrefs: ['../hr/my-objection', '../hr/objection-requests'],
+        hrefs: ['../hr/my-objection', '../hr/objection-requests']
       }
     ]
   },
   {
     label: '근속 지원',
-    icon: 'support_agent',
+    icon: 'fa-headset',
     subItems: [
       {
         label: '근속 전망',
-        hrefs: ['../retention/risk-dash'],
+        hrefs: ['../retention/prospect-dash'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       {
@@ -244,41 +249,51 @@ const menuItems = [
   },
   {
     label: '공지 관리',
-    icon: 'campaign',
+    icon: 'fa-bullhorn',
     hrefs: ['../notice/notice']
   }
 ]
-function getFaIconClass(materialIcon) {
-  const iconMap = {
-    domain: 'fa-building',
-    apartment: 'fa-city',
-    group: 'fa-users',
-    schedule: 'fa-clock',
-    person: 'fa-user',
-    task: 'fa-tasks',
-    bar_chart: 'fa-chart-bar',
-    support_agent: 'fa-headset',
-    campaign: 'fa-bullhorn',
-    notifications: 'fa-bell',
-    settings: 'fa-cog',
-    logout: 'fa-sign-out-alt',
-    menu: 'fa-bars',
-    chevron_right: 'fa-chevron-right',
-  };
-  return iconMap[materialIcon] || 'fa-circle';
+
+/* ======================== 유틸: 메뉴 접근 제어 및 라우팅 ======================== */
+function isAllowed(item) {
+  if (!item) return false
+  if (typeof item.required === 'function' && !item.required()) return false
+  if (!item.requireRole || item.requireRole.length === 0) return true
+  return item.requireRole.some(role => userRole.value.includes(role))
 }
 
-// 마운트
-onMounted(async () => {
-  await getStartTime()
-  await fetchTodayAttendance()
-})
+function hasVisibleSubItems(menu) {
+  return Array.isArray(menu?.subItems) && menu.subItems.some(isAllowed)
+}
 
-onUnmounted(() => {
-  stopClockUpdater()
-});
+function resolveRoute(hrefs) {
+  if (typeof hrefs === 'function') {
+    const result = hrefs()
+    if (result?.length > 0) {
+      return { path: result[0], state: { roundId: roundStatus.value.roundId } }
+    }
+    return '/'
+  }
+  return Array.isArray(hrefs) && hrefs.length > 0 ? hrefs[0] : '/'
+}
 
-// Methods
+function resolveRouteList(hrefs) {
+  return typeof hrefs === 'function'
+      ? userRole.value.flatMap(role => hrefs(role) || []).filter(Boolean)
+      : Array.isArray(hrefs) ? hrefs.filter(Boolean) : []
+}
+
+function isActive(hrefs) {
+  const currentPath = route.path
+  const list = Array.isArray(hrefs) ? hrefs : [hrefs]
+  return list.some(href => currentPath.endsWith(href.replace('../', '/')))
+}
+
+function isSubmenuActive(subItems) {
+  return subItems.some(item => isAllowed(item) && isActive(resolveRouteList(item.hrefs)))
+}
+
+/* ======================== UI 토글 ======================== */
 function toggleSidebar() {
   collapsed.value = !collapsed.value
   openSubmenu.value = null
@@ -288,188 +303,83 @@ function toggleSubmenu(index) {
   openSubmenu.value = openSubmenu.value === index ? null : index
 }
 
-function resolveRoute(hrefs) {
-  if (typeof hrefs === 'function') {
-    const resolved = hrefs()
-    if (resolved?.length > 0) {
-      // roundId 함께 넘기기
-      return {
-        path: resolved[0],
-        state: { roundId: roundStatus.value.roundId }
-      }
-    }
-    return '/'
+function toggleAlertPanel() {
+  showAlertPanel.value = !showAlertPanel.value
+}
+
+/* ======================== 출퇴근 ======================== */
+const submitAttendance = async () => {
+  isLoading.value = true
+  try {
+    if (!isAttended.value) await startWork()
+    else await endWork()
+    await fetchTodayAttendance()
+    toast.success('출퇴근 등록 완료')
+    closeAttendanceModal()
+  } catch (e) {
+    toast.error('근태 처리 실패')
+  } finally {
+    isLoading.value = false
   }
-  return Array.isArray(hrefs) && hrefs.length > 0 ? hrefs[0] : '/'
 }
 
-
-function resolveRouteList(hrefs) {
-  if (typeof hrefs === 'function') {
-    for (const role of userRole.value) {
-      try {
-        const resolved = hrefs(role)
-        if (resolved?.length > 0) return resolved
-      } catch (e) {
-        console.warn('resolveRouteList error:', e)
-      }
-    }
-    return []
-  }
-  return Array.isArray(hrefs) ? hrefs.filter(Boolean) : []
+function formatTime(datetime) {
+  return datetime ? datetime.toLocaleString().slice(0, -3) : '-'
 }
 
-function resolveHrefList(hrefs) {
-  if (typeof hrefs === 'function') {
-    for (const role of userRole.value) {
-      try {
-        const resolved = hrefs(role)
-        if (resolved?.length > 0) return resolved
-      } catch (e) {
-        console.warn('resolveHrefList error:', e)
-      }
-    }
-    return []
-  }
-  return Array.isArray(hrefs) ? hrefs.filter(Boolean) : []
+function formatDuration(minutes) {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return h || m ? `${h ? `${h}시간` : ''} ${m ? `${m}분` : ''}`.trim() : '0분'
 }
 
-function isActive(hrefs) {
-  const currentPath = route.path
-  if (!Array.isArray(hrefs)) hrefs = [hrefs]
-  return hrefs.some(href => currentPath.endsWith(href.replace('../', '/')))
-}
-
-function isSubmenuActive(subItems) {
-  return subItems.some(
-      (item) => isAllowed(item) && isActive(resolveHrefList(item.hrefs))
-  )
-}
-
-function isAllowed(item) {
-  if (!item) return false;
-
-  // 1. 추가 조건 (required 함수) → false면 표시 안 함
-  if (typeof item.required === 'function' && !item.required()) {
-    return false
-  }
-
-  // 2. 권한 조건 없으면 허용
-  if (!item.requireRole || item.requireRole.length === 0) {
-    return true;
-  }
-
-  // 3. 현재 사용자 권한이 하나라도 포함되면 허용
-  return item.requireRole.some((required) => userRole.value.includes(required));
-}
-
-
-function hasVisibleSubItems(menu) {
-  if (!menu?.subItems) return false
-  return menu.subItems.some((sub) => isAllowed(sub))
-}
-
-const handleLogout = async () => {
+/* ======================== 로그아웃 ======================== */
+async function handleLogout() {
   try {
     await logoutUser()
   } catch (e) {
-    console.error('로그아웃 API 실패', e)
+    console.error('로그아웃 실패:', e)
   }
   authStore.clearAuth()
   router.push('/login')
 }
 
-function toggleAlertPanel() {
-  showAlertPanel.value = !showAlertPanel.value
-}
-
-/* 근태 로직 */
-const submitAttendance = async () => {
-  isLoading.value = true;
-  try {
-    if (!isAttended.value) {
-      await startWork();
-    } else {
-      await endWork();
-    }
-    await fetchTodayAttendance(); // 출/퇴근 상태 최신화
-    toast.success("출퇴근 등록 완료");
-    closeAttendanceModal()
-  } catch (e) {
-    toast.error("근태 처리 실패", e);
-  } finally {
-    isLoading.value = false;
-  }
-}
-
-function formatTime(datetime) {
-  if (!datetime) return '-';
-
-  return datetime.toLocaleString().slice(0, -3);
-}
-
-function formatDuration(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  const parts = [];
-  if (h > 0) parts.push(`${h}시간`);
-  if (m > 0) parts.push(`${m}분`);
-  return parts.length ? parts.join(' ') : '0분';
-}
-
-
+/* ======================== 초기 실행 ======================== */
 onMounted(async () => {
   try {
+    await getStartTime()
+    await fetchTodayAttendance()
     const result = await getEvaluationRoundStatus()
     roundStatus.value = result || { inProgress: false, roundId: null }
   } catch (e) {
-    console.error('평가 진행 여부 조회 실패', e)
+    console.error('초기 로딩 실패', e)
   }
+})
+
+onUnmounted(() => {
+  stopClockUpdater()
 })
 </script>
 
 <style scoped>
+/* ===== 공통 스타일 ===== */
 .sidebar {
   width: 23rem;
-  background: var(--side-background);
-  color: var(--color-surface);
+  min-width: 4.8rem;
   height: 100vh;
   padding: 1.5rem;
+  background: var(--side-background);
+  color: var(--color-surface);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   flex-shrink: 0;
+  overflow: hidden;
 
-  /* 핵심 추가 부분 */
   transition:
       width 0.4s ease,
       transform 0.6s ease,
       padding 0.3s ease;
   transform: translateX(0);
-}
-
-.sidebar.collapsed {
-  width: 4.8rem;
-  min-width: 4.8rem;
-}
-.sidebar.collapsed .fa-bars::before {
-  margin-left: 0.4rem;
-}
-
-
-.side-btn {
-  background: var(--main-color);
-  color: var(--color-surface);
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.sidebar .top-icons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .sidebar-header {
@@ -504,22 +414,43 @@ onMounted(async () => {
   background: none;
   border: none;
   color: var(--color-surface);
-  cursor: pointer;
   font-size: 1rem;
+  cursor: pointer;
+}
+
+.side-btn {
+  background: var(--main-color);
+  color: var(--color-surface);
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.top-icons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .sidebar-nav {
   display: flex;
   flex-direction: column;
   flex: 1;
-  overflow-y: auto; /* 이 영역만 스크롤 */
   padding: 20px 0;
+  overflow-y: auto;
 }
 
 .sidebar-nav::-webkit-scrollbar {
   width: 4px;
 }
 
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 2rem;
+}
+
+/* ===== 메뉴 항목 ===== */
 .sidebar-item {
   display: flex;
   align-items: center;
@@ -528,14 +459,14 @@ onMounted(async () => {
   border-radius: 0.5rem;
   color: var(--gray-300);
   text-decoration: none;
-  transition: background 0.2s, color 0.2s;
   margin-bottom: 0.5rem;
+  transition: background 0.2s, color 0.2s;
 }
 
 .sidebar-item:hover {
-  cursor: pointer;
   background-color: var(--gray-600);
   color: var(--color-surface);
+  cursor: pointer;
 }
 
 .sidebar-item.active {
@@ -548,31 +479,43 @@ onMounted(async () => {
   color: var(--color-surface);
 }
 
-/* 서브 메뉴의 active (더 연하게) */
-.sidebar-indent .sidebar-item.active {
-  background-color: var(--gray-700); /* 좀 더 연한 회색 */
-  color: var(--gray-50); /* 연한 흰색 계열 */
+.sidebar-sub-toggle {
+  margin-left: auto;
+  transition: transform 0.2s ease;
+  transform: rotate(0deg); /* 닫힌 상태 */
 }
 
+.sidebar-item.active .sidebar-sub-toggle {
+  transform: rotate(90deg); /* 열린 상태 */
+}
+
+/* ===== 서브 메뉴 ===== */
 .sidebar-indent {
   padding-left: 1rem;
-  display: none;
+  display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
 }
 
 .sidebar-indent.open {
-  display: flex;
+  max-height: 500px;
 }
 
-.sidebar-footer {
-  margin-top: auto;
-  padding-top: 2rem;
+.sidebar-indent .sidebar-item.active {
+  background-color: var(--gray-700);
+  color: var(--gray-50);
 }
 
-/* Collapsed 상태 처리 */
-.sidebar.collapsed .sidebar-label,
+/* ===== Collapsed 상태 ===== */
+.sidebar.collapsed {
+  width: 4.8rem;
+}
+
 .sidebar.collapsed .sidebar-title,
+.sidebar.collapsed .sidebar-label,
 .sidebar.collapsed .sidebar-indent,
 .sidebar.collapsed .sidebar-sub-toggle,
 .sidebar.collapsed .sidebar-logo,
@@ -589,31 +532,16 @@ onMounted(async () => {
   margin-right: 0;
 }
 
-.sidebar-toggle .material-symbols-rounded {
-  transition: transform 0.3s ease;
-}
-
-.sidebar.collapsed .sidebar-toggle .material-symbols-rounded {
-  transform: rotate(180deg);
-}
-
-.sidebar-sub-toggle {
-  margin-left: auto;
-  transition: transform 0.2s ease;
-  transform: rotate(0deg); /* 닫힌 상태 */
-}
-
-.sidebar-item.active .sidebar-sub-toggle {
-  transform: rotate(90deg); /* 열린 상태: 아래 방향 */
+.sidebar.collapsed .fa-bars::before {
+  margin-left: 0.4rem;
 }
 
 .rotate-icon {
-  transition: transform 0.3s ease;
   transform: rotate(180deg);
+  transition: transform 0.3s ease;
 }
 
 .fas.fa-bars {
   transition: transform 0.3s ease;
 }
-
 </style>
