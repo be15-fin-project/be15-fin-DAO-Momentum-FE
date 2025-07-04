@@ -248,11 +248,19 @@ const openModalHandler = async (row) => {
         icon: 'fa-user',
         layout: 'two-column',
         fields: [
-          { key: 'createdAt', label: '요청일', type: 'input', editable: false },
-          { key: 'target', label: '대상자', type: 'input', editable: false },
           { key: 'deptName', label: '부서', type: 'input', editable: false },
           { key: 'positionName', label: '직위', type: 'input', editable: false },
-          { key: 'managerName', label: '상급자', type: 'input', editable: false }
+          { key: 'target', label: '대상자', type: 'input', editable: false },
+          { key: 'createdAt', label: '요청일', type: 'input', editable: false },
+        ]
+      },
+      {
+        title: '진행자 정보',
+        icon: 'fa-user-tie',
+        layout: 'two-column',
+        fields: [
+          { key: 'managerName', label: '진행자 이름', type: 'input', editable: false },
+          { key: 'managerNo', label: '진행자 사번', type: 'input', editable: false }
         ]
       },
       {
