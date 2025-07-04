@@ -49,6 +49,9 @@ import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 // ───────── 상태값 ─────────
 const currentPage = ref(1);
@@ -145,7 +148,7 @@ async function fetchSummary(values) {
     const total = res.pagination?.totalPage > 0 ? res.pagination.totalPage : 1;
     pagination.value = { currentPage: current, totalPage: total };
   } catch (err) {
-    console.error('[fetchSummary] 오류:', err);
+    toast.error('KPI 요약 정보를 불러오지 못했습니다.');
     tableData.value = [];
     pagination.value = { currentPage: 1, totalPage: 1 };
   }
@@ -177,7 +180,7 @@ onMounted(async () => {
     filterValues.value = {};
     handleSearch();
   } catch (err) {
-    console.error('부서/직위 불러오기 실패:', err);
+    toast.error('부서/직위 정보를 불러오지 못했습니다.');
   }
 });
 

@@ -91,6 +91,9 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 // ──────────────── 상태 변수 ────────────────
 const currentPage = ref(1);
@@ -179,7 +182,7 @@ const handleSearch = async (values) => {
       totalPage: p.totalPage || 1
     };
   } catch (err) {
-    console.error('회차 조회 실패:', err);
+    toast.error('모든 항목을 입력해주세요.');
     tableData.value = [];
   }
 };
@@ -253,7 +256,7 @@ const handleSubmit = async () => {
       !Array.isArray(weightSegments) || weightSegments.length !== 6 ||
       !Array.isArray(gradeRatios) || gradeRatios.length !== 5
   ) {
-    alert('모든 항목을 입력해주세요.');
+    toast.error('모든 항목을 입력해주세요.');
     return;
   }
 
@@ -276,13 +279,16 @@ const handleSubmit = async () => {
 
   try {
     await createEvaluationRound(payload);
-    alert('등록 완료');
+    toast.success('등록이 완료되었습니다.');
     isOpenCreate.value = false;
     await handleSearch(filterValues.value);
   } catch (err) {
-    console.error('저장 실패:', err);
-    alert(err.response?.data?.message || '저장 실패');
+    toast.error(err.response?.data?.message || '저장에 실패하였습니다.');
   }
+};
+
+const handleCloseCreateModal = () => {
+  isOpenCreate.value = false;
 };
 
 
@@ -357,8 +363,7 @@ const openDetailModal = async (row) => {
     origDetailModel = JSON.parse(JSON.stringify(detailFormModel.value));
     detailFormSections.value = makeDetailSections(false);
   } catch (err) {
-    console.error('상세 조회 실패:', err);
-    alert('평가 기준 정보를 불러오지 못했습니다.');
+    toast.error('평가 기준 정보를 불러오지 못했습니다.');
   }
 };
 
@@ -403,12 +408,11 @@ const handleEditSubmit = async () => {
 
   try {
     await updateEvaluationRound(payload);
-    alert('수정 완료');
+    toast.success('수정이 완료되었습니다.');
     detailMode.value = 'view';
     await handleSearch(filterValues.value);
   } catch (err) {
-    console.error('수정 실패:', err);
-    alert(err.response?.data?.message || '수정 실패');
+    toast.error(err.response?.data?.message || '수정 처리 중 오류가 발생했습니다.');
   }
 };
 
@@ -416,12 +420,11 @@ const handleDelete = async () => {
   if (!confirm('정말 삭제하시겠습니까?')) return;
   try {
     await deleteEvaluationRound(selectedRoundId.value);
-    alert('삭제 완료');
+    toast.success('삭제가 완료되었습니다.');
     isOpenDetail.value = false;
     await handleSearch(filterValues.value);
   } catch (err) {
-    console.error('삭제 실패:', err);
-    alert('삭제 실패');
+    toast.error('삭제 처리 중 오류가 발생했습니다.');
   }
 };
 

@@ -69,6 +69,9 @@ import SideModal from '@/components/common/SideModal.vue';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/stores/auth.js';
 import { useRoute } from 'vue-router';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 /* ========== State ========== */
 const currentPage = ref(1);
@@ -181,7 +184,7 @@ const handleSearch = async (values) => {
       totalPage: res.pagination?.totalPage || 1,
     };
   } catch (e) {
-    console.error('인사 평가 내역 조회 실패:', e);
+    toast.error('이의제기 목록을 불러오지 못했습니다.');
     tableData.value = [];
   }
 };
@@ -195,15 +198,22 @@ const openModalHandler = async (row) => {
     isRejecting.value = false;
     createForm.value = { reason: '' };
 
-    selectedContent.value = content;
+    const enrichedContent = {
+      ...content,
+      roundNo: row.roundNo ?? content.roundNo,
+      overallGrade: row.score ?? content.overallGrade,
+      statusType: row.statusType ?? content.statusType,
+    };
+
+    selectedContent.value = enrichedContent;
     selectedFactorScores.value = factorScores;
     selectedWeightInfo.value = weightInfo;
     selectedRateInfo.value = rateInfo;
 
-    formSections.value = buildFormSections(content, factorScores, weightInfo, rateInfo);
+    formSections.value = buildFormSections(enrichedContent, factorScores, weightInfo, rateInfo);
 
   } catch (e) {
-    console.error('상세 조회 실패:', e);
+    toast.error('상세 정보를 불러오지 못했습니다.');
     isOpen.value = false;
   }
 };
@@ -267,26 +277,19 @@ const handleSubmit = async () => {
     const factorSection = formSections.value.find(s => s.title === '요인별 평가 결과');
     const scoreField = factorSection?.fields?.find(f => f.type === 'scoreChart');
 
-    // ✅ 여기 넣으세요
-    console.log('[DEBUG] scoreField.value:', scoreField?.value);
-
     payload.factorScores = scoreField?.value?.map(f => ({
       propertyId: f.propertyId,
       score: f.score
     })) || [];
-
-    // ✅ 여기도 넣으세요
-    console.log('[DEBUG] payload:', payload);
   }
 
   try {
     await processHrObjection(payload);
-    alert(isApproval.value ? '승인 처리되었습니다.' : '반려 처리되었습니다.');
+    toast.success(isApproval.value ? '승인 처리되었습니다.' : '반려 처리되었습니다.');
     isOpen.value = false;
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('[ERROR] 이의제기 처리 실패:', e);
-    alert('처리 중 오류가 발생했습니다.');
+    toast.error('이의제기 처리 중 오류가 발생했습니다.');
   }
 };
 
