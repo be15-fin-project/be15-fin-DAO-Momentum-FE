@@ -1,6 +1,7 @@
 <!-- 작은 모달 -->
 <script setup>
 import { nextTick, watch } from 'vue'
+import BaseButton from "@/components/common/BaseButton.vue";
 
 const props = defineProps({
     visible: { type: Boolean, required: true },
@@ -44,8 +45,21 @@ watch(() => props.visible, (val) => {
         <div class="modal-content">
             <slot/>
             <div class="modal-buttons">
-                <button v-if="confirmVisible" class="confirm-btn" @click="handleConfirm">{{ confirmText }}</button>
-                <button class="cancel-btn" @click="handleCancel">{{ cancelText }}</button>
+              <BaseButton
+                  v-if="confirmVisible"
+                  variant="submit"
+                  @button-click="handleConfirm"
+                  :style="{ padding: '8px 20px' }"
+              >
+                {{ confirmText }}
+              </BaseButton>
+              <BaseButton
+                  variant="cancel"
+                  @button-click="handleCancel"
+                  :style="{ padding: '8px 20px' }"
+              >
+                {{ cancelText }}
+              </BaseButton>
             </div>
         </div>
     </div>
@@ -91,7 +105,6 @@ watch(() => props.visible, (val) => {
 .modal-buttons {
     display: flex;
     justify-content: space-evenly;
-
 }
 
 .modal-buttons button {
