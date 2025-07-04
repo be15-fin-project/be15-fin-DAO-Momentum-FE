@@ -116,8 +116,7 @@ export async function deleteRetentionContact(retentionId) {
 
 // 면담 기록 피드백 등록
 export async function submitRetentionFeedback(retentionId, feedback) {
-    const res = await api.post('/retention/communications/feedback', {
-        retentionId,
+    const res = await api.post(`/retention-contacts/${retentionId}/feedback`, {
         feedback
     });
     return res.data.data;
