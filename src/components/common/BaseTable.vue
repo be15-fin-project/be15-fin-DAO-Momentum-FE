@@ -165,17 +165,17 @@ const emit = defineEmits(['click-detail']);
 }
 
 .status-approved {
-  background-color: #d9fbe5;
-  color: #1b5e20;
+  background-color: var(--label-approved);
+  color: var(--text-on-label-approved);
 }
 
 .status-rejected {
-  background-color: #ffe2e2;
-  color: #c62828;
+  background-color: var(--label-rejected);
+  color: var(--text-on-label-rejected);
 }
 
 .status-wait {
-  background-color: #e0f0ff;
-  color: #1565c0;
+  background-color: var(--label-pending);
+  color: var(--text-on-label-pending);
 }
 </style>
