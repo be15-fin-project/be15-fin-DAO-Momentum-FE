@@ -152,33 +152,33 @@ const menuItems = [
     label: '회사 정보',
     icon: 'fa-city',
     subItems: [
-      { label: '회사 정보', hrefs: ['../company/company-info'] },
-      { label: '조직도', hrefs: ['../company/org-chart'] }
+      { label: '회사 정보', hrefs: ['/company/company-info'] },
+      { label: '조직도', hrefs: ['/company/org-chart'] }
     ]
   },
   {
     label: '사원 관리',
     icon: 'fa-users',
     subItems: [
-      { label: '사원 목록 조회', hrefs: ['../employees'] },
-      { label: '인사 발령 내역', hrefs: ['../appoints'] },
-      { label: '계약서 목록 조회', hrefs: ['../contracts'] }
+      { label: '사원 목록 조회', hrefs: ['/employees'] },
+      { label: '인사 발령 내역', hrefs: ['/appoints'] },
+      { label: '계약서 목록 조회', hrefs: ['/contracts'] }
     ],
     requireRole: ['MASTER', 'HR_MANAGER']
   },
   {
     label: '근태 관리',
     icon: 'fa-clock',
-    hrefs: ['../works'],
+    hrefs: ['/works'],
     requireRole: ['MASTER', 'HR_MANAGER']
   },
   {
     label: '내 정보',
     icon: 'fa-user',
     subItems: [
-      { label: '대시보드', hrefs: ['../mypage/dashboard'] },
-      { label: '내 정보 조회', hrefs: ['../mypage/profile'] },
-      { label: '계약서 내역 조회', hrefs: ['../mypage/contracts'] }
+      { label: '대시보드', hrefs: ['/mypage/dashboard'] },
+      { label: '내 정보 조회', hrefs: ['/mypage/profile'] },
+      { label: '계약서 내역 조회', hrefs: ['/mypage/contracts'] }
     ]
   },
   {
@@ -187,10 +187,10 @@ const menuItems = [
     subItems: [
       {
         label: '전체 결재 내역',
-        hrefs: ['../approvals'],
+        hrefs: ['/approvals'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      { label: '문서함', hrefs: ['../approval/inbox'] }
+      { label: '문서함', hrefs: ['/approval/inbox'] }
     ]
   },
   {
@@ -199,29 +199,29 @@ const menuItems = [
     subItems: [
       {
         label: 'KPI 분석',
-        hrefs: ['../kpi/statics', '../kpi/employee-kpis', '../kpi/employee-detail'],
+        hrefs: ['/kpi/statics', '/kpi/employee-kpis', '/kpi/employee-detail'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      { label: 'KPI 조회', hrefs: ['../kpi/kpi-list'] },
+      { label: 'KPI 조회', hrefs: ['/kpi/kpi-list'] },
       {
         label: 'KPI 요청 관리',
-        hrefs: ['../kpi/requests'],
+        hrefs: ['/kpi/requests'],
         requireRole: ['MANAGER']
       },
       {
         label: '평가 관리',
-        hrefs: ['/eval/manage-peer', '../eval/manage-org', '../eval/manage-self', '../eval/round'],
+        hrefs: ['/eval/manage-peer', '/eval/manage-org', '/eval/manage-self', '/eval/round'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       {
         label: '다면 평가 제출',
-        hrefs: ['../eval/submit'],
+        hrefs: ['/eval/submit'],
         required: () => roundStatus.value.inProgress === true
       },
-      { label: '인사 평가 조회', hrefs: ['../hr/hr-list'] },
+      { label: '인사 평가 조회', hrefs: ['/hr/hr-list'] },
       {
         label: '이의 제기 관리',
-        hrefs: ['../hr/my-objection', '../hr/objection-requests']
+        hrefs: ['/hr/my-objection', '/hr/objection-requests']
       }
     ]
   },
@@ -231,13 +231,12 @@ const menuItems = [
     subItems: [
       {
         label: '근속 전망',
-        hrefs: ['../retention/prospect-dash', '../retention/prospect-employees', '../retention/prospect-rounds', ],
+        hrefs: ['/retention/prospect-dash', '/retention/prospect-employees', '/retention/prospect-rounds', ],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       {
         label: '면담 기록',
-        hrefs: ['../retention/my-contacts', '../retention/contact-list'],
-
+        hrefs: ['/retention/my-contacts', '/retention/contact-list'],
         requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
       }
     ],
@@ -246,7 +245,7 @@ const menuItems = [
   {
     label: '공지 관리',
     icon: 'fa-bullhorn',
-    hrefs: ['../notice/notice']
+    hrefs: ['/notice/notice']
   }
 ]
 
