@@ -14,7 +14,7 @@
     <!-- KPI 통계 차트 영역 -->
     <section class="chart-row">
       <!-- 도넛 차트 -->
-      <DoughnutChart
+      <DonutChart
           :labels="donutChartData.labels"
           :data="donutChartData.data"
           :colors="donutChartData.colors"
@@ -76,7 +76,7 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import SideModal from '@/components/common/SideModal.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
-import DoughnutChart from '@/features/performance/components/DoughnutChart.vue';
+import DonutChart from '@/features/performance/components/DonutChart.vue';
 import LineChart from '@/features/performance/components/LineChart.vue';
 
 // ────────── 상태 ──────────
