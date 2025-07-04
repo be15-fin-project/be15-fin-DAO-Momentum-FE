@@ -28,7 +28,7 @@ export async function getDepartmentStabilityDistribution(params) {
 
 // 근속 전망 엑셀 다운로드
 export async function downloadRetentionPredictionExcel(params) {
-    const res = await api.get('/retention/prediction/export', {
+    const res = await api.get('/retention-supports/excel', {
         params,
         responseType: 'blob' // 파일 다운로드를 위해 blob 지정
     });
