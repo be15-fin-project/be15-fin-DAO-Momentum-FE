@@ -4,25 +4,29 @@
     <div class="sidebar-header">
       <div class="sidebar-brand">
         <div class="sidebar-logo">
-          <span class="material-symbols-rounded">domain</span>
+          <i class="fas fa-building"></i>
         </div>
         <h2 class="sidebar-title">Momentum</h2>
       </div>
       <span class="top-icons">
         <button class="side-btn" @click="handleCreateAttendance" :disabled="isLoading">
-  {{ isAttended ? '퇴근' : '출근' }}
-</button>
+          {{ isAttended ? '퇴근' : '출근' }}
+        </button>
         <button class="sidebar-toggle" @click="toggleAlertPanel">
-        <span class="material-symbols-rounded notification-icon">notifications</span>
-      </button>
+          <i class="fas fa-bell notification-icon"></i>
+        </button>
       </span>
       <button class="sidebar-toggle" @click="toggleSidebar">
-        <span class="material-symbols-rounded">menu</span>
+        <i
+            class="fas fa-bars"
+            :class="{ 'rotate-icon': collapsed }"
+        ></i>
+
       </button>
     </div>
 
     <!-- Alert Panel -->
-    <AlertPanel :visible="showAlertPanel" @close="toggleAlertPanel"/>
+    <AlertPanel :visible="showAlertPanel" @close="toggleAlertPanel" />
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
@@ -35,14 +39,12 @@
                 @click.prevent="toggleSubmenu(index)"
                 :class="{ active: openSubmenu === index || isSubmenuActive(menu.subItems) }"
             >
-              <span class="material-symbols-rounded">{{ menu.icon }}</span>
+              <i :class="`fas ${getFaIconClass(menu.icon)}`"></i>
               <span class="sidebar-label">{{ menu.label }}</span>
-              <span
-                  class="material-symbols-rounded sidebar-sub-toggle"
+              <i
+                  class="fas fa-chevron-right sidebar-sub-toggle"
                   :class="{ open: openSubmenu === index || isSubmenuActive(menu.subItems) }"
-              >
-                chevron_right
-              </span>
+              ></i>
             </a>
 
             <div
@@ -68,7 +70,7 @@
                 class="sidebar-item"
                 :class="{ active: isActive(resolveRouteList(menu.hrefs)) }"
             >
-              <span class="material-symbols-rounded">{{ menu.icon }}</span>
+              <i :class="`fas ${getFaIconClass(menu.icon)}`"></i>
               <span class="sidebar-label">{{ menu.label }}</span>
             </router-link>
           </template>
@@ -76,7 +78,7 @@
       </div>
     </nav>
 
-    <!--  출퇴근 모달  -->
+    <!-- 출퇴근 모달 -->
     <AttendanceModal
         :visible="showAttendanceModal"
         :is-attended="isAttended"
@@ -90,11 +92,11 @@
     <!-- Footer -->
     <div class="sidebar-footer">
       <router-link to="/setting" class="sidebar-item">
-        <span class="material-symbols-rounded">settings</span>
+        <i class="fas fa-cog"></i>
         <span class="sidebar-label">설정</span>
       </router-link>
       <div class="sidebar-item" @click="handleLogout">
-        <span class="material-symbols-rounded">logout</span>
+        <i class="fas fa-sign-out-alt"></i>
         <span class="sidebar-label">로그아웃</span>
       </div>
     </div>
@@ -246,6 +248,25 @@ const menuItems = [
     hrefs: ['../notice/notice']
   }
 ]
+function getFaIconClass(materialIcon) {
+  const iconMap = {
+    domain: 'fa-building',
+    apartment: 'fa-city',
+    group: 'fa-users',
+    schedule: 'fa-clock',
+    person: 'fa-user',
+    task: 'fa-tasks',
+    bar_chart: 'fa-chart-bar',
+    support_agent: 'fa-headset',
+    campaign: 'fa-bullhorn',
+    notifications: 'fa-bell',
+    settings: 'fa-cog',
+    logout: 'fa-sign-out-alt',
+    menu: 'fa-bars',
+    chevron_right: 'fa-chevron-right',
+  };
+  return iconMap[materialIcon] || 'fa-circle';
+}
 
 // 마운트
 onMounted(async () => {
@@ -408,28 +429,33 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Pretendard&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded');
-
 .sidebar {
   width: 23rem;
-  min-width: 23rem;
-  max-width: 25rem;
   background: var(--side-background);
   color: var(--color-surface);
   height: 100vh;
   padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease;
   overflow: hidden;
+  flex-shrink: 0;
+
+  /* 핵심 추가 부분 */
+  transition:
+      width 0.4s ease,
+      transform 0.6s ease,
+      padding 0.3s ease;
+  transform: translateX(0);
 }
 
-/* 기존 CSS 그대로 유지 */
 .sidebar.collapsed {
   width: 4.8rem;
-  min-width: 4.8rem
+  min-width: 4.8rem;
 }
+.sidebar.collapsed .fa-bars::before {
+  margin-left: 0.4rem;
+}
+
 
 .side-btn {
   background: var(--main-color);
@@ -580,4 +606,14 @@ onMounted(async () => {
 .sidebar-item.active .sidebar-sub-toggle {
   transform: rotate(90deg); /* 열린 상태: 아래 방향 */
 }
+
+.rotate-icon {
+  transition: transform 0.3s ease;
+  transform: rotate(180deg);
+}
+
+.fas.fa-bars {
+  transition: transform 0.3s ease;
+}
+
 </style>
