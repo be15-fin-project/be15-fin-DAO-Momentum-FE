@@ -46,6 +46,7 @@
           class="form-input"
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
+          :value="field.value"
       />
       <input
           v-else-if="field.type === 'number'"
@@ -73,6 +74,7 @@
           v-else-if="field.type === 'select'"
           class="form-select"
           v-model="model[field.key]"
+          :value="field.value"
       >
         <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
           {{ opt.label }}

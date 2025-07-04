@@ -7,6 +7,7 @@ import {worksRoutes} from "@/features/works/router.js";
 import {employeeRoutes} from "@/features/employee/router.js";
 import {useAuthStore} from "@/stores/auth.js";
 import {companyRoutes} from "@/features/company/router.js";
+import {myPageRoutes} from "@/features/mypage/router.js";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -21,6 +22,7 @@ const router = createRouter({
                 ...approvalsRoutes,
                 ...companyRoutes,
                 ...employeeRoutes,
+                ...myPageRoutes,
             ]
         },
         ...commonRoutes
