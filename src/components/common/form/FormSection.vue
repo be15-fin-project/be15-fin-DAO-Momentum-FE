@@ -44,7 +44,7 @@ const layoutClass = props.layout || '';
   position: absolute;
   bottom: -2px;
   left: 0;
-  width: 60px;
+  width: 12rem;
   height: 2px;
   background: var(--icon-gradient);
   border-radius: 1px;
