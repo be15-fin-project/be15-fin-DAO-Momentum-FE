@@ -245,6 +245,17 @@ const modalSections = computed(() => [
   },
 ]);
 
+const handleHeaderButton = (event) => {
+  switch (event.value) {
+    case 'create':
+      openCreateModal();
+      break;
+    case 'upload':
+      router.push('/employees/csv');
+      break;
+  }
+};
+
 const handleRegisterSubmit = async (req) => {
   try {
     const resp = await createEmployee(req);
@@ -261,13 +272,12 @@ const handleRegisterSubmit = async (req) => {
     <HeaderWithTabs :headerItems="[
         { label: '사원 목록 조회', to: '/employees', active: true },
     ]"
-                    :submitButtons="[{ label: '등록', icon: 'fa-user-plus', variant: 'blue'},
-    {label: 'CSV', icon: 'fa-upload', variant: 'green'}]"
+                    :submitButtons="[{ label: '등록', icon: 'fa-user-plus', variant: 'blue', event: 'click', value: 'create'},
+    {label: 'CSV', icon: 'fa-upload', variant: 'green', event: 'click', value: 'upload'}]"
                     :showTabs="false"
-                    @click="openCreateModal"
+                    @click="handleHeaderButton"
     />
     <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch"/>
-
 
     <!-- Table Section -->
     <BaseTable :columns="columns" :rows="employees" @click-detail="goToDetailsPage"/>
