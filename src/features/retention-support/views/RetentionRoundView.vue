@@ -149,10 +149,31 @@ const openCreateModal = () => {
 
 const handleCreate = async () => {
   try {
+    const { roundNo, year, month } = createForm.value;
+
+    // 유효성 검사
+    if (!year || isNaN(year) || year < 0) {
+      alert('유효한 연도를 입력하세요.');
+      return;
+    }
+
+    if (!month || isNaN(month) || month < 1 || month > 12) {
+      alert('월은 1에서 12 사이여야 합니다.');
+      return;
+    }
+
+    if (roundNo && (isNaN(roundNo) || roundNo < 1)) {
+      alert('회차 번호는 1 이상의 숫자여야 합니다.');
+      return;
+    }
+
+    // payload 구성
     const payload = {
-      year: Number(createForm.value.year),
-      month: Number(createForm.value.month)
+      year: Number(year),
+      month: Number(month),
+      ...(roundNo ? { roundNo: Number(roundNo) } : {})  // optional 필드 처리
     };
+
     await createRetentionForecastRound(payload);
     alert('근속 전망 회차 등록이 완료되었습니다.');
     isOpen.value = false;
