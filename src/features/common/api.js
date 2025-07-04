@@ -19,3 +19,10 @@ export function forgetPassword(data) {
 export function resetPassword(data) {
     return api.post('/employees/reset-password',data);
 }
+
+/*
+* s3에 저장된 파일을 가져오는 api
+* */
+export function getFileUrl({ key, fileName }) {
+    return api.post('/file/download-url', {key, fileName});
+}
