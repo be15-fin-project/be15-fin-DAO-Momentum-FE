@@ -4,7 +4,9 @@
       <div class="section-icon">
         <i :class="['fas', icon]"></i>
       </div>
+      <slot name="title">
       <h3 class="section-title">{{ title }}</h3>
+      </slot>
     </div>
 
     <div :class="['form-grid', layoutClass]">
@@ -44,7 +46,7 @@ const layoutClass = props.layout || '';
   position: absolute;
   bottom: -2px;
   left: 0;
-  width: 60px;
+  width: 12rem;
   height: 2px;
   background: var(--icon-gradient);
   border-radius: 1px;
@@ -54,7 +56,7 @@ const layoutClass = props.layout || '';
   width: 44px;
   height: 44px;
   background: var(--icon-gradient);
-  color: var(--basic);
+  color: var(--color-surface);
   border-radius: var(--form-radius);
   display: flex;
   align-items: center;

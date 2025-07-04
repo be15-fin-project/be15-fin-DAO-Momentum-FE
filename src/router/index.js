@@ -22,7 +22,7 @@ const router = createRouter({
                 ...approvalsRoutes,
                 ...companyRoutes,
                 ...employeeRoutes,
-                ...myPageRoutes,
+                ...myPageRoutes
             ]
         },
         ...commonRoutes

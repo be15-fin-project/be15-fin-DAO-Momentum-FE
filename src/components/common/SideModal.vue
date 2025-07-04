@@ -80,8 +80,8 @@
 
 
 <script setup>
-import FormSection from '@/components/common/FormSection.vue';
-import FieldRenderer from '@/components/common/FieldRenderer.vue';
+import FormSection from '@/components/common/form/FormSection.vue';
+import FieldRenderer from '@/components/common/form/FieldRenderer.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
 import { watch, onMounted, ref } from 'vue';
 

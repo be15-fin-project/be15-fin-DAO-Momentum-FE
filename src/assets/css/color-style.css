@@ -17,6 +17,8 @@
     --purple-500: #4338ca;
     --green-100: #16a34a;
     --green-200: #15803d;
+    --green-250: #10b981;
+    --green-300: #059669;
 
     /* Neutral / Gray Scale */
     --gray-50: #f9fafb;       /* 페이지 배경 */
@@ -69,7 +71,6 @@
     --color-text-muted: #666;
 
     /* ───────────── Layout / Spacing / Radius ───────────── */
-    --basic: #ffffff;
     --color-background: #f9fafb;
     --color-surface: #ffffff;
     --color-muted: #e5e7eb;
@@ -89,6 +90,7 @@
     --radius-lg: 12px;
     --radius-xl: 20px;
     --radius-full: 50%;
+    --radius-max: 999px;
 
     --header-height: 66px;
 

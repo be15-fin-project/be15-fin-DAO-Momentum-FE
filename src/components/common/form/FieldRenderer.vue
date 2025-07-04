@@ -1,15 +1,15 @@
-<template>
+<template xmlns="">
   <div class="form-group">
     <label class="form-label" :class="{ required: field.required }">
       {{ field.label }}
     </label>
 
-    <!-- scoreChart 시각화 우선 -->
-    <div v-if="field.type === 'scoreChart'" class="score-bar-wrapper">
-      <div class="score-bar" :style="{ width: scoreWidth + '%' }">
-        <span class="score-value">{{ field.value }}</span>
-      </div>
-    </div>
+    <template v-if="field.type === 'scoreChart'">
+      <ScoreBarChart
+          :scores="field.value"
+          :editable="!readonly && field.editable"
+      />
+    </template>
 
     <SliderGroup
         v-else-if="field.type === 'sliderGroup'"
@@ -25,7 +25,7 @@
 
     <LikertScale
         v-else-if="field.type === 'likert'"
-        v-model="model[field.key]"
+        v-model="field.value"
         labelClass="text-lg text-blue-600 mb-2"
         :min="field.min ?? 1"
         :max="field.max ?? 7"
@@ -33,10 +33,44 @@
         :readonly="readonly || !field.editable"
     />
 
+    <RadarChart
+        v-if="field.type === 'radarChart'"
+        :labels="field.value.labels"
+        :values="field.value.scores"
+        :editable="isEditMode"
+    />
+
+    <template v-if="field.type === 'progressTimeline'">
+      <ProgressTimeline
+          v-if="!readonly && field.editable"
+          :kpiProgress="model[field.key]?.kpiProgress"
+          v-model:progress25="model[field.key].progress25"
+          v-model:progress50="model[field.key].progress50"
+          v-model:progress75="model[field.key].progress75"
+          v-model:progress100="model[field.key].progress100"
+          :editable="true"
+      />
+      <ProgressTimeline
+          v-else
+          :kpiProgress="field.value?.kpiProgress"
+          :progress25="field.value?.progress25"
+          :progress50="field.value?.progress50"
+          :progress75="field.value?.progress75"
+          :progress100="field.value?.progress100"
+          :editable="false"
+      />
+    </template>
+
+
+
     <!-- 읽기 전용 -->
-    <div v-else-if="readonly || !field.editable" class="form-input readonly">
-      {{ field.value ?? model[field.key] ?? '' }}
-    </div>
+    <div
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart'].includes(field.type)"
+        class="form-input readonly"
+        v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
+    />
+
+
 
     <!-- 입력 가능 -->
     <template v-else>
@@ -48,6 +82,9 @@
           :placeholder="field.placeholder || field.label"
           :value="field.value"
       />
+      <template v-if="field.type === 'html'">
+        <div class="html-field" v-html="field.value" />
+      </template>
       <input
           v-else-if="field.type === 'number'"
           type="number"
@@ -86,8 +123,11 @@
 
 <script setup>
 import { computed } from 'vue';
-import SliderGroup from "@/components/common/SliderGroup.vue";
-import LikertScale from "@/components/common/LikertScale.vue";
+import SliderGroup from "@/components/common/form/SliderGroup.vue";
+import LikertScale from "@/components/common/form/LikertScale.vue";
+import RadarChart from "@/components/common/form/RadarChart.vue";
+import ProgressTimeline from "@/components/common/form/ProgressTimeline.vue";
+import ScoreBarChart from "@/components/common/form/ScoreBarChart.vue";
 
 const props = defineProps({
   field: Object,
@@ -189,7 +229,7 @@ const scoreWidth = computed(() => {
   display: flex;
   align-items: center;
   padding-left: 12px;
-  color: var(--basic);
+  color: var(--color-surface);
   font-weight: 600;
   transition: width 0.3s ease;
   border-radius: var(--radius-ss);
@@ -199,4 +239,11 @@ const scoreWidth = computed(() => {
   position: relative;
   z-index: 2;
 }
+.html-field {
+  padding: 8px 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
 </style>
