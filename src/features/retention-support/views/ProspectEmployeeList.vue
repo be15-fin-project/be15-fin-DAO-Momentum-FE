@@ -38,7 +38,7 @@
         :visible="isOpen"
         title="근속 전망 상세"
         icon="fa-chart-line"
-        :sections="detailSections"
+        :sections="formSections"
         :showSubmit="false"
         @close="isOpen = false"
     />
@@ -69,6 +69,7 @@ const pagination = ref({ currentPage: 1, totalPage: 1 });
 const tableData = ref([]);
 const isOpen = ref(false);
 const detailSections = ref([]);
+const formSections = ref([]);
 
 onMounted(async () => {
   const [deptRes, posRes] = await Promise.all([
@@ -186,37 +187,65 @@ const tableColumns = [
 
 const openDetail = async (row) => {
   try {
-    const res = await getRetentionForecastDetail(row.retentionId);
-    detailSections.value = [
+    const detail = await getRetentionForecastDetail(row.retentionId);
+
+    formSections.value = [
       {
-        title: '기본 정보',
+        title: '사원 정보',
         icon: 'fa-user',
         layout: 'two-column',
         fields: [
-          { label: '이름', value: res.empName, type: 'input', editable: false },
-          { label: '부서', value: res.deptName, type: 'input', editable: false },
-          { label: '직위', value: res.positionName, type: 'input', editable: false },
-          { label: '근속 연수', value: res.tenure + '년', type: 'input', editable: false },
+          { label: '이름', value: detail.empName, type: 'input', editable: false },
+          { label: '부서', value: detail.deptName, type: 'input', editable: false },
+          { label: '직위', value: detail.positionName, type: 'input', editable: false },
+          { label: '근속 연수', value: `${detail.tenure}년`, type: 'input', editable: false },
+        ],
+      },
+      {
+        title: '근속 지표 점수',
+        icon: 'fa-star-half-stroke',
+        layout: 'one-column',
+        fields: [
+          {
+            label: '',
+            type: 'radarChart',
+            editable: false,
+            value: {
+              labels: ['직무', '보상', '관계', '성장', '워라밸', '근속연수'],
+              scores: [
+                detail.jobScore,
+                detail.compScore,
+                detail.relationScore,
+                detail.growthScore,
+                detail.wlbScore,
+                detail.tenureScore,
+              ],
+            }
+          }
         ]
       },
       {
-        title: '근속 지표',
+        title: '근속 지표 등급',
         icon: 'fa-chart-bar',
         layout: 'two-column',
         fields: [
-          { label: '직무 만족도', value: res.jobGrade, type: 'input', editable: false },
-          { label: '보상 만족도', value: res.compGrade, type: 'input', editable: false },
-          { label: '관계 만족도', value: res.relationGrade, type: 'input', editable: false },
-          { label: '성장 만족도', value: res.growthGrade, type: 'input', editable: false },
-          { label: '워라밸 만족도', value: res.wlbGrade, type: 'input', editable: false },
-          { label: '근속 등급', value: res.retentionGrade, type: 'input', editable: false },
-          { label: '안정성 유형', value: res.stabilityType, type: 'input', editable: false },
-        ]
+          { label: '직무 만족도', value: detail.jobGrade, type: 'input', editable: false },
+          { label: '보상 만족도', value: detail.compGrade, type: 'input', editable: false },
+          { label: '관계 만족도', value: detail.relationGrade, type: 'input', editable: false },
+          { label: '성장 만족도', value: detail.growthGrade, type: 'input', editable: false },
+          { label: '워라밸 만족도', value: detail.wlbGrade, type: 'input', editable: false },
+          { label: '근속 만족도', value: detail.tenureGrade, type: 'input', editable: false },
+          { label: '종합 점수', value: detail.retentionScore, type: 'input', editable: false },
+          { label: '근속 등급', value: detail.retentionGrade, type: 'input', editable: false },
+          { label: '안정성 유형', value: detail.stabilityType, type: 'input', editable: false },
+        ],
       }
     ];
+
     isOpen.value = true;
   } catch (err) {
     console.error('상세 조회 실패:', err);
+    alert('상세 조회에 실패했습니다.');
   }
 };
 
