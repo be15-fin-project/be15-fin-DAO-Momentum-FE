@@ -35,9 +35,9 @@
 </template>
 
 <script setup>
-import InfoTable from "@/features/mypage/components/InfoTable.vue";
-import CompanyCard from "@/features/mypage/components/CompanyCard.vue";
-import SectionHeader from "@/features/mypage/components/SectionHeader.vue";
+import InfoTable from "@/features/mypage/components/profile/InfoTable.vue";
+import CompanyCard from "@/features/mypage/components/profile/CompanyCard.vue";
+import SectionHeader from "@/features/mypage/components/profile/SectionHeader.vue";
 import {computed, watch} from "vue";
 import BaseButton from "@/components/common/BaseButton.vue";
 

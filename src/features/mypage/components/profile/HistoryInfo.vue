@@ -34,8 +34,8 @@
 </template>
 
 <script setup>
-import InfoTable from "@/features/mypage/components/InfoTable.vue";
-import SectionHeader from "@/features/mypage/components/SectionHeader.vue";
+import InfoTable from "@/features/mypage/components/profile/InfoTable.vue";
+import SectionHeader from "@/features/mypage/components/profile/SectionHeader.vue";
 import {onMounted, reactive} from "vue";
 
 //enum('EDUCATION','CERTIFICATE','AWARD','CAREER')

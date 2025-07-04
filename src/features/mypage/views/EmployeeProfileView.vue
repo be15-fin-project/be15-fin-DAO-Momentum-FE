@@ -1,10 +1,10 @@
 <script setup>
-import ContactButton from "@/features/mypage/components/ContactButton.vue";
+import ContactButton from "@/features/mypage/components/profile/ContactButton.vue";
 import {computed, onMounted, reactive, ref, watch} from "vue";
-import ProfileCard from "@/features/mypage/components/ProfileCard.vue";
-import InfoItem from "@/features/mypage/components/InfoItem.vue";
-import BasicInfo from "@/features/mypage/components/BasicInfo.vue";
-import HistoryInfo from "@/features/mypage/components/HistoryInfo.vue";
+import ProfileCard from "@/features/mypage/components/profile/ProfileCard.vue";
+import InfoItem from "@/features/mypage/components/profile/InfoItem.vue";
+import BasicInfo from "@/features/mypage/components/profile/BasicInfo.vue";
+import HistoryInfo from "@/features/mypage/components/profile/HistoryInfo.vue";
 import "@/assets/css/index.css";
 import {fetchEmpInfo, putEmpInfo} from "@/features/mypage/api.js";
 import SideModal from "@/components/common/SideModal.vue";
