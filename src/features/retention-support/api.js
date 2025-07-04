@@ -45,6 +45,11 @@ export async function getRetentionRounds(params) {
     return res.data.data;
 }
 
+// 근속 전망 회차 등록
+export async function createRetentionForecastRound(payload) {
+    const res = await api.post('/retention-forecasts', payload);
+    return res.data.data;
+}
 
 // ==================================================
 // 근속 전망 조회 API
