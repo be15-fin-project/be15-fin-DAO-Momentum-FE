@@ -44,3 +44,20 @@ export async function getRetentionRounds(params) {
     const res = await api.get('/retention/rounds', { params });
     return res.data.data;
 }
+
+
+// ==================================================
+// 근속 전망 조회 API
+// ==================================================
+
+// 근속 전망 목록 조회
+export async function getRetentionForecasts(params) {
+    const res = await api.get('/retention/forecast', { params });
+    return res.data.data;
+}
+
+// 근속 전망 상세 조회
+export async function getRetentionForecastDetail(retentionId) {
+    const res = await api.get(`/retention/${retentionId}`);
+    return res.data.data;
+}

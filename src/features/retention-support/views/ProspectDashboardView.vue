@@ -2,7 +2,11 @@
   <main>
     <!-- 헤더 및 상단 버튼 -->
     <HeaderWithTabs
-        :headerItems="[{ label: '근속 전망 대시보드', to: '/retention/prospect-dash', active: true }]"
+        :headerItems="[
+            { label: '대시보드', to: '/retention/prospect-dash', active: true },
+            { label: '근속 전망', to: '/retention/prospect-employees', active: false },
+            { label: '전망 회차', to: '/retention/prospect-rounds', active: false },
+            ]"
         :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
         :showTabs="false"
         @download="handleDownload"
