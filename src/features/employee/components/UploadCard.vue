@@ -48,27 +48,12 @@
         icon="upload"
         class="start-btn"
         :disabled="!file || uploading"
-        @button-click="$emit('start-upload')"
+        :class="{ 'disabled-btn': !file || uploading }"
+        @button-click="onClickUpload"
     >
       업로드 시작
     </BaseButton>
     </FormSection>
-
-
-    <!-- 5) 진행 상태 -->
-    <div v-if="uploading" class="progress-section">
-      <div class="progress-bar-wrapper">
-        <span class="progress-label">진행률</span>
-        <span class="progress-percent">{{ uploadProgress }}%</span>
-        <div class="progress-track">
-          <div
-              class="progress-fill"
-              :style="{ width: uploadProgress + '%' }"
-          ></div>
-        </div>
-      </div>
-      <p class="progress-status">{{ uploadStatus }}</p>
-    </div>
   </div>
 </template>
 
@@ -82,7 +67,6 @@ const props = defineProps({
   fileName:   String,
   fileSize:   String,
   uploading:  Boolean,
-  uploadProgress: Number,
   uploadStatus:   String,
 })
 
@@ -99,9 +83,25 @@ function onDrop(e) {
   const f = e.dataTransfer.files[0]
   emit('select-file', f)
 }
+
+function onClickUpload() {
+  if (!props.file || props.uploading) return
+  emit('start-upload')
+}
 </script>
 
 <style scoped>
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.start-btn.disabled-btn {
+  opacity: 0.8;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .form-section {
   background-color: white;
   border-radius: 12px;
