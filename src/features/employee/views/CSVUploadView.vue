@@ -1,10 +1,11 @@
 <template>
   <main>
     <HeaderWithTabs :headerItems="[
-        { label: 'CSV 등록', to: '/employees/csv', active: true },
+        { label: 'CSV 등록', to: '/employees/csv', event: 'click', active: true },
     ]"
-                    :submitButtons="[{ label: '뒤로 가기', icon: 'fa-arrow-left', event: 'back', variant: 'white' }]"
-                    :showTabs="false"
+        :submitButtons="[{ label: '뒤로 가기', icon: 'fa-arrow-left', event:'click', value: 'back', variant: 'white' }]"
+        :showTabs="false"
+        @click="handleClick"
     />
 
     <section class="csv-upload-layout">
@@ -55,6 +56,9 @@ import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue"
 
 import {createEmployees, getCSVTemplate} from '@/features/employee/api'
 import {useToast} from "vue-toastification";
+import {useRouter} from "vue-router";
+
+const router = useRouter()
 
 const toast = useToast();
 const file = ref(null)
@@ -100,10 +104,11 @@ const csvNotices = [
 ]
 
 function handleFile(f) {
-  if (!f.name.endsWith('.csv')) {
+  if (!f || !f.name?.endsWith('.csv')) {
     toast.error('CSV 파일만 업로드 가능합니다.')
     return
   }
+
   file.value = f
   fileName.value = f.name
   fileSize.value = formatFileSize(f.size)
@@ -154,6 +159,12 @@ async function downloadTemplate() {
   } catch (e) {
     toast.error('CSV 템플릿 다운로드에 실패했습니다.')
     console.error(e)
+  }
+}
+
+function handleClick(event) {
+  if (event.value === 'back') {
+    router.push('/employees')
   }
 }
 </script>

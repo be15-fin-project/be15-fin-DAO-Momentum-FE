@@ -76,6 +76,7 @@ const dragOver = ref(false)
 function onSelect(e) {
   const f = e.target.files[0]
   emit('select-file', f)
+  e.target.value = ''
 }
 
 function onDrop(e) {
