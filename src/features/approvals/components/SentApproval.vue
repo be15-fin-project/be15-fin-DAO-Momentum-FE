@@ -193,7 +193,7 @@ function convertReceipt(receiptType) {
   return statusMap[receiptType] || null;
 }
 
-/* 보여지는 부분 수저하는 로직 */
+/* 보여지는 부분 수정하는 로직 */
 const displayApprovals = computed(() => {
   return sentApprovals.value.map(item => ({
     ...item,
