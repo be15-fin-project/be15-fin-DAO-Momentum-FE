@@ -67,7 +67,7 @@ const props = defineProps({
   fileName:   String,
   fileSize:   String,
   uploading:  Boolean,
-  uploadStatus:   String,
+  // uploadStatus:   String,
 })
 
 const emit = defineEmits(['select-file', 'remove-file', 'start-upload'])

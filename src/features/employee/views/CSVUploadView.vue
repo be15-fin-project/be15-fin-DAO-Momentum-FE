@@ -61,7 +61,7 @@ const file = ref(null)
 const fileName = ref('')
 const fileSize = ref('')
 const uploading = ref(false)
-const uploadProgress = ref(0)
+// const uploadProgress = ref(0)
 
 const requiredFields = [
   {key: 'name', icon: 'fa-user', type: 'input', label: '이름', placeholder: '사원 이름', required: true},
@@ -113,7 +113,7 @@ function removeFile() {
   file.value = null
   fileName.value = ''
   fileSize.value = ''
-  uploadProgress.value = 0
+  // uploadProgress.value = 0
 }
 
 async function uploadCSV() {
@@ -124,13 +124,7 @@ async function uploadCSV() {
   formData.append('file', file.value)
 
   try {
-    await createEmployees(formData, (e) => {
-      if (e.lengthComputable) {
-        const percent = Math.floor((e.loaded / e.total) * 100)
-        uploadProgress.value = percent
-      }
-    })
-
+    await createEmployees(formData)
     toast.success('CSV 파일이 성공적으로 업로드되었습니다!')
     removeFile()
   } catch (err) {
