@@ -20,32 +20,38 @@
         @search="handleSearch"
     />
 
-    <!-- 평균 점수 카드 -->
-    <MetricCardGroup
-        :employeeCount="employeeCount"
-        :averageScore="averageScore"
-        :stableRate="stableRate"
-        :riskRate="riskRate"
-    />
+    <section class="content">
+      <!-- 평균 점수 카드 -->
+      <section class="dashboard">
+        <StabilityDonut :distribution="overallDistribution"/>
+        <MetricCardGroup
+            :employeeCount="employeeCount"
+            :averageScore="averageScore"
+            :stableRate="stableRate"
+            :riskRate="riskRate"
+        />
+      </section>
 
-    <!-- 차트 영역 -->
-    <section class="chart-row">
-      <StabilityDonut :distribution="overallDistribution" />
-      <DeptStabilityBar :data="departmentDistribution" />
+      <!-- 차트 영역 -->
+      <section class="chart-row">
+        <DeptStabilityBar :data="departmentDistribution"/>
+        <MonthlyRetentionTrend :data="monthlyStats"/>
+      </section>
+
     </section>
 
-    <section class="chart-row-full" />
   </main>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import {ref, onMounted} from 'vue';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 
 import StabilityDonut from '@/features/retention-support/components/StabilityDonut.vue';
 import DeptStabilityBar from '@/features/retention-support/components/DeptStabilityBar.vue';
 import MetricCardGroup from '@/features/retention-support/components/MetricCardGroup.vue';
+import MonthlyRetentionTrend from '@/features/retention-support/components/MonthlyRetentionTrend.vue';
 
 import {
   getDepartments,
@@ -57,9 +63,10 @@ import {
   getRetentionOverview,
   getOverallStabilityDistribution,
   getDepartmentStabilityDistribution,
+  getMonthlyRetentionTimeseries,
   downloadRetentionPredictionExcel,
 } from '@/features/retention-support/api.js';
-import { useToast } from 'vue-toastification';
+import {useToast} from 'vue-toastification';
 
 const toast = useToast();
 // ────────── 상태 ──────────
@@ -73,6 +80,7 @@ const riskRate = ref(0);
 
 const overallDistribution = ref({});
 const departmentDistribution = ref([]);
+const monthlyStats = ref([]);
 
 // ────────── 초기 진입 ──────────
 onMounted(async () => {
@@ -82,7 +90,7 @@ onMounted(async () => {
 
 // ────────── 필터 초기화 ──────────
 async function initFilterOptions() {
-  const roundRes = await getRetentionRounds({ size: 100 });
+  const roundRes = await getRetentionRounds({size: 100});
   const rounds = roundRes?.content ?? [];
 
   const roundOptions = rounds.map(r => ({
@@ -142,6 +150,7 @@ async function handleSearch(values) {
 
     overallDistribution.value = await getOverallStabilityDistribution(params);
     departmentDistribution.value = await getDepartmentStabilityDistribution(params);
+    monthlyStats.value = await getMonthlyRetentionTimeseries(params);
   } catch (e) {
     toast.error('통계 정보를 불러오는 데 실패했습니다.');
   }
@@ -169,7 +178,7 @@ async function handleDownload() {
 
 // ────────── 유틸 ──────────
 function normalizeParams(values) {
-  const normalized = { ...values };
+  const normalized = {...values};
 
   // positionId: "전체" → null
   if (normalized.positionId && normalized.positionId !== '전체') {
@@ -189,16 +198,22 @@ function normalizeParams(values) {
 </script>
 
 <style scoped>
-.chart-row {
-  padding: 0 40px;
+.content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+}
+.dashboard {
+  display: flex;
+  gap: 24px;
+  flex-direction: column;
+  align-items: center;
+}
+.chart-row {
+  padding-right: 40px;
+  display: grid;
+  grid-template-columns: repeat(1, 1fr); /* 2개의 열을 각 240px로 고정 */
   gap: 32px;
-  margin-bottom: 32px;
 }
 
-.chart-row-full {
-  padding: 0 40px;
-  margin-bottom: 32px;
-}
 </style>

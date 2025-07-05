@@ -22,7 +22,8 @@ defineProps({
 .metric-grid {
   padding: 0 40px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, minmax(260px, 1fr)); /* 2개의 열을 각 240px로 고정 */
+  grid-template-rows: repeat(auto-fill, minmax(100px, 1fr)); /* 행의 높이를 120px로 고정 */
   gap: 24px;
   margin-bottom: 32px;
 }
