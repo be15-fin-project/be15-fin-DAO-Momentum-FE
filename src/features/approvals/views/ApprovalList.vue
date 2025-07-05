@@ -134,7 +134,7 @@ const columns = [
   { key: 'approveTitle', label: '제목' },
   { key: 'approveType', label: '종류' },
   { key: 'employeeName', label: '작성자' },
-  { key: 'deptId', label: '부서' },
+  { key: 'departmentName', label: '부서' },
   { key: 'createAt', label: '작성일' },
   { key: 'completeAt', label: '처리일' },
   { key: 'action', label: '상세' }

@@ -59,19 +59,27 @@ const selectedFormComponent = computed(() => {
             placeholder="제목을 입력하세요"
           />
         </div><br>
-        <h3 class="section-title">
-          <i class="fas fa-user"></i>작성자
-        </h3>
-        <div class="form-group">
-          <input
-            type="text"
-            class="form-input enhanced"
-            :class="{ readonly: isReadOnly }"
-            :value="`${approveDTO.departmentName} ${approveDTO.employeeName}`"
-            :readonly="isReadOnly"
-          />
-        </div>
       </section>
+
+      <div class="form-group-row">
+        <div class="form-group half-width">
+          <h3 class="section-title">
+            <i class="fas fa-user"></i>작성자
+          </h3>
+          <div class="readonly-box">
+            {{ `${approveDTO.departmentName} ${approveDTO.employeeName}` }}
+          </div>
+        </div>
+
+        <div class="form-group half-width">
+          <h3 class="section-title">
+            <i class="fas fa-calendar-alt"></i>작성일
+          </h3>
+          <div class="readonly-box">
+            {{ approveDTO.createAt?.slice(0, 10) }}
+          </div>
+        </div>
+      </div>
 
       <section class="form-section">
         <h3 class="section-title">
@@ -101,16 +109,38 @@ const selectedFormComponent = computed(() => {
   flex: 1;
   min-width: 0;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-xsm);
+  box-shadow: var(--shadow-sm);
 }
 
 .form-container {
   margin: 0 auto;
   padding: 0 24px;
+
 }
 
-.fas{
-  color: var(--blue-100)
+.form-group-row {
+  display: flex;
+  gap: 32px;
+  margin-bottom: 24px;
+}
+
+.form-group.half-width {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.readonly-box {
+  padding: 14px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  font-size: 0.95rem;
+  color: var(--gray-800);
+  background-color: var(--color-surface);
+}
+
+.fas {
+  color: var(--blue-100);
 }
 
 .form-section:nth-of-type(2) {
@@ -128,7 +158,6 @@ const selectedFormComponent = computed(() => {
   gap: 10px;
 }
 
-
 .form-group {
   margin: 0;
 }
@@ -138,20 +167,19 @@ const selectedFormComponent = computed(() => {
 .form-textarea {
   width: 100%;
   padding: 16px 20px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border: 2px solid var(--gray-200);
+  border-radius: var(--form-radius);
   font-size: 1rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  background: white;
-  color: #1f2937;
+  background-color: var(--color-surface);
+  color: var(--gray-800);
   font-family: inherit;
   line-height: 1.5;
   box-sizing: border-box;
 }
 
 .form-input.enhanced {
-  border: 2px solid #e2e8f0;
-  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid var(--gray-200);
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
@@ -159,24 +187,23 @@ const selectedFormComponent = computed(() => {
 .form-select:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--blue-450);
   box-shadow:
     0 0 0 4px rgba(59, 130, 246, 0.1),
     inset 0 1px 3px rgba(0, 0, 0, 0.05);
-  background: white;
+  background-color: var(--color-surface);
 }
 
 .form-input::placeholder {
-  color: #9ca3af;
+  color: var(--gray-400);
   font-style: italic;
 }
 
 .form-input.readonly,
 .form-select.readonly,
 .form-textarea.readonly {
-  background: #f9fafb;
-  border-color: #e5e7eb;
-  color: #4b5563;
+  border-color: var(--gray-200);
+  color: var(--gray-600);
   cursor: not-allowed;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
 }
@@ -186,37 +213,37 @@ const selectedFormComponent = computed(() => {
 .form-textarea.readonly:focus {
   outline: none;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
-  border-color: #e5e7eb;
+  border-color: var(--gray-200);
 }
 
 .upload-box {
-  border: 2px dashed #cbd5e1;
-  border-radius: 12px;
+  border: 2px dashed var(--gray-300);
+  border-radius: var(--radius-lg);
   padding: 40px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s ease;
   display: block;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-50) 100%);
 }
 
 .upload-box:hover {
-  border-color: #3b82f6;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+  border-color: var(--blue-450);
+  background: linear-gradient(135deg, var(--blue-50) 0%, var(--blue-100) 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15);
+  box-shadow: var(--shadow-soft);
 }
 
 .upload-box i {
   font-size: 2rem;
-  color: #64748b;
+  color: var(--gray-500);
   margin-bottom: 12px;
   display: block;
 }
 
 .reason-readonly {
-  background-color: #f3f4f6;
-  color: #374151;
+  background-color: var(--color-muted-light);
+  color: var(--gray-700);
   cursor: not-allowed;
 }
 </style>

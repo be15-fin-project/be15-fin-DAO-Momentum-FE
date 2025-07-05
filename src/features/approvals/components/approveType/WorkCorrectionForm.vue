@@ -109,7 +109,7 @@ const props = defineProps({
 .form-label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--gray-700);
   margin-bottom: 8px;
 }
 
@@ -122,11 +122,11 @@ const props = defineProps({
 .form-input,
 .form-textarea {
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--gray-200);
   border-radius: 10px;
   font-size: 0.95rem;
-  background: white;
-  color: #1f2937;
+  background: var(--color-surface);
+  color: var(--gray-800);
   font-family: inherit;
 }
 
@@ -138,17 +138,17 @@ const props = defineProps({
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--purple-50);
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
   transform: translateY(-1px);
 }
 
 .readonly-box {
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--gray-200);
   border-radius: 10px;
   font-size: 0.95rem;
-  color: #1f2937;
+  color: var(--gray-800);
   white-space: pre-wrap;
   min-height: 44px;
 }

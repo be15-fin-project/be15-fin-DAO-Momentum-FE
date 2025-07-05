@@ -123,6 +123,24 @@ onMounted(fetchApproval);
 </template>
 
 <style scoped>
+.container {
+  background-color: var(--color-surface);
+  margin: 0 40px;
+  padding: 40px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--chart-shadow);
+}
+
+.approval-page {
+  display: flex;
+  flex-direction: column;
+}
+
+.page-body {
+  display: flex;
+  gap: 32px;
+}
+
 .approval-header {
   display: flex;
   justify-content: space-between;
@@ -145,7 +163,7 @@ onMounted(fetchApproval);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--color-surface);
   font-size: 1.5rem;
   box-shadow: 0 4px 14px rgba(120, 127, 245, 0.08);
 }
@@ -169,7 +187,7 @@ onMounted(fetchApproval);
   border-radius: var(--radius-ss);
   border: none;
   background-color: var(--blue-300);
-  color: var(--basic);
+  color: var(--color-background);
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
@@ -203,24 +221,5 @@ onMounted(fetchApproval);
 .status-rejected {
   background-color: var(--label-rejected);
   color: var(--text-on-label-rejected);
-}
-
-
-.container {
-  background: var(--basic);
-  margin: 0 40px;
-  padding: 40px;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--chart-shadow);
-}
-
-.approval-page {
-  display: flex;
-  flex-direction: column;
-}
-
-.page-body {
-  display: flex;
-  gap: 32px;
 }
 </style>
