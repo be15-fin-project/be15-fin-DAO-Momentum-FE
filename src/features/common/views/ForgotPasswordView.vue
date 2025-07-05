@@ -51,7 +51,7 @@ const closeModal = () => {
               <input
                   v-model="email"
                   type="text"
-                  placeholder="사번을 입력하세요"
+                  placeholder="이메일을 입력하세요"
                   class="login-input-field"
                   required
               />

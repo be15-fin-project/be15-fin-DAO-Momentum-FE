@@ -1,9 +1,22 @@
+<template>
+  <div class="reset-container">
+    <InitialPasswordSetupForm :token="token" @completed="handleResult" />
+    <CommonModal
+        :visible="modalVisible"
+        :confirm-text="'확인'"
+        @cancel="closeModal"
+    >
+      <p>{{ modalMessage }}</p>
+    </CommonModal>
+  </div>
+</template>
+
 <script setup>
 import {ref, onUnmounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import CommonModal from "@/components/common/CommonModal.vue";
+import CommonModal from "@/components/common/CommonModal.vue"
 import {useAuthStore} from "@/stores/auth.js"
-import PasswordResetForm from "@/features/common/components/PasswordResetForm.vue";
+import InitialPasswordSetupForm from "@/features/common/components/InitialPasswordSetupForm.vue";
 
 const route = useRoute()
 const router = useRouter()
@@ -14,7 +27,7 @@ const modalVisible = ref(false)
 const modalMessage = ref('')
 const resetSuccess = ref(false)
 
-const handleResetCompleted = ({ success, message }) => {
+const handleResult = ({ success, message }) => {
   resetSuccess.value = success
   modalMessage.value = message
   modalVisible.value = true
@@ -33,23 +46,7 @@ onUnmounted(() => {
 })
 </script>
 
-<template>
-  <div class="reset-container">
-    <PasswordResetForm :token="token" @completed="handleResetCompleted" />
-
-    <CommonModal
-        :visible="modalVisible"
-        :confirm-text="'확인'"
-        @cancel="closeModal"
-    >
-      <p>{{ modalMessage }}</p>
-    </CommonModal>
-  </div>
-</template>
-
 <style scoped>
-@import "@/assets/css/login.css";
-
 .reset-container {
   min-height: 100vh;
   display: flex;
