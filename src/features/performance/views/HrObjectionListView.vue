@@ -59,6 +59,42 @@ import SideModal from '@/components/common/SideModal.vue';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/stores/auth.js';
 import { useRoute } from 'vue-router';
+import { useToast } from 'vue-toastification';
+import DeleteConfirmToast from '@/components/common/DeleteConfirmToast.vue';
+
+const toast = useToast()
+
+const showDeleteConfirm = () => {
+  return new Promise((resolve) => {
+    const id = toast(
+        {
+          component: DeleteConfirmToast,
+          props: {
+            toastId: '', // placeholder
+            resolve
+          }
+        },
+        {
+          type: 'error',
+          timeout: false,
+          closeOnClick: false,
+          draggable: false
+        }
+    );
+
+    // update to inject the correct toastId
+    toast.update(id, {
+      content: {
+        component: DeleteConfirmToast,
+        props: {
+          toastId: id,
+          resolve
+        }
+      }
+    });
+  });
+};
+
 
 /* ========== State ========== */
 const currentPage = ref(1);
@@ -160,7 +196,7 @@ const handleSearch = async (values) => {
       totalPage: res.pagination?.totalPage || 1,
     };
   } catch (e) {
-    console.error('인사 평가 내역 조회 실패:', e);
+    toast.error('인사 평가 내역 조회에 실패했습니다.');
     tableData.value = [];
   }
 };
@@ -269,7 +305,7 @@ const openModalHandler = async (row) => {
 
     ];
   } catch (e) {
-    console.error('상세 조회 실패:', e);
+    toast.error('상세 정보를 불러오지 못했습니다.');
     isOpen.value = false;
   }
 };
@@ -277,17 +313,16 @@ const openModalHandler = async (row) => {
 const handleReject = async () => {
   if (!selectedRow.value) return;
 
-  const confirmed = window.confirm('정말로 이의제기를 삭제하시겠습니까?');
+  const confirmed = await showDeleteConfirm();
   if (!confirmed) return;
 
   try {
     await deleteHrObjection(selectedRow.value.objectionId);
-    alert('이의제기가 삭제되었습니다.');
+    toast.success('이의제기가 삭제되었습니다.');
     isOpen.value = false;
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('이의제기 삭제 실패:', e);
-    alert('삭제 중 오류가 발생했습니다.');
+    toast.error('이의제기 삭제에 실패했습니다.');
   }
 };
 
@@ -358,7 +393,7 @@ onMounted(async () => {
     initFilters();
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('초기 로딩 실패:', e);
+    toast.error('초기 로딩에 실패했습니다.');
   }
 });
 </script>

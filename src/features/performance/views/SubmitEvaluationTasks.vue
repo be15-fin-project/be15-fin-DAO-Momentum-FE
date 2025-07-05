@@ -64,6 +64,9 @@ import EmployeeFilter from '@/components/common/Filter.vue'
 import BaseTable from '@/components/common/BaseTable.vue'
 import Pagination from '@/components/common/Pagination.vue'
 import SideModal from '@/components/common/SideModal.vue'
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 
 const roundId = ref(null);
 const currentPage = ref(1)
@@ -192,7 +195,7 @@ async function handleSearch(values) {
       totalPage: apiPage.totalPage
     }
   } catch (e) {
-    console.error('검색 실패:', e)
+    toast.error('검색 중 오류가 발생했습니다.');
     tasks.value = []
   }
 }
@@ -265,7 +268,7 @@ async function openSubmitModal(row) {
       reason: ''
     }
   } catch (e) {
-    console.error('폼 상세 조회 실패:', e)
+    toast.error('폼 상세 조회 중 오류가 발생했습니다.');
   }
 }
 
@@ -283,7 +286,7 @@ async function handleSubmit() {
     for (const section of responseSections) {
       for (const field of section.fields) {
         if (field.value == null) {
-          alert('모든 항목에 응답을 완료해 주세요.');
+          toast.error('모든 항목에 응답을 완료해 주세요.');
           return;
         }
       }
@@ -326,7 +329,7 @@ async function handleSubmit() {
       const propertyId = propertyMap.get(propertyName);
 
       if (propertyId == null) {
-        console.warn(`propertyId not found for ${propertyName}`);
+        toast.error('제출 중 오류가 발생했습니다.');
         continue;
       }
 
@@ -345,18 +348,16 @@ async function handleSubmit() {
       factorScores
     };
 
-    console.log('제출 payload:', JSON.stringify(payload, null, 2));
 
     // [7] 서버에 제출 요청
     const result = await submitEvaluation(payload);
-    console.log('제출 성공 응답:', result);
+    toast.success('평가가 성공적으로 제출되었습니다.');
 
     isModalOpen.value = false;
     await fetchTasks();
 
   } catch (e) {
-    console.error('제출 실패:', e.response?.data || e);
-    alert('제출 중 오류가 발생했습니다. 콘솔을 확인해주세요.');
+    toast.error('제출 중 오류가 발생했습니다.');
   }
 }
 

@@ -80,7 +80,6 @@
           class="form-input"
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
-          :value="field.value"
       />
       <template v-if="field.type === 'html'">
         <div class="html-field" v-html="field.value" />
