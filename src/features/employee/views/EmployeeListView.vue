@@ -5,7 +5,7 @@ import Filter from "@/components/common/Filter.vue";
 import BaseTable from "@/components/common/BaseTable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import SideModal from "@/components/common/SideModal.vue";
-import {getPositions} from "@/features/works/api.js";
+import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createEmployee, getEmployees} from "@/features/employee/api.js";
 import {useRouter} from "vue-router";
 
@@ -16,21 +16,11 @@ const pagination = ref({currentPage: 1, totalPage: 1});
 const filterValues = ref({});
 const employees = ref([]);
 
+const deptOptions = ref([]);
+const positionOptions = ref([]);
 const positionFilterOptions = ref([]);
 
 const showModal = ref(false);
-
-const deptFilterOptions = ref([
-  {label: '전체', value: null},
-  {label: '테크놀로지(주)', value: 1},
-  {label: '인사팀', value: 10},
-  {label: '재무팀', value: 11},
-  {label: '프론트엔드팀', value: 12},
-  {label: '백엔드팀', value: 13},
-  {label: '데이터팀', value: 14},
-  {label: '영업팀', value: 15},
-  {label: '디지털마케팅팀', value: 16},
-]);
 
 const columns = [
   {key: 'empNo', label: '사번'},
@@ -56,7 +46,7 @@ const columns = [
 
 // 필터
 const baseFilterOptions = computed(() => [
-  {key: 'deptId', type: 'select', label: '부서', icon: 'fa-building', options: deptFilterOptions.value},
+  {key: 'deptId', type: 'tree', label: '부서', icon: 'fa-building', options: departmentTree.value},
   {key: 'positionId', type: 'select', label: '직위', icon: 'fa-user-tie', options: positionFilterOptions.value},
   {key: 'userRole', type: 'select', label: '권한', icon: 'fa-shield-alt', options: roleOptions.value},
   {key: 'joinDate', type: 'date-range', label: '입사일', icon: 'fa-calendar-day'},
@@ -136,9 +126,15 @@ roleOptions.value = [
 ];
 
 onMounted(async () => {
+  const depts = await getDepartments()
+  departmentTree.value = depts.data?.departmentInfoDTOList || [];
+  deptOptions.value = [
+    // ...depts.map(p => ({label: p.name, value: p.deptId}))
+  ];
+
   const positions = await getPositions();
   positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({label: p.name, value: p.positionId}))];
-  positionOptions.value = [{label: '선택', value: null}, ...positions.map(p => ({label: p.name, value: p.positionId}))];
+  positionOptions.value = [...positions.map(p => ({label: p.name, value: p.positionId}))];
   handleSearch();
   filterValues.value = {};
 });
@@ -150,21 +146,9 @@ const goToDetailsPage = (emp) => {
   router.push(`/employees/${empId}`);
 };
 
-const deptOptions = ref([
-  {label: '선택', value: null},
-  {label: '테크놀로지(주)', value: 1},
-  {label: '인사팀', value: 10},
-  {label: '재무팀', value: 11},
-  {label: '프론트엔드팀', value: 12},
-  {label: '백엔드팀', value: 13},
-  {label: '데이터팀', value: 14},
-  {label: '영업팀', value: 15},
-  {label: '디지털마케팅팀', value: 16},
-]);
+const departmentTree = ref([]);
 
-const positionOptions = ref({});
-
-const initialFormData = {
+const req = {
   name: '',
   birthDate: null,
   email: '',
@@ -180,10 +164,8 @@ const initialFormData = {
   gender: null,
 };
 
-const formData = ref({...initialFormData});
 
 const openCreateModal = () => {
-  formData.value = {...initialFormData};
   showModal.value = true;
 }
 
@@ -200,7 +182,6 @@ const modalSections = computed(() => [
       {key: 'name', label: '이름', type: 'input', editable: true, required: true, placeholder: '홍길동'},
       {
         key: 'gender', label: '성별', type: 'select', editable: true, required: true, options: [
-          {label: '선택', value: null},
           {label: '남성', value: 'M'},
           {label: '여성', value: 'F'}
         ]
@@ -256,6 +237,7 @@ const handleHeaderButton = (event) => {
   }
 };
 
+/* TODO: 프론트 검증 로직 작성 */
 const handleRegisterSubmit = async (req) => {
   try {
     const resp = await createEmployee(req);
@@ -292,12 +274,12 @@ const handleRegisterSubmit = async (req) => {
     <SideModal
         v-if="showModal"
         :visible="showModal"
-        v-model:form="formData"
+        v-model:form="req"
         :title="'사원 등록'"
         icon="fa-user-plus"
         @close="closeModal"
         :sections="modalSections"
-        @submit="handleRegisterSubmit(formData)"
+        @submit="handleRegisterSubmit(req)"
     />
   </main>
 </template>

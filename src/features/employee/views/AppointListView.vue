@@ -5,7 +5,7 @@ import Filter from "@/components/common/Filter.vue";
 import BaseTable from "@/components/common/BaseTable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import SideModal from "@/components/common/SideModal.vue";
-import {getPositions} from "@/features/works/api.js";
+import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createAppoint, getAppoints} from "@/features/employee/api.js";
 
 const currentPage = ref(1);
@@ -14,19 +14,9 @@ const filterValues = ref({});
 const appoints = ref([]);
 
 const positionFilterOptions = ref([]);
-const departmentFilterOptions = ref([]);
 
-const deptOptions = ref([
-  {label: '테크놀로지(주)', value: 1},
-  {label: '경영지원본부', value: 2},
-  {label: '인사팀', value: 10},
-  {label: '재무팀', value: 11},
-  {label: '프론트엔드팀', value: 12},
-  {label: '백엔드팀', value: 13},
-  {label: '데이터팀', value: 14},
-  {label: '영업팀', value: 15},
-  {label: '디지털마케팅팀', value: 16},
-]);
+const departmentTree = ref([]);
+const deptOptions = ref([]);
 
 const showModal = ref(false);
 
@@ -54,7 +44,7 @@ const columns = [
 const baseFilterOptions = computed(() => [
   {key: 'empNo', type: 'input', label: '사번', icon: 'fa-id-badge', placeholder: '사번 입력'},
   {key: 'empName', type: 'input', label: '사원명', icon: 'fa-user', placeholder: '이름 입력'},
-  {key: 'deptId', type: 'select', label: '발령 부서', icon: 'fa-building', options: departmentFilterOptions.value},
+  {key: 'deptId', type: 'tree', label: '발령 부서', icon: 'fa-building', options: departmentTree.value},
   {key: 'positionId', type: 'select', label: '발령 직위', icon: 'fa-user-tie', options: positionFilterOptions.value},
   {key: 'appointDate', type: 'date-range', label: '발령일', icon: 'fa-calendar-day'},
   {
@@ -110,18 +100,18 @@ const handleSearch = () => {
 }
 
 onMounted(async () => {
+  const depts = await getDepartments();
+  departmentTree.value = depts.data?.departmentInfoDTOList || [];
+  deptOptions.value = [
+
+  ]
+
   const positions = await getPositions();
-  departmentFilterOptions.value = [{label: '전체', value: null}, ...deptOptions.value
-  ];
-  //   departmentFilterOptions.value = [{label: '전체', value: null}, ...departments.map(p => ({
-//   label: p.name,
-//   value: p.deptId
-// }))]
   positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({
     label: p.name,
     value: p.positionId
   }))];
-  positionOptions.value = [{label: '선택', value: null}, ...positions.map(p => ({label: p.name, value: p.positionId}))];
+  positionOptions.value = [...positions.map(p => ({label: p.name, value: p.positionId}))];
   handleSearch();
   filterValues.value = {};
 });
@@ -164,7 +154,6 @@ const modalSections = computed(() => [
       {key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1'},
       {
         key: 'type', label: '발령 종류', type: 'select', editable: true, required: true, options: [
-          {label: '선택', value: null},
           {label: '소속 이동', value: 'DEPARTMENT_TRANSFER'},
           {label: '승진', value: 'PROMOTION'}
         ]
@@ -175,6 +164,12 @@ const modalSections = computed(() => [
     ]
   }
 ]);
+
+const handleHeaderButton = (event) => {
+  if (event.value === 'create') {
+    openCreateModal();
+  }
+}
 
 /* TODO: 프론트 예외 처리, 토스트 알림 추가 */
 const handleRegisterSubmit = async (req) => {
@@ -193,9 +188,9 @@ const handleRegisterSubmit = async (req) => {
     <HeaderWithTabs :headerItems="[
         { label: '발령 내역 조회', to: '/appoints', active: true },
     ]"
-                    :submitButtons="[{ label: '등록', icon: 'fa-user-plus', variant: 'blue'}]"
+                    :submitButtons="[{ label: '등록', icon: 'fa-user-plus', event: 'click', value: 'create', variant: 'blue'}]"
                     :showTabs="false"
-                    @click="openCreateModal"
+                    @click="handleHeaderButton"
     />
     <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch"/>
 
