@@ -377,7 +377,6 @@ onUnmounted(() => {
       width 0.4s ease,
       transform 0.6s ease,
       padding 0.3s ease;
-  transform: translateX(0);
 }
 
 .sidebar-header {
