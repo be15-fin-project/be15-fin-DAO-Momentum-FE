@@ -50,6 +50,7 @@ function renderChart() {
     },
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           position: 'bottom',
@@ -69,7 +70,6 @@ watch(() => props.distribution, renderChart);
   display: flex;
   flex-direction: column;
   gap: 30px;
-  width: 540px;
   background: var(--color-surface);
   padding: 24px;
   border-radius: var(--radius-lg);
@@ -96,7 +96,10 @@ watch(() => props.distribution, renderChart);
   justify-content: center;
 }
 .chart-content canvas {
-  width: auto !important;
-  height: 100% !important;
+  max-width: 100%;
+  max-height: 100%;
+  height: 400px;
+  width: 100%;
+  height: auto;
 }
 </style>

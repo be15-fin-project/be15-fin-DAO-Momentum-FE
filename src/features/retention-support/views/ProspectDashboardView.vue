@@ -21,22 +21,22 @@
     />
 
     <section class="content">
-      <!-- 평균 점수 카드 -->
-      <section class="dashboard">
+      <div class="narrow">
         <StabilityDonut :distribution="overallDistribution"/>
+      </div>
+      <div class="wide">
+        <DeptStabilityBar :data="departmentDistribution"/>
+      </div>
+      <div class="narrow">
         <MetricCardGroup
             :employeeCount="employeeCount"
             :averageScore="averageScore"
             :stableRate="stableRate"
-            :riskRate="riskRate"
-        />
-      </section>
-
-      <!-- 차트 영역 -->
-      <section class="chart-row">
-        <DeptStabilityBar :data="departmentDistribution"/>
+            :riskRate="riskRate"/>
+      </div>
+      <div class="wide">
         <MonthlyRetentionTrend :data="monthlyStats"/>
-      </section>
+      </div>
 
     </section>
 
@@ -200,20 +200,17 @@ function normalizeParams(values) {
 <style scoped>
 .content {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr 2fr; /* 왼쪽은 좁게, 오른쪽은 넓게 */
   gap: 2rem;
+  padding: 0 40px;
 }
-.dashboard {
-  display: flex;
-  gap: 24px;
-  flex-direction: column;
-  align-items: center;
+
+.narrow {
+  grid-column: 1;
 }
-.chart-row {
-  padding-right: 40px;
-  display: grid;
-  grid-template-columns: repeat(1, 1fr); /* 2개의 열을 각 240px로 고정 */
-  gap: 32px;
+
+.wide {
+  grid-column: 2;
 }
 
 </style>
