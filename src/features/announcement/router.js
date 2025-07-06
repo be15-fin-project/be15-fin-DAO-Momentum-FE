@@ -12,11 +12,16 @@ export const announcementRoutes = [
         props: true,
         meta: { requiresAuth: true, title: '공지사항 상세' }
     },
-    // {
-    //     path: '/announcement/create',
-    //     name: 'AnnouncementCreate',
-    //     component: () => import('@/views/announcement/AnnouncementCreateView.vue'),
-    //     meta: { requiresAuth: true, title: '공지사항 작성' }
-    // }
-
+    {
+        path: '/announcement/create',
+        name: 'AnnouncementCreate',
+        component: () => import('@/features/announcement/views/AnnouncementCreateView.vue'),
+        meta: { requiresAuth: true, title: '공지사항 작성' }
+    },
+    {
+        path: '/announcement/edit/:announcementId',
+        name: 'AnnouncementEdit',
+        component: () => import('@/features/announcement/views/AnnouncementEditView.vue'),
+        meta: { requiresAuth: true, title: '공지사항 수정' }
+    }
 ];
