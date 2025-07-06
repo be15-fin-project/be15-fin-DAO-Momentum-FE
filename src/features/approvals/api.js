@@ -34,3 +34,11 @@ export function getSentApprovals(draftApproveListRequest, pageRequest = {}) {
 export function getApprovalDetail(documentId) {
     return api.get(`/approval/documents/${documentId}`);
 }
+
+/* 5. 결재 문서 작성 */
+
+/* 6. 결재 문서 승인/반려 */
+export function approveOrReject(approvalConfirmRequest) {
+    return api.patch(`/approval/decision`, approvalConfirmRequest);
+}
+
