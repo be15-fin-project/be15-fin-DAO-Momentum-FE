@@ -4,9 +4,10 @@ import Pagination from "@/components/common/Pagination.vue";
 import Filter from "@/components/common/Filter.vue";
 import BaseTable from "@/components/common/BaseTable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
-import {createEmployee, getContracts, getDownloadUrl} from "@/features/employee/api.js";
+import {createEmployee, getContracts} from "@/features/employee/api.js";
 import SideModal from "@/components/common/SideModal.vue";
 import {useRouter} from "vue-router";
+import {getFileUrl} from "@/features/common/api.js";
 
 const router = useRouter();
 
@@ -142,7 +143,16 @@ const openCreateModal = () => {
 
 const downloadFile = async (row) => {
   const s3Key = row.s3Key;
-  const signedUrl = await getDownloadUrl(s3Key);
+  const fileName = row.fileName;
+
+  const response = await getFileUrl({ key: s3Key, fileName });
+  const signedUrl = response.data?.data?.signedUrl;
+
+  if (!signedUrl) {
+    console.error('Signed URL을 가져오지 못했습니다.');
+    return;
+  }
+
 
   const link = document.createElement('a');
   link.href = signedUrl;
