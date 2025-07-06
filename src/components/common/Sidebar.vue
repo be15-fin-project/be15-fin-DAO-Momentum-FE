@@ -243,9 +243,9 @@ const menuItems = [
     requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
   },
   {
-    label: '공지 관리',
+    label: '공지사항',
     icon: 'fa-bullhorn',
-    hrefs: ['/notice/notice']
+    hrefs: ['/announcement']
   }
 ]
 
@@ -377,7 +377,6 @@ onUnmounted(() => {
       width 0.4s ease,
       transform 0.6s ease,
       padding 0.3s ease;
-  transform: translateX(0);
 }
 
 .sidebar-header {
