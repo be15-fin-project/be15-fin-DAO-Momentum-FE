@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue';
+import {computed, ref} from 'vue';
 import OvertimeForm from "@/features/approvals/components/approveType/OvertimeForm.vue";
 import CancelForm from "@/features/approvals/components/approveType/CancelForm.vue";
 import WorkCorrectionForm from "@/features/approvals/components/approveType/WorkCorrectionForm.vue";
@@ -10,6 +10,11 @@ import ProposalForm from "@/features/approvals/components/approveType/ProposalFo
 import ReceiptForm from "@/features/approvals/components/approveType/ReceiptForm.vue";
 import ApproveReasonList from "@/features/approvals/components/ApproveReasonList.vue";
 
+/* 승인/반려 사유 */
+const reason = ref('');
+const rejectError = ref('');
+
+/* 부모에게 받아 온 값 */
 const {
   approveDTO,
   parentApproveDTO,
@@ -23,9 +28,15 @@ const {
   approveFileDTO: { type: Array, default: () => [] },
   approveLineGroupDTO: { type: Object },
   formDetail: { type: Object, required: true },
-  isReadOnly: { type: Boolean, default: true }
+  isReadOnly: { type: Boolean, default: true },
 });
 
+/* 대기 상태인 경우 */
+const canAction = computed(() => {
+  return approveDTO.statusType === 'PENDING'
+})
+
+/* form에 따라서 매핑 하기 */
 const formMap = {
   WORKCORRECTION: WorkCorrectionForm,
   OVERTIME: OvertimeForm,
@@ -40,6 +51,20 @@ const formMap = {
 const selectedFormComponent = computed(() => {
   return formMap[approveDTO.approveType] || null;
 });
+
+const emit = defineEmits(['approve', 'reject']);
+
+  /* 반려 하기 */
+  function handleReject() {
+    if (!reason.value || reason.value.trim() === '') {
+      rejectError.value = '반려 사유는 반드시 입력해야 합니다.';
+      return;
+    }
+    console.log('emit reject:', reason.value); // ← 이 값이 null이 아닌지 확인
+
+    rejectError.value = '';
+    emit('reject', reason.value);
+  }
 </script>
 
 <template>
@@ -98,8 +123,39 @@ const selectedFormComponent = computed(() => {
         </div>
       </section>
 
-
       <ApproveReasonList :items="approveLineGroupDTO?.[0]?.approveLineListDTOs || []" />
+
+      <div
+        v-if="canAction && isReadOnly"
+        class="approve-action-wrapper"
+      >
+        <textarea
+          v-model="reason"
+          class="form-textarea"
+          placeholder="승인, 반려 사유를 입력해주세요. 반려 사유는 반드시 입력되어야 합니다."
+        />
+        <p v-if="rejectError" class="error-message">{{ rejectError }}</p>
+
+        <div class="form-buttons">
+          <button
+            type="button"
+            class="btn-action btn-submit"
+            @click="$emit('approve', reason)"
+            data-v-fb076351 data-v-f51fb21f
+          >
+            승인
+          </button>
+
+          <button
+            type="button"
+            class="btn-action btn-reject"
+            @click="handleReject"
+            data-v-fb076351 data-v-f51fb21f
+          >
+            반려
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -115,7 +171,6 @@ const selectedFormComponent = computed(() => {
 .form-container {
   margin: 0 auto;
   padding: 0 24px;
-
 }
 
 .form-group-row {
@@ -143,6 +198,10 @@ const selectedFormComponent = computed(() => {
   color: var(--blue-100);
 }
 
+.form-section {
+  margin: 0;
+}
+
 .form-section:nth-of-type(2) {
   margin-top: 32px;
 }
@@ -163,7 +222,6 @@ const selectedFormComponent = computed(() => {
 }
 
 .form-input,
-.form-select,
 .form-textarea {
   width: 100%;
   padding: 16px 20px;
@@ -184,7 +242,6 @@ const selectedFormComponent = computed(() => {
 }
 
 .form-input:focus,
-.form-select:focus,
 .form-textarea:focus {
   outline: none;
   border-color: var(--blue-450);
@@ -196,11 +253,9 @@ const selectedFormComponent = computed(() => {
 
 .form-input::placeholder {
   color: var(--gray-400);
-  font-style: italic;
 }
 
 .form-input.readonly,
-.form-select.readonly,
 .form-textarea.readonly {
   border-color: var(--gray-200);
   color: var(--gray-600);
@@ -209,11 +264,16 @@ const selectedFormComponent = computed(() => {
 }
 
 .form-input.readonly:focus,
-.form-select.readonly:focus,
 .form-textarea.readonly:focus {
   outline: none;
   box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
   border-color: var(--gray-200);
+}
+
+.form-textarea {
+  resize: vertical;
+  height: 200px;
+  max-height: 300px;
 }
 
 .upload-box {
@@ -241,9 +301,27 @@ const selectedFormComponent = computed(() => {
   display: block;
 }
 
-.reason-readonly {
-  background-color: var(--color-muted-light);
-  color: var(--gray-700);
-  cursor: not-allowed;
+.approve-action-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.form-buttons {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: 200px;
+}
+
+.error-message {
+  color: var(--error-500);
+  font-size: 0.9rem;
+  margin-top: 4px;
+  align-self: flex-start;
 }
 </style>
