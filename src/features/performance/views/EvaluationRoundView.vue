@@ -6,7 +6,7 @@
         { label: '평가 회차', to: '/eval/round',  active: true  }
       ]"
         :submitButtons="[
-        { label: '회차 등록', icon: 'fa-file-signature', event: 'create', variant: 'blue' }
+        { label: '회차 등록', icon: 'fa-calendar-plus', event: 'create', variant: 'blue' }
       ]"
         :showTabs="false"
         @create="openCreateModal"
@@ -91,6 +91,42 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
+import { useToast } from 'vue-toastification';
+import DeleteConfirmToast from '@/components/common/DeleteConfirmToast.vue';
+
+const toast = useToast()
+
+const showDeleteConfirm = () => {
+  return new Promise((resolve) => {
+    const id = toast(
+        {
+          component: DeleteConfirmToast,
+          props: {
+            toastId: '', // placeholder
+            resolve
+          }
+        },
+        {
+          type: 'error',
+          timeout: false,
+          closeOnClick: false,
+          draggable: false
+        }
+    );
+
+    // update to inject the correct toastId
+    toast.update(id, {
+      content: {
+        component: DeleteConfirmToast,
+        props: {
+          toastId: id,
+          resolve
+        }
+      }
+    });
+  });
+};
+
 
 // ──────────────── 상태 변수 ────────────────
 const currentPage = ref(1);
@@ -179,7 +215,7 @@ const handleSearch = async (values) => {
       totalPage: p.totalPage || 1
     };
   } catch (err) {
-    console.error('회차 조회 실패:', err);
+    toast.error('모든 항목을 입력해주세요.');
     tableData.value = [];
   }
 };
@@ -208,9 +244,9 @@ const openCreateModal = () => {
       icon: 'fa-calendar-plus',
       layout: 'two-column',
       fields: [
-        { label: '회차 번호', key: 'roundNo', type: 'number', editable: true },
-        { label: '시작일', key: 'startAt', type: 'date', editable: true },
-        { label: '종료일', key: 'endAt', type: 'date', editable: false }
+        { label: '회차 번호', key: 'roundNo', type: 'number', editable: true, required: true },
+        { label: '시작일', key: 'startAt', type: 'date', editable: true, required: true },
+        { label: '종료일', key: 'endAt', type: 'date', editable: false, required: true }
       ]
     },
     {
@@ -245,6 +281,18 @@ const openCreateModal = () => {
 const handleSubmit = async () => {
   const { roundNo, startAt, endAt, weightSegments, gradeRatios } = createFormModel.value;
 
+  // 필수값 유효성 검사
+  if (
+      !roundNo ||
+      !startAt ||
+      !endAt ||
+      !Array.isArray(weightSegments) || weightSegments.length !== 6 ||
+      !Array.isArray(gradeRatios) || gradeRatios.length !== 5
+  ) {
+    toast.error('모든 항목을 입력해주세요.');
+    return;
+  }
+
   const payload = {
     roundNo,
     startAt,
@@ -264,18 +312,18 @@ const handleSubmit = async () => {
 
   try {
     await createEvaluationRound(payload);
-    alert('등록 완료');
+    toast.success('등록이 완료되었습니다.');
     isOpenCreate.value = false;
     await handleSearch(filterValues.value);
   } catch (err) {
-    console.error('저장 실패:', err);
-    alert(err.response?.data?.message || '저장 실패');
+    toast.error(err.response?.data?.message || '저장에 실패하였습니다.');
   }
 };
 
 const handleCloseCreateModal = () => {
   isOpenCreate.value = false;
 };
+
 
 // ──────────────── 상세/수정 모달 ────────────────
 const makeDetailSections = (editable = false) => [
@@ -348,8 +396,7 @@ const openDetailModal = async (row) => {
     origDetailModel = JSON.parse(JSON.stringify(detailFormModel.value));
     detailFormSections.value = makeDetailSections(false);
   } catch (err) {
-    console.error('상세 조회 실패:', err);
-    alert('평가 기준 정보를 불러오지 못했습니다.');
+    toast.error('평가 기준 정보를 불러오지 못했습니다.');
   }
 };
 
@@ -394,25 +441,25 @@ const handleEditSubmit = async () => {
 
   try {
     await updateEvaluationRound(payload);
-    alert('수정 완료');
+    toast.success('수정이 완료되었습니다.');
     detailMode.value = 'view';
     await handleSearch(filterValues.value);
   } catch (err) {
-    console.error('수정 실패:', err);
-    alert(err.response?.data?.message || '수정 실패');
+    toast.error(err.response?.data?.message || '수정 처리 중 오류가 발생했습니다.');
   }
 };
 
 const handleDelete = async () => {
-  if (!confirm('정말 삭제하시겠습니까?')) return;
+  const confirmed = await showDeleteConfirm();
+  if (!confirmed) return;
+
   try {
     await deleteEvaluationRound(selectedRoundId.value);
-    alert('삭제 완료');
+    toast.success('삭제가 완료되었습니다.');
     isOpenDetail.value = false;
     await handleSearch(filterValues.value);
   } catch (err) {
-    console.error('삭제 실패:', err);
-    alert('삭제 실패');
+    toast.error('삭제 처리 중 오류가 발생했습니다.');
   }
 };
 

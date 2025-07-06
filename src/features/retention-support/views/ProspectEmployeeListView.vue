@@ -59,6 +59,9 @@ import {
   getRetentionForecastDetail,
   downloadRetentionPredictionExcel,
 } from '@/features/retention-support/api.js';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 
 const filterOptions = ref([]);
 const departmentTree = ref([]);
@@ -170,11 +173,12 @@ const handleSearch = async (values) => {
     tableData.value = res.items ?? [];
     pagination.value = res.pagination ?? { currentPage: 1, totalPage: 1 };
   } catch (err) {
-    console.error('목록 조회 실패:', err);
+    toast.error('근속 전망 목록을 불러오는 데 실패했습니다.');
   }
 };
 
 const tableColumns = [
+  { key: 'profile', label: '#' },
   { key: 'empNo', label: '사번' },
   { key: 'empName', label: '이름' },
   { key: 'deptName', label: '부서명' },
@@ -244,13 +248,13 @@ const openDetail = async (row) => {
 
     isOpen.value = true;
   } catch (err) {
-    console.error('상세 조회 실패:', err);
-    alert('상세 조회에 실패했습니다.');
+    toast.error('상세 정보를 불러오는 데 실패했습니다.');
   }
 };
 
 const handleDownload = async () => {
   try {
+    toast.success('엑셀 다운로드가 시작되었습니다.');
     const params = normalizeParams(filterValues.value);
     const blob = await downloadRetentionPredictionExcel(params);
     const url = window.URL.createObjectURL(new Blob([blob]));
@@ -262,7 +266,7 @@ const handleDownload = async () => {
     link.remove();
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error('엑셀 다운로드 실패:', err);
+    toast.error('엑셀 다운로드 중 오류가 발생했습니다.');
   }
 };
 </script>

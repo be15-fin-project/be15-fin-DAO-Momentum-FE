@@ -40,7 +40,6 @@ export function useAttendance() {
     async function fetchTodayAttendance() {
         try {
             const resp = await getMyTodaysAttendance()
-            console.log(resp)
             todaysWork.value = resp.attendance
             isAttended.value = !!todaysWork.value
             hasAmHalfDayoff.value = !!resp.amHalfDayoff
@@ -48,8 +47,8 @@ export function useAttendance() {
             hasDayoff.value = !!resp.dayoff
             hasVacation.value = !!resp.vacation
             hasApprovedWork.value = !!resp.approvedWork
-            isWeekend.value = resp.isWeekend
-            isHoliday.value = resp.isHoliday
+            isWeekend.value = resp.weekend
+            isHoliday.value = resp.holiday
         } catch (e) {
             console.error('출근 상태 조회 실패', e)
         }

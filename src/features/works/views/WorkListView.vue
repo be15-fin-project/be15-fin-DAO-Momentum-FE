@@ -5,7 +5,14 @@ import Filter from "@/components/common/Filter.vue";
 import BaseTable from "@/components/common/BaseTable.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
-import {getPositions, getVacationTypes, getWorkDetails, getWorks, getWorkTypes} from "@/features/works/api.js";
+import {
+  getDepartments,
+  getPositions,
+  getVacationTypes,
+  getWorkDetails,
+  getWorks,
+  getWorkTypes
+} from "@/features/works/api.js";
 
 const currentPage = ref(1);
 const pagination = ref({currentPage: 1, totalPage: 1});
@@ -25,17 +32,7 @@ const childWorkTypeOptions = ref([]);
 
 const workTypeIdMap = ref({VACATION: null, ADDITIONAL: null});
 
-const deptOptions = ref([
-  {label: '전체', value: null},
-  {label: '테크놀로지(주)', value: 1},
-  {label: '인사팀', value: 10},
-  {label: '재무팀', value: 11},
-  {label: '프론트엔드팀', value: 12},
-  {label: '백엔드팀', value: 13},
-  {label: '데이터팀', value: 14},
-  {label: '영업팀', value: 15},
-  {label: '디지털마케팅팀', value: 16},
-]);
+const departmentTree = ref([]);
 
 const columns = computed(() => {
   const baseColumns = [
@@ -76,11 +73,11 @@ const columns = computed(() => {
 const baseFilterOptions = computed(() => [
   {key: 'empNo', type: 'input', label: '사번', icon: 'fa-id-badge', placeholder: '사번 입력'},
   {key: 'empName', type: 'input', label: '이름', icon: 'fa-user', placeholder: '이름 입력'},
-  {key: 'deptId', type: 'select', label: '부서', icon: 'fa-building', options: deptOptions.value},
+  {key: 'deptId', type: 'tree', label: '부서', icon: 'fa-building', options: departmentTree.value},
   {key: 'positionId', type: 'select', label: '직위', icon: 'fa-user-tie', options: positionOptions.value},
-  {key: 'startAt', type: 'date-range', label: '시작 일시', icon: 'fa-calendar-day'},
+  {key: 'startAt', type: 'date-range', label: '출근 일시', icon: 'fa-calendar-day'},
   {
-    key: 'order', type: 'select', label: '정렬 (시작 일시)', icon: 'fa-filter', options: [
+    key: 'order', type: 'select', label: '정렬 (출근 일시)', icon: 'fa-filter', options: [
       {label: '오름차순', value: 'ASC'},
       {label: '내림차순', value: 'DESC'}
     ]
@@ -159,6 +156,9 @@ const additionalWorkMap = {
 };
 
 onMounted(async () => {
+  const depts = await getDepartments();
+  departmentTree.value = depts.data?.departmentInfoDTOList || [];
+
   const positions = await getPositions();
   positionOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({label: p.name, value: p.positionId}))];
 

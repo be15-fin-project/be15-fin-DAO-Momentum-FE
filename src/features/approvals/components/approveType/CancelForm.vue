@@ -18,11 +18,6 @@ const props = defineProps({
   }
 });
 
-/* 취소 사유 */
-const cancelForm = ref({
-  cancelReason: ''
-});
-
 /* 부모 결재 내역 */
 const parentApprove = ref(null);
 
@@ -65,6 +60,7 @@ onMounted(async () => {
 </script>
 
 <template>
+  <!-- 1. 취소 되는 문서 -->
   <div class="cancel-banner">
     <div class="cancel-title">
       <strong>취소 요청 문서</strong>
@@ -83,11 +79,13 @@ onMounted(async () => {
     </div>
   </div>
 
+  <!-- 2. 취소 사유 -->
   <div class="form-section">
     <div class="form-grid">
       <div class="form-group full-width">
         <label class="form-label required">취소 사유</label>
-        <textarea v-model="cancelForm.cancelReason" class="form-textarea" required></textarea>
+        <input v-model="formData.cancelReason" class="form-textarea" readonly></input>
+<!--        <textarea v-model="cancelForm.cancelReason" class="form-textarea" required></textarea>-->
       </div>
     </div>
   </div>
@@ -124,7 +122,6 @@ onMounted(async () => {
   border: 2px solid var(--gray-200);
   border-radius: 10px;
   font-size: 0.95rem;
-  background: var(--basic);
   color: var(--gray-800);
   font-family: inherit;
   resize: vertical;
@@ -133,7 +130,6 @@ onMounted(async () => {
 
 .form-textarea:focus {
   outline: none;
-  border-color: #667eea;
   box-shadow: 0 0 0 4px var(--form-shadow);
   transform: translateY(-1px);
 }
@@ -161,7 +157,7 @@ onMounted(async () => {
 
 .original-form-wrapper {
   border: 1px solid var(--blue-100);
-  background-color: var(--basic);
+  background-color: var(--color-surface);
   padding: 20px;
   border-radius: 10px;
 }

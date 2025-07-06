@@ -79,6 +79,9 @@ import SideModal from '@/components/common/SideModal.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import DonutChart from '@/features/performance/components/DonutChart.vue';
 import LineChart from '@/features/performance/components/LineChart.vue';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 // ───── 상태 변수 ─────
 const route = useRoute();
@@ -180,7 +183,7 @@ async function handleSearch(values) {
 
     await renderCharts();
   } catch (err) {
-    console.error('KPI 목록 조회 오류:', err);
+    toast.error('KPI 목록 조회에 실패했습니다.');
     tableData.value = [];
     pagination.value = { currentPage: 1, totalPage: 1 };
   }
@@ -235,7 +238,7 @@ async function renderCharts() {
       ],
     };
   } catch (e) {
-    console.warn('차트 데이터 로드 실패:', e);
+    toast.error('차트 데이터를 불러오지 못했습니다.');
   }
 }
 
@@ -291,7 +294,7 @@ async function openModalHandler(kpiId) {
       },
     ].filter(section => section.fields.length > 0);
   } catch (err) {
-    console.error('KPI 상세 조회 실패:', err);
+    toast.error('KPI 상세 정보를 불러오지 못했습니다.');
     isOpen.value = false;
   }
 }

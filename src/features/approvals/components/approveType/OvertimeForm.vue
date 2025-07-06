@@ -150,7 +150,7 @@ function getDateOnly(dateTimeString) {
 .form-label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--gray-700);
   margin-bottom: 8px;
 }
 
@@ -158,11 +158,11 @@ function getDateOnly(dateTimeString) {
 .form-textarea,
 select.form-input {
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--gray-200);
   border-radius: 10px;
   font-size: 0.95rem;
-  background: white;
-  color: #1f2937;
+  background: var(--color-surface);
+  color: var(--gray-800);
   font-family: inherit;
 }
 
@@ -178,11 +178,11 @@ select.form-input {
 
 .readonly-box {
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--gray-200);
   border-radius: 10px;
-  background-color: #f9fafb;
+  background-color: var(--gray-50);
   font-size: 0.95rem;
-  color: #1f2937;
+  color: var(--gray-800);
   white-space: pre-wrap;
   min-height: 44px;
 }

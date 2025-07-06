@@ -20,6 +20,11 @@ export const getContracts = async (params) => {
     return resp.data.data;
 }
 
+export const getDownloadUrl = async (s3Key) => {
+    const resp = await api.post("/file/download-url", {key: s3Key});
+    return resp.data.data.signedUrl;
+}
+
 export const createContract = async (req) => {
     const resp = await api.post('/contracts', req);
     return resp.data.data;
@@ -32,5 +37,19 @@ export const getAppoints = async (params) => {
 
 export const createAppoint = async (req) => {
     const resp = await api.post('/employees/appoints', req);
+    return resp.data.data;
+}
+
+export const createEmployees = async (req) => {
+    const resp = await api.post('/employees/csv', req, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        }
+    });
+    return resp.data.data;
+}
+
+export const getCSVTemplate = async () => {
+    const resp = await api.get('/employees/csv')
     return resp.data.data;
 }

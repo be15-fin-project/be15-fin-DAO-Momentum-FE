@@ -18,9 +18,6 @@ const appliedFilterValues = ref({});
 const contracts = ref([]);
 
 const showModal = ref(false);
-// const workDetails = ref(null);
-
-const vacationTypeOptions = ref([]);
 
 const columns = [
   {key: 'empNo', label: '사번'},
@@ -38,8 +35,8 @@ const columns = [
     }
   },
   {key: 'createdAt', label: '등록일', format: val => val.split('T')[0]},
-  // {key: 's3Key', label: 's3Key', hidden: true},
   {key: 'action', label: '다운로드'},
+  /* TODO: 베이스테이블 수정 후 "삭제" 버튼 추가*/
 ];
 
 // 필터
@@ -127,19 +124,21 @@ const req = ref({
       }
 });
 
+const initializeRequest = () => {
+  req.value = {
+    empId: null,
+    type: null,
+    salary: null,
+    attachment: {
+      s3Key: null,
+      type: null
+    }
+  };
+}
+
 const openCreateModal = () => {
+  initializeRequest()
   showModal.value = true;
-
-  // loadingDetails.value = true;
-  //
-  // try {
-  //   workDetails.value = await getWorkDetails(workId);
-  // } catch (error) {
-  //   workDetails.value = null;
-  // } finally {
-  //   loadingDetails.value = false;
-  // }
-
 };
 
 const downloadFile = async (row) => {
@@ -172,35 +171,34 @@ const closeModal = () => {
 * 2. 파일 업로드 로직 및 form 작성
 * */
 const modalSections = computed(() => {
-  const salaryIsEditable = req.value.type === 'SALARY_AGREEMENT'
+  const salaryEditable = req.value.type === 'SALARY_AGREEMENT';
 
-      return [
+  return [
+    {
+      title: '계약서 정보',
+      icon: 'fa-info-circle',
+      layout: 'two-column',
+      fields: [
+        {key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1'},
+        {key: 'file', label: '첨부 파일', type: 'file', editable: true, required: true},
         {
-          title: '계약서 정보',
-          icon: 'fa-info-circle',
-          layout: 'two-column',
-          fields: [
-            {key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1'}, // 조직도 조회
-            {key: 'file', label: '첨부 파일', type: 'file', editable: true, required: true},
-            {
-              key: 'type', label: '계약서 종류', type: 'select', editable: true, required: true, options: [
-                {label: '선택', value: null},
-                {label: '근로계약서', value: 'EMPLOYEE_AGREEMENT'},
-                {label: '연봉계약서', value: 'SALARY_AGREEMENT'}
-              ]
-            },
-            {
-              key: 'salary',
-              label: '연봉',
-              type: 'input',
-              editable: salaryIsEditable,
-              placeholder: '40000000'
-            },
-          ]
+          key: 'type', label: '계약서 종류', type: 'select', editable: true, required: true, options: [
+            {label: '근로계약서', value: 'EMPLOYEE_AGREEMENT'},
+            {label: '연봉계약서', value: 'SALARY_AGREEMENT'},
+          ],
+          value: req.value.type
+        },
+        {
+          key: 'salary',
+          label: '연봉',
+          type: 'input',
+          editable: salaryEditable,
+          placeholder: '40000000'
         }
       ]
     }
-);
+  ];
+});
 
 const handleRegisterSubmit = async (req) => {
   try {
@@ -212,11 +210,18 @@ const handleRegisterSubmit = async (req) => {
   }
 };
 
+const handleHeaderButton = (event) => {
+  if (event.value === 'create') {
+    openCreateModal();
+  }
+}
+
 watch(() => req.value.type, (newType) => {
   if (newType !== 'SALARY_AGREEMENT') {
     req.value.salary = null;
   }
-});
+}, { immediate: true });
+
 </script>
 
 <template>
@@ -225,9 +230,9 @@ watch(() => req.value.type, (newType) => {
         :headerItems="[
         { label: '계약서 목록 조회', to: '/contracts', active: true },
     ]"
-        :submitButtons="[{label: '계약서 등록', icon: 'fa-file-signature', variant: 'blue'}]"
+        :submitButtons="[{label: '계약서 등록', icon: 'fa-file-signature', event: 'click', value: 'create', variant: 'blue'}]"
         :showTabs="false"
-        @click="openCreateModal"
+        @click="handleHeaderButton"
     />
     <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch"/>
 
