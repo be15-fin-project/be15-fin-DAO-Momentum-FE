@@ -52,6 +52,9 @@ import {
   getRetentionRounds,
   createRetentionForecastRound
 } from '@/features/retention-support/api.js';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 
 const filterOptions = ref([]);
 const filterValues = ref({});
@@ -126,7 +129,7 @@ const handleSearch = async () => {
       totalPage: res.totalPages || 1
     };
   } catch (err) {
-    console.error('회차 목록 조회 실패:', err);
+    toast.error('회차 목록을 불러오는 데 실패했습니다.');
   }
 };
 
@@ -153,17 +156,17 @@ const handleCreate = async () => {
 
     // 유효성 검사
     if (!year || isNaN(year) || year < 0) {
-      alert('유효한 연도를 입력하세요.');
+      toast.error('유효한 연도를 입력하세요.');
       return;
     }
 
     if (!month || isNaN(month) || month < 1 || month > 12) {
-      alert('월은 1에서 12 사이여야 합니다.');
+      toast.error('월은 1에서 12 사이여야 합니다.');
       return;
     }
 
     if (roundNo && (isNaN(roundNo) || roundNo < 1)) {
-      alert('회차 번호는 1 이상의 숫자여야 합니다.');
+      toast.error('회차 번호는 1 이상의 숫자여야 합니다.');
       return;
     }
 
@@ -175,11 +178,11 @@ const handleCreate = async () => {
     };
 
     await createRetentionForecastRound(payload);
-    alert('근속 전망 회차 등록이 완료되었습니다.');
+    toast.success('근속 전망 회차 등록이 완료되었습니다.');
     isOpen.value = false;
     await handleSearch();
   } catch (err) {
-    console.error('등록 실패:', err);
+    toast.error('근속 전망 회차 등록에 실패했습니다.');
     alert('등록에 실패했습니다.');
   }
 };

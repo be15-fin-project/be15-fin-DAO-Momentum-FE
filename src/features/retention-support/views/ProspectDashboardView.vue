@@ -59,7 +59,9 @@ import {
   getDepartmentStabilityDistribution,
   downloadRetentionPredictionExcel,
 } from '@/features/retention-support/api.js';
+import { useToast } from 'vue-toastification';
 
+const toast = useToast();
 // ────────── 상태 ──────────
 const filterValues = ref({});
 const filterOptions = ref([]);
@@ -129,7 +131,6 @@ async function initFilterOptions() {
 // ────────── 검색 핸들러 ──────────
 async function handleSearch(values) {
   const params = normalizeParams(values);
-  console.log('[handleSearch params]', params);
 
   try {
     const overview = await getRetentionOverview(params);
@@ -142,13 +143,14 @@ async function handleSearch(values) {
     overallDistribution.value = await getOverallStabilityDistribution(params);
     departmentDistribution.value = await getDepartmentStabilityDistribution(params);
   } catch (e) {
-    console.error('통계 조회 실패:', e);
+    toast.error('통계 정보를 불러오는 데 실패했습니다.');
   }
 }
 
 // ────────── 엑셀 다운로드 ──────────
 async function handleDownload() {
   try {
+    toast.success('엑셀 다운로드가 시작되었습니다.');
     const params = normalizeParams(filterValues.value);
     const blob = await downloadRetentionPredictionExcel(params);
 
@@ -161,7 +163,7 @@ async function handleDownload() {
     link.remove();
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error('엑셀 다운로드 실패:', err);
+    toast.error('엑셀 다운로드 중 오류가 발생했습니다.');
   }
 }
 

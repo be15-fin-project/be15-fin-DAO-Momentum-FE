@@ -71,6 +71,9 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 // ────── State ──────
 const currentPage = ref(1);
@@ -100,7 +103,7 @@ onMounted(async () => {
     initFilters();
     await handleSearch({});
   } catch (e) {
-    console.error('초기화 실패:', e);
+    toast.error('초기화 중 오류가 발생했습니다.');
   }
 });
 
@@ -209,8 +212,6 @@ const handleSearch = async (values) => {
     size: 10,
   };
 
-  console.log('[SEARCH PARAMS]', params);
-
   try {
     const resData = await getSelfEvaluations(params);
     tableData.value = resData.list ?? [];
@@ -219,7 +220,7 @@ const handleSearch = async (values) => {
     const total = resData.pagination?.totalPage > 0 ? resData.pagination.totalPage : 1;
     pagination.value = { currentPage: current, totalPage: total };
   } catch (e) {
-    console.error('자가 진단 평가 조회 실패:', e);
+    toast.error('자가 진단 평가 조회에 실패했습니다.');
     tableData.value = [];
   }
 };
@@ -294,7 +295,7 @@ const openModalHandler = async (row) => {
 
     formSections.value = [...baseSections, ...reasonSection, ...factorSection];
   } catch (err) {
-    console.error('상세 조회 실패:', err);
+    toast.error('상세 정보를 불러오지 못했습니다.');
     isOpen.value = false;
   }
 };
@@ -302,6 +303,7 @@ const openModalHandler = async (row) => {
 // ────── Excel Export ──────
 const handleDownload = async () => {
   try {
+    toast.success('엑셀 다운로드가 시작되었습니다.');
     const normalized = normalizeFilterParams(filterValues.value);
     const blob = await getSelfExcelDownload({ ...normalized });
 
@@ -314,8 +316,7 @@ const handleDownload = async () => {
     link.remove();
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error('엑셀 다운로드 오류:', err);
-    alert('엑셀 다운로드 실패');
+    toast.error('엑셀 다운로드에 실패했습니다.');
   }
 };
 </script>

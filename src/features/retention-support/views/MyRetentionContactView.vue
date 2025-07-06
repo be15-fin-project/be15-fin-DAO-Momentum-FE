@@ -51,6 +51,9 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 
 const currentPage = ref(1);
 const filterValues = ref({});
@@ -109,7 +112,7 @@ const handleSearch = async (values) => {
       totalPage: res.pagination?.totalPage || 1
     };
   } catch (e) {
-    console.error('면담 요청 내역 조회 실패:', e);
+    toast.error('면담 요청 내역 조회 중 오류가 발생했습니다.');
     tableData.value = [];
   }
 };
@@ -186,7 +189,7 @@ const openModalHandler = async (row) => {
       }
     ];
   } catch (e) {
-    console.error('면담 상세 조회 실패:', e);
+    toast.error('면담 상세 정보를 불러오는 데 실패했습니다.');
     isOpen.value = false;
   }
 };
@@ -194,16 +197,15 @@ const openModalHandler = async (row) => {
 const handleSubmit = async () => {
   if (!selectedRow.value) return;
   const response = formData.value.response?.trim();
-  if (!response) return alert('면담 보고 내용을 입력해주세요.');
+  if (!response) return toast.error('면담 보고 내용을 입력해주세요.');
 
   try {
     await submitRetentionResponse(selectedRow.value.retentionId, response);
-    alert('면담 보고가 완료되었습니다.');
+    toast.success('면담 보고가 완료되었습니다.');
     isOpen.value = false;
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('면담 보고 실패:', e);
-    alert('면담 보고 중 오류가 발생했습니다.');
+    toast.error('면담 보고 중 오류가 발생했습니다.');
   }
 };
 

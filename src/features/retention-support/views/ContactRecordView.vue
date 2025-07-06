@@ -74,6 +74,9 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast();
 
 /* ===== 상태 ===== */
 const currentPage = ref(1);
@@ -112,7 +115,7 @@ onMounted(async () => {
     initFilters();
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('초기화 실패:', e);
+    toast.error('초기화 중 오류가 발생했습니다.');
   }
 });
 
@@ -215,7 +218,7 @@ const handleSearch = async (values) => {
       totalPage: res.pagination?.totalPage || 1
     };
   } catch (e) {
-    console.error('면담 기록 조회 실패:', e);
+    toast.error('면담 기록을 불러오는 데 실패했습니다.');
     tableData.value = [];
   }
 };
@@ -235,7 +238,7 @@ const openModalHandler = async (row) => {
     selectedRow.value = row;
     isOpen.value = true;
 
-    // ✅ 버튼 노출 여부 설정
+    // 버튼 노출 여부 설정
     showFeedbackButton.value = detail.feedbackWritable === true;
 
     formData.value = {
@@ -308,7 +311,7 @@ const openModalHandler = async (row) => {
       }
     ];
   } catch (e) {
-    console.error('면담 상세 조회 실패:', e);
+    toast.error('면담 상세 정보를 불러오는 데 실패했습니다.');
     isOpen.value = false;
   }
 };
@@ -318,18 +321,17 @@ const handleFeedbackSubmit = async () => {
   const feedback = formData.value.feedback?.trim();
 
   if (!retentionId || !feedback) {
-    alert('피드백 내용을 입력해주세요.');
+    toast.error('피드백 내용을 입력해주세요.');
     return;
   }
 
   try {
     await submitRetentionFeedback(retentionId, feedback);
-    alert('피드백이 저장되었습니다.');
+    toast.success('피드백이 저장되었습니다.');
     isOpen.value = false;
     await handleSearch(filterValues.value); // 목록 새로고침
   } catch (e) {
-    console.error('피드백 등록 실패:', e);
-    alert('피드백 저장 중 오류가 발생했습니다.');
+    toast.error('피드백 저장 중 오류가 발생했습니다.');
   }
 };
 
@@ -361,18 +363,17 @@ const handleCreateContact = async () => {
   const { targetId, managerId, reason } = formData.value;
 
   if (!targetId || !managerId || !reason?.trim()) {
-    alert('모든 항목을 입력해주세요.');
+    toast.error('모든 항목을 입력해주세요.');
     return;
   }
 
   try {
     await createRetentionContact(formData.value);
-    alert('면담 요청이 등록되었습니다.');
+    toast.success('면담 요청이 등록되었습니다.');
     isSubmitModalOpen.value = false;
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('면담 요청 등록 실패:', e);
-    alert('면담 요청 중 오류가 발생했습니다.');
+    toast.error('면담 요청 중 오류가 발생했습니다.');
   }
 };
 
