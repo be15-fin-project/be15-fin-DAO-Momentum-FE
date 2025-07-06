@@ -1,6 +1,6 @@
 import api from '@/api/axios.js'
 
-/* 1. 전체 결재 내역 불러오기 */
+/* 1. 전체 공지사항 목록 불러오기 */
 export function getAnnouncementList(searchRequest) {
     return api.get('/announcement', {
         params: searchRequest
@@ -45,6 +45,15 @@ export function modifyAnnouncement(announcementId, { title, content, attachments
         attachments,
         remainFileIdList
     });
+}
+
+/**
+ * 5. 공지사항 삭제
+ * @param {number} announcementId
+ * @returns {Promise}
+ */
+export function deleteAnnouncement(announcementId) {
+    return api.delete(`/announcement/${announcementId}`);
 }
 
 // Presigned URL 요청 -> 공통으로 분리

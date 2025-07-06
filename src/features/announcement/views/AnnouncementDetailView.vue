@@ -93,7 +93,7 @@
 <script setup>
 import {ref, onMounted, computed, onBeforeUnmount} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { getAnnouncementDetail } from '@/features/announcement/api';
+import {deleteAnnouncement, getAnnouncementDetail} from '@/features/announcement/api';
 import { getFileUrl } from '@/features/common/api.js';
 import { useAuthStore } from '@/stores/auth.js';
 
@@ -155,12 +155,12 @@ const handleDownload = async (file) => {
 const handleDelete = async () => {
   if (confirm('정말 삭제하시겠습니까?')) {
     try {
-      // TODO: 공지 삭제 API 호출
-      alert('삭제 완료');
+      await deleteAnnouncement(route.params.announcementId);
+      alert('공지사항이 삭제되었습니다.');
       router.push('/announcement');
     } catch (err) {
       console.error('공지 삭제 실패:', err);
-      alert('삭제 중 오류가 발생했습니다.');
+      alert('공지사항 삭제 중 오류가 발생했습니다.');
     }
   }
 };
