@@ -1,12 +1,13 @@
 <script setup>
 import { computed } from 'vue';
 
+/* 부모에게 결재선과 참조자 데이터 받아오기 */
 const props = defineProps({
   approveLineGroupDTO: { type: Array, required: true },
   approveRefDTO: { type: Array, default: () => [] },
 });
 
-// 결재선 처리
+/* 결재선 처리 */
 const approvalLines = computed(() => {
   return props.approveLineGroupDTO.map(group => ({
     step: group.approveLineDTO.approveLineOrder,
@@ -19,7 +20,7 @@ const approvalLines = computed(() => {
   }));
 });
 
-// 참조자 처리
+/* 참조자 처리 */
 const referenceList = computed(() =>
   props.approveRefDTO.map(ref => ({
     name: ref.employeeDisplayName,
@@ -31,20 +32,22 @@ const referenceList = computed(() =>
 
 <template>
   <aside class="sidebar">
-    <!-- 결재선 -->
+    <!-- 1. 결재선 -->
     <section class="form-section side-section">
       <div class="section-header">
         <div class="section-icon"><i class="fas fa-users"></i></div>
         <h3 class="section-title">결재선</h3>
       </div>
 
+      <!-- 1-1. 결재선 순서 -->
       <div v-for="(line, idx) in approvalLines" :key="idx" class="step-section">
         <div class="step-header">
-          <span class="step-label">{{ line.step }}단계 승인</span>
+          <span class="step-label">{{ line.step }}단계 결재</span>
           <div class="step-line"></div>
           <span class="step-type">{{ line.requiredType }}</span>
         </div>
 
+        <!-- 1-2. 결재자 정보 및 결재 상태 -->
         <div
           v-for="(approver, i) in line.approvers"
           :key="i"
@@ -70,13 +73,14 @@ const referenceList = computed(() =>
       </div>
     </section>
 
-    <!-- 참조자 -->
+    <!-- 2. 참조자 -->
     <section v-if="referenceList.length" class="form-section side-section">
       <div class="section-header">
         <div class="section-icon"><i class="fas fa-eye"></i></div>
         <h3 class="section-title">참조자</h3>
       </div>
 
+      <!-- 2-1. 참조자 정보 및 열람 여부 -->
       <div
         v-for="(ref, idx) in referenceList"
         :key="idx"
@@ -104,7 +108,7 @@ const referenceList = computed(() =>
 .sidebar {
   width: 400px;
   flex-shrink: 0;
-  background-color: var(--color-background);
+  background-color: var(--color-surface);
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-md);
   padding: 16px;
@@ -170,10 +174,10 @@ const referenceList = computed(() =>
 
 .step-type {
   font-size: 12px;
-  color: var(--gray-500);
+  background-color: var(--label-approved);
+  color: var(--text-on-label-approved);
   padding: 2px 6px;
-  border-radius: var(--radius-xs);
-  background-color: var(--gray-100);
+  border-radius: 40%;
 }
 
 .approver-row {
@@ -183,7 +187,6 @@ const referenceList = computed(() =>
   padding: 12px;
   border: 1px solid var(--gray-200);
   border-radius: var(--radius-sm);
-  background-color: var(--basic);
   margin-bottom: 8px;
 }
 
@@ -230,7 +233,7 @@ const referenceList = computed(() =>
   white-space: nowrap;
 }
 
-.status-chip.accepted {
+.status-chip.accepted, .status-chip.y {
   background-color: var(--label-approved);
   color: var(--text-on-label-approved);
 }
@@ -240,17 +243,7 @@ const referenceList = computed(() =>
   color: var(--text-on-label-rejected);
 }
 
-.status-chip.pending {
-  background-color: var(--label-pending);
-  color: var(--text-on-label-pending);
-}
-
-.status-chip.y {
-  background-color: var(--label-approved);
-  color: var(--text-on-label-approved);
-}
-
-.status-chip.n {
+.status-chip.pending, .status-chip.n  {
   background-color: var(--label-pending);
   color: var(--text-on-label-pending);
 }
