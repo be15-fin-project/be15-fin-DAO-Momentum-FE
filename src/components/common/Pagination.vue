@@ -90,7 +90,14 @@ const visiblePages = computed(() => {
 const updateSliderPosition = () => {
   nextTick(() => {
     const buttons = pagination.value?.querySelectorAll('.page-btn') || [];
-    const activeIndex = visiblePages.value.findIndex((p) => p === props.modelValue);
+    let activeIndex = 0;
+    for (let i = 0; i < visiblePages.value.length; i++) {
+      const p = visiblePages.value[i];
+      if (p === '...') continue;
+      if (p === props.modelValue) break;
+      activeIndex++;
+    }
+
     const activeBtn = buttons[activeIndex];
     if (!activeBtn) return;
 
