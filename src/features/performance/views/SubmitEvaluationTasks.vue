@@ -258,21 +258,25 @@ async function handleSubmit() {
   try {
     const task = selectedTask.value
     const round = roundId.value
+    // [1] 평가 문항에 대한 응답 섹션만 추출
     const responseSections = formSections.value.filter(s => s.title !== '평가 정보' && s.title !== '평가 사유')
 
     for (const section of responseSections) {
       for (const field of section.fields) {
         if (field.value == null) {
+          // [2] 모든 문항 응답 여부 검증
           toast.error('모든 항목에 응답을 완료해 주세요.')
           return
         }
       }
     }
 
+    // [3] 점수 계산 준비
     const factorData = await getEvaluationFormDetail(task.formId, round)
     const propertyMap = await getEvaluationFormProperties({ formId: task.formId }).then(list => new Map(list.map(p => [p.name, p.propertyId])))
     const factorScoreMap = new Map()
 
+    // [4] 점수 수집 및 변환
     for (const section of responseSections) {
       const scores = []
       for (const field of section.fields) {
@@ -287,6 +291,7 @@ async function handleSubmit() {
       factorScoreMap.set(section.title, scores)
     }
 
+    // [5] 요인별 점수 평균 → 백분율 변환
     const factorScores = []
     for (const [propertyName, scores] of factorScoreMap.entries()) {
       const avg = scores.reduce((a, b) => a + b, 0) / scores.length
@@ -296,6 +301,7 @@ async function handleSubmit() {
       factorScores.push({ propertyId, score: percent })
     }
 
+    // [6] 제출 페이로드 구성
     const payload = {
       roundId: round,
       formId: task.formId,
@@ -304,6 +310,7 @@ async function handleSubmit() {
       factorScores
     }
 
+    // [7] 서버에 제출 요청
     await submitEvaluation(payload)
     toast.success('평가가 성공적으로 제출되었습니다.')
     isModalOpen.value = false

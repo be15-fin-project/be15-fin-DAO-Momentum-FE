@@ -79,6 +79,12 @@ export async function updateKpiProgress(kpiId, payload) {
     return res.data;
 }
 
+// KPI 회수
+export async function withdrawKpi(kpiId) {
+    const res = await api.delete(`/kpi/${kpiId}/withdraw`);
+    return res.data;
+}
+
 // KPI 취소 요청
 export async function deleteKpi(kpiId, payload) {
     const res = await api.delete(`/kpi/${kpiId}`, { data: payload });
