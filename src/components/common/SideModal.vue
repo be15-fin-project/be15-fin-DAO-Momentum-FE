@@ -26,6 +26,7 @@
               :field="field"
               :model="form"
               :readonly="readonly"
+              @file-change="handleFileChange"
           />
         </FormSection>
 
@@ -108,11 +109,16 @@ const props = defineProps({
 });
 
 const form = defineModel('form');
-const emit = defineEmits(['close', 'reject', 'submit', 'update:visible']);
+const emit = defineEmits(['close', 'reject', 'submit', 'update:visible', 'file-change']);
 
 function onClose() {
   emit('update:visible', false);
   emit('close');
+}
+
+function handleFileChange(file) {
+  console.log('SideModal: file-change event, file:', file);
+  emit('file-change', file); // 외부 부모 컴포넌트로 이벤트 전달
 }
 
 watch(

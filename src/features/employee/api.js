@@ -20,6 +20,11 @@ export const getContracts = async (params) => {
     return resp.data.data;
 }
 
+export const getMyContracts = async (params) => {
+    const resp = await api.get("/contracts/me", {params});
+    return resp.data.data;
+}
+
 export const getDownloadUrl = async (s3Key) => {
     const resp = await api.post("/file/download-url", {key: s3Key});
     return resp.data.data.signedUrl;
