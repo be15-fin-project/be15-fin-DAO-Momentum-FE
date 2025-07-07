@@ -24,10 +24,12 @@ defineProps({
 
 <style scoped>
 .metric-card {
+  display: flex;
+  align-items: center;
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--card-shadow);
-  padding: 24px 48px;
+  padding: 24px 24px;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .metric-card:hover {
@@ -38,6 +40,7 @@ defineProps({
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 20px;
 }
 .metric-label {
   font-size: 13px;

@@ -38,7 +38,7 @@ const router = createRouter({
 //권한 없어도 되는 페이지들
 router.beforeEach((to, from, next) => {
     const authStore = useAuthStore()
-    const publicPages = ['/login', '/register', '/password/reset']
+    const publicPages = ['/login', '/forgot-password', '/password/reset','/password/init']
 
     const requiresAuth = !publicPages.includes(to.path)
 

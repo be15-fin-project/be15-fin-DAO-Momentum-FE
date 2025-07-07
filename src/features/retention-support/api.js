@@ -22,6 +22,12 @@ export async function getDepartmentStabilityDistribution(params) {
     return res.data.data;
 }
 
+// 근속 지수 월별 추이 조회
+export async function getMonthlyRetentionTimeseries(params) {
+    const res = await api.get('/retention/statistics/timeseries', { params });
+    return res.data.data;
+}
+
 // ==================================================
 // 근속 전망 엑셀 다운로드 API
 // ==================================================
