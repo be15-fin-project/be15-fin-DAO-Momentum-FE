@@ -5,10 +5,11 @@ import Filter from '@/components/common/Filter.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import SideModal from '@/components/common/SideModal.vue';
-import { createContract, getContracts } from '@/features/employee/api.js';
+import {createContract, deleteContract, getContracts} from '@/features/employee/api.js';
 import { getFileUrl } from '@/features/common/api.js';
 import { generatePresignedUrl } from '@/features/announcement/api.js';
 import {useToast} from "vue-toastification";
+import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
 
 const toast = useToast();
 
@@ -35,8 +36,18 @@ const columns = [
     }
   },
   { key: 'createdAt', label: '등록일', format: val => val.split('T')[0] },
-  { key: 'action', label: '다운로드' },
+  // { key: 'action', label: '다운로드' },
 ];
+
+const rowActions = [
+  { key: 'download', icon: 'fa-download', label: '다운로드'},
+  { key: 'delete',   icon: 'fa-trash', label: '삭제'}
+];
+
+function handleRowAction({ action, row }) {
+  if (action === 'download') downloadFile(row);
+  if (action === 'delete') handleDeleteContract(row);
+}
 
 // 필터 옵션
 const filterOptions = computed(() => [
@@ -180,9 +191,10 @@ const closeModal = () => {
 const downloadFile = async (row) => {
   const s3Key = row.s3Key;
   const fileName = row.fileName;
+  console.log(row)
 
   try {
-    const response = await getFileUrl({ key: s3Key, fileName });
+    const response = await getFileUrl({ key: s3Key, fileName: fileName });
     const signedUrl = response.data?.data?.signedUrl;
 
     if (!signedUrl) {
@@ -190,13 +202,11 @@ const downloadFile = async (row) => {
       return;
     }
 
-    // 안전한 다운로드 방식으로 교체
     const fileResp = await fetch(signedUrl);
     if (!fileResp.ok) {
       toast.error('파일 다운로드 실패');
       return;
     }
-
     const blob = await fileResp.blob();
     const blobUrl = URL.createObjectURL(blob);
 
@@ -210,6 +220,32 @@ const downloadFile = async (row) => {
   } catch (err) {
     toast.error('다운로드 중 오류 발생');
     console.error(err);
+  }
+};
+
+const handleDeleteContract = async (row) => {
+  try {
+    const result = await new Promise((resolve) => {
+      toast(
+          {
+            component: DeleteConfirmToast,
+            props: { resolve },
+          },
+          {
+            timeout: false,
+            closeOnClick: false,
+            showCloseButtonOnHover: false,
+          }
+      );
+    });
+
+    if (!result) return;
+
+    await deleteContract(row.contractId);
+    toast.success('계약서가 삭제되었습니다.');
+    handleSearch();
+  } catch (e) {
+    toast.error('삭제 실패: ' + (e.message || e));
   }
 };
 
@@ -308,7 +344,7 @@ const handleHeaderButton = (event) => {
 
     <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
 
-    <BaseTable :columns="columns" :rows="contracts" @click-detail="downloadFile" />
+    <BaseTable :columns="columns" :rows="contracts" :actions="rowActions" @action="handleRowAction" />
 
     <Pagination
         v-if="pagination.totalPage"

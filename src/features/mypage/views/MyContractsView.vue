@@ -80,20 +80,35 @@ const downloadFile = async (row) => {
   const s3Key = row.s3Key;
   const fileName = row.fileName;
 
-  const response = await getFileUrl({key: s3Key, fileName});
-  const signedUrl = response.data?.data?.signedUrl;
+  try {
+    const response = await getFileUrl({ key: s3Key, fileName });
+    const signedUrl = response.data?.data?.signedUrl;
 
-  if (!signedUrl) {
-    console.error('Signed URL을 가져오지 못했습니다.');
-    return;
+    if (!signedUrl) {
+      toast.error('파일 다운로드 링크를 가져오지 못했습니다.');
+      return;
+    }
+
+    const fileResp = await fetch(signedUrl);
+    if (!fileResp.ok) {
+      toast.error('파일 다운로드 실패');
+      return;
+    }
+
+    const blob = await fileResp.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    toast.error('다운로드 중 오류 발생');
+    console.error(err);
   }
-
-  const link = document.createElement('a');
-  link.href = signedUrl;
-  link.download = fileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
 };
 
 onMounted(() => {
