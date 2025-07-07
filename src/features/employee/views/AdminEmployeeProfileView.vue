@@ -4,14 +4,16 @@ import {computed, onMounted, reactive, ref, watch} from "vue";
 import ProfileCard from "@/features/employee/components/profile/ProfileCard.vue";
 import InfoItem from "@/features/employee/components/profile/InfoItem.vue";
 import BasicInfo from "@/features/employee/components/profile/BasicInfo.vue";
-import HistoryInfo from "@/features/employee/components/profile/HistoryInfo.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import {useToast} from "vue-toastification";
-import {getEmployeeDetails, updateEmpInfo} from "@/features/employee/api.js";
+import {getEmployeeDetails, updateEmpInfo, updateEmpRecords} from "@/features/employee/api.js";
 import {useRoute} from "vue-router";
+import HistoryInfoEditable from "@/features/employee/components/profile/HistoryInfoEditable.vue";
 
 const route = useRoute();
 const empId = route.params.empId;
+console.log('empId:', empId);         // 값 출력
+
 
 const toast = useToast()
 const employeeDetails = ref({
@@ -37,7 +39,6 @@ const currentTab = ref('basic');
 
 //사이드 모달 관련 변수
 const modalVisible = ref(false);
-const modalType = ref('basic');
 
 const req = reactive({
   empNo: '',
@@ -46,7 +47,6 @@ const req = reactive({
 });
 
 const getModalSections = computed(() => {
-  if (modalType.value === 'basic') {
     return [{
       title: '정보 수정',
       icon: 'fa-user-edit',
@@ -65,17 +65,6 @@ const getModalSections = computed(() => {
         }
       ]
     }];
-  } else {
-    return [{
-      title: '이력 정보 수정',
-      icon: 'fa-history',
-      layout: 'one-column',
-      fields: [
-        { key: 'education', type: 'input', label: '학력', icon: 'fa-university', editable: true, required: false, value: req.education },
-        { key: 'certificate', type: 'input', label: '자격증', icon: 'fa-certificate', editable: true, required: false, value: req.certificate }
-      ]
-    }];
-  }
 });
 
 const computedStatus = computed(() =>{
@@ -111,6 +100,72 @@ const handleRegisterSubmit = async(req) => {
     toast.error('문제가 발생했습니다.')
   }
 }
+
+const handleHistorySubmit = async (formData, idsToDelete) => {
+  try {
+    const insertItems = [];
+    // const updateItems = [];
+
+    for (const sectionKey in formData) {
+      const items = formData[sectionKey];
+      for (const item of items) {
+        const record = {
+          type: sectionKey,
+          organization: '',
+          name: '',
+          startDate: '',
+          endDate: null,
+          empId,
+          recordId: item.recordId || null,
+        };
+
+        // 필드 매핑은 기존 로직 사용
+        switch (sectionKey) {
+          case 'EDUCATION':
+            record.organization = item['학교명'];
+            record.name = item['학과명'];
+            record.startDate = item['입학일'];
+            record.endDate = item['졸업일'];
+            break;
+          case 'CERTIFICATE':
+            record.organization = item['발급기관'];
+            record.name = item['자격증명'];
+            record.startDate = item['취득일'];
+            record.endDate = null;
+            break;
+          case 'AWARD':
+            record.organization = item['수상기관'];
+            record.name = item['수상명'];
+            record.startDate = item['수상일'];
+            record.endDate = null;
+            break;
+          case 'CAREER':
+            record.organization = item['직장명'];
+            record.startDate = item['시작일'];
+            record.endDate = item['종료일'];
+            break;
+        }
+
+        if (record.recordId) {
+          // updateItems.push(record);
+        } else {
+          // 신규는 recordId 제거
+          delete record.recordId;
+          insertItems.push(record);
+        }
+      }
+    }
+
+    console.log('updateEmpRecords 호출:', empId, { insertItems, idsToDelete });
+    await updateEmpRecords({ insertItems, idsToDelete }, empId);
+
+    toast.success('이력 정보를 수정했습니다!');
+    await getEmpInfo();
+  } catch (e) {
+    toast.error('문제가 발생했습니다.');
+  }
+};
+
 
 watch(
     () => employeeDetails.value,
@@ -183,7 +238,7 @@ onMounted(async () => {
 
           <!-- History Info Tab -->
           <div class="tab-content" id="history-tab" v-else>
-            <HistoryInfo :info = "employeeRecords" @openModal="modalVisible=true"/>
+            <HistoryInfoEditable :records="employeeRecords" @submit="handleHistorySubmit" @cancel="handleCancel" />
           </div>
         </div>
       </div>
@@ -191,8 +246,8 @@ onMounted(async () => {
     <SideModal
         :visible="modalVisible"
         @close="modalVisible=false"
-        :title="modalType==='basic' ? '정보 수정' : '이력 정보 수정'"
-        :icon="modalType==='basic' ? 'fa-user-edit' : 'fa-history'"
+        :title="'정보 수정'"
+        :icon="'fa-user-edit'"
         v-model:form="req"
         :sections="getModalSections"
         @submit="handleRegisterSubmit(req)"
