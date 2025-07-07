@@ -245,6 +245,7 @@ const openModalHandler = async (row) => {
       target: `${detail.targetName} (${detail.targetNo})`,
       deptName: detail.deptName,
       positionName: detail.positionName,
+      managerNo: detail.managerNo,
       managerName: detail.managerName,
       reason: detail.reason,
       response: detail.response ?? '-',
