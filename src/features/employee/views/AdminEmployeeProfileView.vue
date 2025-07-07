@@ -7,13 +7,13 @@ import BasicInfo from "@/features/employee/components/profile/BasicInfo.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import {useToast} from "vue-toastification";
 import {getEmployeeDetails, updateEmpInfo, updateEmpRecords} from "@/features/employee/api.js";
-import {useRoute} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import HistoryInfoEditable from "@/features/employee/components/profile/HistoryInfoEditable.vue";
+import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 
 const route = useRoute();
+const router = useRouter();
 const empId = route.params.empId;
-console.log('empId:', empId);         // 값 출력
-
 
 const toast = useToast()
 const employeeDetails = ref({
@@ -181,18 +181,22 @@ onMounted(async () => {
   await getEmpInfo();
 })
 
+function handleClick(event) {
+  if (event.value === 'back') {
+    router.push('/employees')
+  }
+}
 </script>
 
 <template>
   <section>
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Left left-profile -->
-      <div class="main-header">
-        <div class="header-content">
-          <h1 class="header-title">직원 프로필</h1>
-        </div>
-      </div>
+      <HeaderWithTabs :headerItems="[
+        { label: '사원 프로필 조회', event: 'click', active: true },
+    ]"
+                      :submitButtons="[{ label: '뒤로 가기', icon: 'fa-arrow-left', event:'click', value: 'back', variant: 'white' }]"
+                      :showTabs="false"
+                      @click="handleClick"
+      />
       <div class="container">
         <!-- Profile Section -->
         <div class="left-profile">
@@ -238,11 +242,10 @@ onMounted(async () => {
 
           <!-- History Info Tab -->
           <div class="tab-content" id="history-tab" v-else>
-            <HistoryInfoEditable :records="employeeRecords" @submit="handleHistorySubmit" @cancel="handleCancel" />
+            <HistoryInfoEditable :records="employeeRecords" @submit="handleHistorySubmit"/>
           </div>
         </div>
       </div>
-    </div>
     <SideModal
         :visible="modalVisible"
         @close="modalVisible=false"

@@ -129,7 +129,6 @@ const handleCancel = () => {
     <div v-for="(section, sectionIndex) in sections" :key="section.key" class="table-block">
       <div class="first-header">
         <SectionHeader :icon-class="section.icon" :title="section.title" />
-
         <template v-if="sectionIndex === 0 && !isEditing">
           <BaseButton
               icon="fas fa-edit"
@@ -190,10 +189,6 @@ const handleCancel = () => {
   display: flex;
   flex-direction: column;
   gap: 40px;
-}
-
-.table-block {
-  margin-top: 24px;
 }
 
 .info-table {
