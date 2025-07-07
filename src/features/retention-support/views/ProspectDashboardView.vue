@@ -17,6 +17,7 @@
         v-if="filterOptions.length > 0"
         :filters="filterOptions"
         v-model="filterValues"
+        :preserveKeys="['roundId']"
         @search="handleSearch"
     />
 
