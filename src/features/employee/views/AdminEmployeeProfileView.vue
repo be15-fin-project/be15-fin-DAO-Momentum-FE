@@ -1,0 +1,340 @@
+<script setup>
+import ContactButton from "@/features/employee/components/profile/ContactButton.vue";
+import {computed, onMounted, reactive, ref, watch} from "vue";
+import ProfileCard from "@/features/employee/components/profile/ProfileCard.vue";
+import InfoItem from "@/features/employee/components/profile/InfoItem.vue";
+import BasicInfo from "@/features/employee/components/profile/BasicInfo.vue";
+import HistoryInfo from "@/features/employee/components/profile/HistoryInfo.vue";
+import SideModal from "@/components/common/SideModal.vue";
+import {useToast} from "vue-toastification";
+import {getEmployeeDetails, updateEmpInfo} from "@/features/employee/api.js";
+import {useRoute} from "vue-router";
+
+const route = useRoute();
+const empId = route.params.empId;
+
+const toast = useToast()
+const employeeDetails = ref({
+      empId:null,
+      empNo:'',
+      name: '',
+      email:'',
+      gender:'',
+      deptName:'',
+      positionName: '',
+      address:'',
+      contact:'',
+      status: '',
+      department: '',
+      joinDate:'',
+      birthDate:''
+    }
+)
+
+const employeeRecords = ref({});
+
+const currentTab = ref('basic');
+
+//사이드 모달 관련 변수
+const modalVisible = ref(false);
+const modalType = ref('basic');
+
+const req = reactive({
+  empNo: '',
+  email: '',
+  status: '',
+});
+
+const getModalSections = computed(() => {
+  if (modalType.value === 'basic') {
+    return [{
+      title: '정보 수정',
+      icon: 'fa-user-edit',
+      layout: 'one-column',
+      fields: [
+        { key: 'empNo', type: 'input', label: '사번', icon: 'fa-id-badge', editable: true, required: true, value: req.empNo },
+        { key: 'email', type: 'input', label: '이메일', icon: 'fa-envelope', editable: true, required: true, value: req.email },
+        {
+          key: 'status', type: 'select', label: '재직 상태', icon: 'fa-briefcase', editable: true, required: true,
+          options: [
+            { label: '재직중', value: 'EMPLOYED' },
+            { label: '휴직중', value: 'ON_LEAVE' },
+            { label: '퇴직', value: 'RESIGNED' }
+          ],
+          value: req.status
+        }
+      ]
+    }];
+  } else {
+    return [{
+      title: '이력 정보 수정',
+      icon: 'fa-history',
+      layout: 'one-column',
+      fields: [
+        { key: 'education', type: 'input', label: '학력', icon: 'fa-university', editable: true, required: false, value: req.education },
+        { key: 'certificate', type: 'input', label: '자격증', icon: 'fa-certificate', editable: true, required: false, value: req.certificate }
+      ]
+    }];
+  }
+});
+
+const computedStatus = computed(() =>{
+  switch(employeeDetails.value.status){
+    case 'EMPLOYED':
+      return '재직중'
+    case 'ON_LEAVE':
+      return '휴직중'
+    case 'RESIGNED':
+      return '퇴직'
+  }
+
+})
+
+const getEmpInfo = async () => {
+  try{
+    const response = await getEmployeeDetails(empId);
+    employeeDetails.value = response.employeeDetails;
+    employeeRecords.value = response.employeeRecords;
+  }catch(error){
+    console.log("에러 ",error)
+  }
+
+}
+
+const handleRegisterSubmit = async(req) => {
+  try{
+    await updateEmpInfo(req, empId);
+    toast.success('개인정보를 수정했습니다!')
+    modalVisible.value = false;
+    await getEmpInfo();
+  }catch(e){
+    toast.error('문제가 발생했습니다.')
+  }
+}
+
+watch(
+    () => employeeDetails.value,
+    (newVal) => {
+      req.empNo = newVal.empNo;
+      req.email = newVal.email;
+      req.status = newVal.status;
+    },
+    { immediate: true, deep: true }
+);
+
+onMounted(async () => {
+  await getEmpInfo();
+})
+
+</script>
+
+<template>
+  <section>
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Left left-profile -->
+      <div class="main-header">
+        <div class="header-content">
+          <h1 class="header-title">직원 프로필</h1>
+        </div>
+      </div>
+      <div class="container">
+        <!-- Profile Section -->
+        <div class="left-profile">
+          <div class="left-profile-content">
+            <!-- Profile Card -->
+            <ProfileCard :name="employeeDetails.name" :department="employeeDetails.deptName" :position="employeeDetails.positionName" :status="computedStatus"/>
+            <div class="contact-section">
+              <contact-button  label = "email" :value="employeeDetails.email" icon="fas fa-envelope"/>
+              <contact-button  label = "contact" :value="employeeDetails.contact" icon="fas fa-phone"/>
+            </div>
+            <!-- Quick Info Cards -->
+            <div class="quick-info">
+              <InfoItem :label="'사번'" :value="employeeDetails.empNo" :icon="'fas fa-fingerprint'"/>
+              <InfoItem :label="'입사일'" :value="employeeDetails.joinDate" :icon="'fas fa-calendar-alt'"/>
+              <InfoItem :label="'직위'" :value="employeeDetails.positionName" :icon="'fas fa-briefcase'"/>
+            </div>
+          </div>
+        </div>
+        <!-- Main Content Card -->
+        <div class="content-card">
+          <!-- Tabs -->
+          <div class="tabs-header">
+          <button
+              class="tab-button"
+              :class="{ 'tab-active': currentTab === 'basic' }"
+              @click="currentTab = 'basic'"
+          >
+            <i class="fas fa-user-circle"></i>기본정보
+          </button>
+          <button
+              class="tab-button"
+              :class="{ 'tab-active': currentTab === 'history' }"
+              @click="currentTab = 'history'"
+          >
+            <i class="fas fa-history"></i>이력정보
+          </button>
+          </div>
+
+          <!-- Tab Content -->
+          <div class="tab-content" id="basic-tab" v-if="currentTab==='basic'">
+              <BasicInfo :info = "employeeDetails" @openModal="modalVisible=true"/>
+          </div>
+
+          <!-- History Info Tab -->
+          <div class="tab-content" id="history-tab" v-else>
+            <HistoryInfo :info = "employeeRecords" @openModal="modalVisible=true"/>
+          </div>
+        </div>
+      </div>
+    </div>
+    <SideModal
+        :visible="modalVisible"
+        @close="modalVisible=false"
+        :title="modalType==='basic' ? '정보 수정' : '이력 정보 수정'"
+        :icon="modalType==='basic' ? 'fa-user-edit' : 'fa-history'"
+        v-model:form="req"
+        :sections="getModalSections"
+        @submit="handleRegisterSubmit(req)"
+    />
+  </section>
+</template>
+
+<style scoped>
+.main-content{
+  padding-right: 16px;
+  padding-left: 16px;
+}
+
+.container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  gap: 20px;
+}
+
+/* Left left-profile */
+.left-profile {
+  width: 600px;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-header {
+  padding: 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.header-title {
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.left-profile-content {
+  flex: 1;
+  padding: 24px;
+}
+
+
+.avatar-circle i {
+  color: white;
+  font-size: 32px;
+}
+
+/* Contact Section */
+.contact-section {
+  margin-bottom: 32px;
+}
+
+/* Quick Info Cards */
+.quick-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.content-card {
+  border-radius: 24px;
+  overflow: hidden;
+  width: 100%;
+}
+
+/* Tabs */
+.tabs-header {
+  border-bottom: 1px solid #e5e7eb;
+  background: #f9fafb;
+  display: flex;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 20px 32px;
+  text-align: center;
+  font-weight: 600;
+  background: transparent;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-bottom : none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: #6b7280;
+  font-size: 15px;
+}
+
+.tab-button:first-child {
+  border-top-left-radius: 24px;
+}
+
+.tab-button:hover {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.tab-button.tab-active {
+  background: var(--blue-400);
+  color: white;
+  box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+}
+
+.tab-button i {
+  margin-right: 12px;
+}
+
+/* Tab Content */
+.tab-content {
+  padding: 32px;
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+</style>
