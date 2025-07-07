@@ -24,6 +24,8 @@ const showModal = ref(false);
 const columns = [
   { key: 'empNo', label: '사번' },
   { key: 'empName', label: '사원명' },
+  // {key: 'deptName', label: '부서'},
+  // {key: 'positionName', label: '직위'},
   {
     key: 'type',
     label: '계약서 종류',
@@ -54,6 +56,8 @@ function handleRowAction({ action, row }) {
 const filterOptions = computed(() => [
   { key: 'empNo', type: 'input', label: '사번', icon: 'fa-id-badge', placeholder: '사번 입력' },
   { key: 'empName', type: 'input', label: '사원명', icon: 'fa-user', placeholder: '이름 입력' },
+  // {key: 'deptId', type: 'select', label: '부서', icon: 'fa-building', options: deptOptions.value},
+  // {key: 'positionId', type: 'select', label: '직위', icon: 'fa-user-tie', options: positionOptions.value},
   { key: 'createdAt', type: 'date-range', label: '등록일', icon: 'fa-calendar-day' },
   {
     key: 'order',
@@ -81,6 +85,8 @@ const filterOptions = computed(() => [
 const setParams = (v) => ({
   empNo: v.empNo || null,
   empName: v.empName || null,
+  // deptId: v.deptId ?? null,
+  // positionId: v.positionId ?? null,
   searchStartDate: v.createdAt_start || null,
   searchEndDate: v.createdAt_end || null,
   order: v.order || null,
