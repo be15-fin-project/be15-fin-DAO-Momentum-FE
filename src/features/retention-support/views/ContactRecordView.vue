@@ -226,7 +226,6 @@ const handleSearch = async (values) => {
 const mappedTableData = computed(() =>
     tableData.value.map(row => ({
       ...row,
-      retentionId: row.retention_id,
       createdAt: row.createdAt?.split('T')[0] ?? ''
     }))
 );
@@ -246,6 +245,7 @@ const openModalHandler = async (row) => {
       target: `${detail.targetName} (${detail.targetNo})`,
       deptName: detail.deptName,
       positionName: detail.positionName,
+      managerNo: detail.managerNo,
       managerName: detail.managerName,
       reason: detail.reason,
       response: detail.response ?? '-',

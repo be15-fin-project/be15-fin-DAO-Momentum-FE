@@ -20,9 +20,9 @@ defineProps({
 
 <style scoped>
 .metric-grid {
-  padding: 0 40px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, minmax(200px, 1fr));
+  grid-template-rows: repeat(auto-fill, minmax(100px, 1fr));
   gap: 24px;
   margin-bottom: 32px;
 }

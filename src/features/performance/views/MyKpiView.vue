@@ -56,7 +56,7 @@
         :reject-text="rejectText"
         :showSubmit="canEditProgress"
         :submit-text="submitText"
-        @close="isOpen = false"
+        @close="closeDetailModal"
         @submit="handleDetailModalSubmit"
         @reject="handleDetailModalReject"
         v-model:form="createForm"
@@ -412,6 +412,17 @@ async function openModalHandler(kpiId) {
     isOpen.value = false;
   }
 }
+
+// KPI 상세 모달 닫기 핸들러
+function closeDetailModal() {
+  isOpen.value = false;
+  selectedKpiId.value = null;
+  editMode.value = null;
+  cancelReason.value = '';
+  createForm.value.cancelReason = '';
+  formSections.value = [];
+}
+
 
 // 진척도 수정 시작
 function startEditProgress() {

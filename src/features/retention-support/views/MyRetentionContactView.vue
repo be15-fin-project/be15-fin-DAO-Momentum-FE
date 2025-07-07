@@ -120,7 +120,6 @@ const handleSearch = async (values) => {
 const mappedTableData = computed(() =>
     tableData.value.map(row => ({
       ...row,
-      retentionId: row.retention_id,
       createdAt: row.createdAt?.split('T')[0] ?? ''
     }))
 );
