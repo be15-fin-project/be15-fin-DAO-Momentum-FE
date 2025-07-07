@@ -185,7 +185,6 @@ const downloadFile = async (row) => {
   const signedUrl = response.data?.data?.signedUrl;
 
   if (!signedUrl) {
-    console.error('Signed URL을 가져오지 못했습니다.');
     toast.error('파일 다운로드 링크를 가져오지 못했습니다.');
     return;
   }
@@ -198,6 +197,7 @@ const downloadFile = async (row) => {
   document.body.removeChild(link);
 };
 
+
 const getContentTypeWithCharset = (type) => {
   if (type.startsWith('text/') || type === 'text/csv') {
     return `${type}; charset=UTF-8`;
@@ -207,11 +207,9 @@ const getContentTypeWithCharset = (type) => {
 
 const handleFileChange = async ({ fieldKey, file }) => {
   if (!file) {
-    console.log('파일이 선택되지 않았습니다.');
+    toast.error('파일이 선택되지 않았습니다.');
     return;
   }
-
-  console.log('파일 선택됨:', file.name);
 
   try {
     // 1. Content-Type에 charset 추가(텍스트 파일일 경우)
@@ -223,8 +221,6 @@ const handleFileChange = async ({ fieldKey, file }) => {
     };
 
     const contentType = getContentTypeWithCharset(file.type);
-    console.log('Content-Type:', contentType);
-
     // 2. presigned URL 요청
     const presignedResp = await generatePresignedUrl({
       fileName: file.name,
@@ -237,7 +233,6 @@ const handleFileChange = async ({ fieldKey, file }) => {
 
     if (!presignedData?.presignedUrl || !presignedData?.s3Key) {
       toast.error('Presigned URL 또는 Key를 받아오지 못했습니다.');
-      console.error('Presigned URL 또는 Key 누락:', presignedData);
       return;
     }
 
@@ -250,8 +245,6 @@ const handleFileChange = async ({ fieldKey, file }) => {
       body: file,
     });
 
-    console.log('S3 업로드 응답 상태:', uploadResp.status);
-
     if (!uploadResp.ok) {
       toast.error('파일 업로드 실패: S3 업로드 실패');
       return;
@@ -262,8 +255,6 @@ const handleFileChange = async ({ fieldKey, file }) => {
       req.attachment.s3Key = presignedData.s3Key;
       req.attachment.type = file.type;
       req.attachment.name = file.name;
-      console.log('업데이트된 req.attachment:', req.attachment);
-
     } else {
       // 만약 다른 필드 키에 대해서도 처리해야 하면 여기에 작성
       // 예: req[fieldKey] = ...
@@ -272,20 +263,18 @@ const handleFileChange = async ({ fieldKey, file }) => {
     toast.success('파일 업로드 성공');
   } catch (error) {
     toast.error('파일 업로드 중 오류가 발생했습니다.');
-    console.error('handleFileChange 예외 발생:', error);
+    toast.error('handleFileChange 예외 발생:');
   }
 };
 
 const handleRegisterSubmit = async () => {
   try {
-    console.log('최종 전송 payload:', JSON.stringify(req, null, 2));
     await createContract(req);
     closeModal();
     handleSearch();
     toast.success('계약서가 등록되었습니다.');
   } catch (e) {
     toast.error('등록 실패: ' + (e.message || e));
-    console.error('등록 실패:', e);
   }
 };
 
