@@ -6,7 +6,9 @@ import BaseTable from "@/components/common/BaseTable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import {getMyContracts} from "@/features/employee/api.js";
 import {getFileUrl} from "@/features/common/api.js";
+import {useToast} from "vue-toastification";
 
+const toast = useToast();
 const currentPage = ref(1);
 const pagination = ref({currentPage: 1, totalPage: 1});
 const filterValues = ref({});
@@ -23,9 +25,13 @@ const columns = [
       }
     }
   },
+  {key: 'salary', label: '연봉', format: val => val == null? '-' : val},
   {key: 'createdAt', label: '등록일', format: val => val.split('T')[0]},
-  {key: 'action', label: '다운로드'}
 ];
+
+const rowActions = [
+  { key: 'download', icon: 'fa-download', label: '다운로드'},
+]
 
 // 필터 정의
 const filterOptions = computed(() => [
@@ -126,7 +132,7 @@ watch(currentPage, () => fetchSummary(filterValues.value));
         :showTabs="false"
     />
     <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
-    <BaseTable :columns="columns" :rows="contracts" @click-detail="downloadFile" />
+    <BaseTable :columns="columns" :rows="contracts" :actions="rowActions" @action="downloadFile" />
     <Pagination
         v-if="pagination.totalPage"
         v-model="currentPage"

@@ -35,6 +35,7 @@ const columns = [
       }
     }
   },
+  {key: 'salary', label: '연봉', format: val => val == null? '-' : val},
   { key: 'createdAt', label: '등록일', format: val => val.split('T')[0] },
   // { key: 'action', label: '다운로드' },
 ];
@@ -136,33 +137,42 @@ const req = reactive(initializeRequest());
 // modalSections 함수
 function getModalSections(type) {
   const salaryEditable = type === 'SALARY_AGREEMENT';
+
+  // 기본 필드
+  const fields = [
+    { key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1' },
+    { key: 'attachment', label: '첨부 파일', type: 'file', editable: true, required: true },
+    {
+      key: 'type',
+      label: '계약서 종류',
+      type: 'select',
+      editable: true,
+      required: true,
+      options: [
+        { label: '근로계약서', value: 'EMPLOYEE_AGREEMENT' },
+        { label: '연봉계약서', value: 'SALARY_AGREEMENT' }
+      ],
+    }
+  ];
+
+  // SALARY_AGREEMENT일 때만 연봉 필드 추가
+  if (salaryEditable) {
+    fields.push({
+      key: 'salary',
+      label: '연봉',
+      type: 'input',
+      editable: true,
+      required: true,
+      placeholder: '40000000'
+    });
+  }
+
   return [
     {
       title: '계약서 정보',
       icon: 'fa-info-circle',
       layout: 'two-column',
-      fields: [
-        { key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1' },
-        { key: 'attachment', label: '첨부 파일', type: 'file', editable: true, required: true },
-        {
-          key: 'type',
-          label: '계약서 종류',
-          type: 'select',
-          editable: true,
-          required: true,
-          options: [
-            { label: '근로계약서', value: 'EMPLOYEE_AGREEMENT' },
-            { label: '연봉계약서', value: 'SALARY_AGREEMENT' }
-          ],
-        },
-        {
-          key: 'salary',
-          label: '연봉',
-          type: 'input',
-          editable: salaryEditable,
-          placeholder: '40000000'
-        }
-      ]
+      fields
     }
   ];
 }
@@ -270,18 +280,13 @@ const handleFileChange = async ({ fieldKey, file }) => {
       fileName: file.name,
       sizeInBytes: file.size,
       contentType,
-      prefixType: 'contract',  // 필요에 따라 조정
+      prefixType: 'contract',
     });
 
-    const presignedData = presignedResp.data?.data;
-
-    if (!presignedData?.presignedUrl || !presignedData?.s3Key) {
-      toast.error('Presigned URL 또는 Key를 받아오지 못했습니다.');
-      return;
-    }
+    const { presignedUrl, s3Key } = presignedResp.data.data
 
     // 3. S3에 PUT 요청으로 파일 업로드
-    const uploadResp = await fetch(presignedData.presignedUrl, {
+    const uploadResp = await fetch(presignedUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': contentType,
@@ -296,7 +301,7 @@ const handleFileChange = async ({ fieldKey, file }) => {
 
     // 4. 업로드 성공 시 req 객체에 메타데이터만 저장
     if (fieldKey === 'attachment' || fieldKey.startsWith('attachment.')) {
-      req.attachment.s3Key = presignedData.s3Key;
+      req.attachment.s3Key = s3Key;
       req.attachment.type = file.type;
       req.attachment.name = file.name;
     } else {
