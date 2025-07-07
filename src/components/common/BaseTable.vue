@@ -1,7 +1,7 @@
 <script setup>
 defineProps({
-  columns: { type: Array, required: true },
-  rows: { type: Array, default: () => [] }
+  columns: {type: Array, required: true},
+  rows: {type: Array, default: () => []}
 })
 
 const emit = defineEmits(['click-detail']);
@@ -38,7 +38,7 @@ const emit = defineEmits(['click-detail']);
             <!-- 상태 컬럼 색상 처리 -->
             <template v-else-if="col.key === 'statusType'">
               <span
-                :class="{
+                  :class="{
                   'status-wait': row[col.key] === '대기',
                   'status-approved': row[col.key] === '승인',
                   'status-rejected': row[col.key] === '반려'
@@ -46,6 +46,16 @@ const emit = defineEmits(['click-detail']);
               >
                 {{ row[col.key] }}
               </span>
+            </template>
+
+            <template v-else-if="col.key === 'showDetail'">
+              <button
+                  v-if="row.showDetail"
+                  class="action-button"
+                  @click="emit('click-detail', row)"
+              >
+                <i class="fas fa-angle-right"></i>
+              </button>
             </template>
 
             <!-- 일반 텍스트 렌더링 -->
@@ -59,9 +69,10 @@ const emit = defineEmits(['click-detail']);
                   class="action-button"
                   @click="emit('click-detail', row)"
               >
-                &gt;
+                <i class="fas fa-angle-right"></i>
               </button>
             </template>
+
           </td>
         </tr>
         </tbody>
@@ -99,6 +110,7 @@ const emit = defineEmits(['click-detail']);
   text-align: center;
   white-space: nowrap;
 }
+
 .list-table th {
   background: var(--gray-100);
   color: var(--color-text-sub);
@@ -108,23 +120,32 @@ const emit = defineEmits(['click-detail']);
   top: 0;
   z-index: 1;
 }
+
 .list-table tbody tr {
   transition: background 0.16s;
 }
+
 .list-table tbody tr:hover {
   background: var(--blue-50);
 }
+
 .list-table td {
   border-bottom: 1px solid var(--color-muted);
 }
+
 .text-left {
   text-align: left;
 }
 
 .list-table th:first-child,
-.list-table td:first-child { padding-left: 4rem; }
+.list-table td:first-child {
+  padding-left: 4rem;
+}
+
 .list-table th:last-child,
-.list-table td:last-child  { padding-right: 4rem; }
+.list-table td:last-child {
+  padding-right: 4rem;
+}
 
 .profile-icon-container {
   width: 36px;
@@ -152,12 +173,22 @@ const emit = defineEmits(['click-detail']);
   cursor: pointer;
   line-height: 1;
 }
+
 .action-button:hover {
   background-color: var(--blue-500);
 }
 
-@media (max-width: 1100px) { .list-table { min-width: 600px; } }
-@media (max-width: 700px)  { .list-table th, .list-table td { padding: 10px; } }
+@media (max-width: 1100px) {
+  .list-table {
+    min-width: 600px;
+  }
+}
+
+@media (max-width: 700px) {
+  .list-table th, .list-table td {
+    padding: 10px;
+  }
+}
 
 .status-approved, .status-rejected, .status-wait {
   border-radius: 30%;
