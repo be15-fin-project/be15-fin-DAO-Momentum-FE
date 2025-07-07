@@ -47,35 +47,24 @@ const fields = computed(() => [
       :visible="visible"
       :confirm-visible="isWork"
       cancel-text="닫기"
-      confirm-text="출퇴근 정정 신청"
+      confirm-text="출퇴근 정정"
       @cancel="$emit('close')"
       @confirm="$emit('editRequest')"
   >
-      <FormSection :fields="fields" layout="two-column">
-        <template #title>
-          <h3 class="section-title">출퇴근 상세 정보</h3>
-        </template>
-        <FieldRenderer
-            v-for="field in fields"
-            :key="field.key"
-            :field="field"
-            :model="model"
-            :readonly="true"
-        />
-      </FormSection>
+    <FormSection :fields="fields" layout="two-column">
+      <template #title>
+        <h3 class="section-title">출퇴근 상세 정보</h3>
+      </template>
+      <FieldRenderer
+          v-for="field in fields"
+          :key="field.key"
+          :field="field"
+          :model="model"
+          :readonly="true"
+      />
+    </FormSection>
   </CommonModal>
 </template>
 
 <style scoped>
-:deep(.modal-content) {
-  padding: 40px;
-  width: 500px;
-}
-
-:deep(.modal-buttons) {
-  display: flex;
-  gap: 12px;                   /* 버튼 사이 간격 */
-  width: 100%;
-  margin-top: 8px;             /* 버튼 위 여백 */
-}
 </style>
