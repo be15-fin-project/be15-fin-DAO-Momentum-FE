@@ -110,7 +110,11 @@ const props = defineProps({
   filters: Array,
   tabs: Array,
   modelValue: Object,
-});
+  preserveKeys: {
+    type: Array,
+    default: () => []
+  }
+})
 const emit = defineEmits(['update:modelValue', 'search']);
 
 const localValues = ref({});
@@ -186,6 +190,13 @@ function handleResetClick() {
       preservedTabValues[tab.key] = localValues.value[tab.key];
     });
   }
+
+  // 상위에서 전달된 유지 key 보존
+  props.preserveKeys.forEach(key => {
+    if (key in localValues.value) {
+      preservedValues[key] = localValues.value[key]
+    }
+  })
 
   // 초기화하면서 탭 값은 유지
   localValues.value = { ...preservedTabValues };

@@ -75,12 +75,12 @@ const fields = computed(() =>
         </template>
 
         <FieldRenderer
-          v-for="field in fields"
-          :key="field.key"
-          :field="field"
-          :model="model"
-          :readonly="readonly"
-          >
+            v-for="field in fields"
+            :key="field.key"
+            :field="field"
+            :model="model"
+            :readonly="readonly"
+        >
           {{ field.key }} : {{ model[field.key] }}
         </FieldRenderer>
       </FormSection>
@@ -102,15 +102,4 @@ const fields = computed(() =>
   gap: 1rem;
 }
 
-:deep(.modal-buttons) {
-  display: flex;
-  gap: 12px;                   /* 버튼 사이 간격 */
-  width: 100%;
-  margin-top: 8px;             /* 버튼 위 여백 */
-}
-
-:deep(.modal-content) {
-  padding: 40px;
-  width: 500px;
-}
 </style>
