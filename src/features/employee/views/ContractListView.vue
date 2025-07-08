@@ -1,55 +1,72 @@
 <script setup>
-import {computed, onMounted, ref, watch} from "vue";
-import Pagination from "@/components/common/Pagination.vue";
-import Filter from "@/components/common/Filter.vue";
-import BaseTable from "@/components/common/BaseTable.vue";
-import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
-import {createEmployee, getContracts} from "@/features/employee/api.js";
-import SideModal from "@/components/common/SideModal.vue";
-import {useRouter} from "vue-router";
-import {getFileUrl} from "@/features/common/api.js";
+import { reactive, computed, watch, ref, onMounted } from 'vue';
+import Pagination from '@/components/common/Pagination.vue';
+import Filter from '@/components/common/Filter.vue';
+import BaseTable from '@/components/common/BaseTable.vue';
+import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
+import SideModal from '@/components/common/SideModal.vue';
+import {createContract, deleteContract, getContracts} from '@/features/employee/api.js';
+import { getFileUrl } from '@/features/common/api.js';
+import { generatePresignedUrl } from '@/features/announcement/api.js';
+import {useToast} from "vue-toastification";
+import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
 
-const router = useRouter();
+const toast = useToast();
 
+// 페이지, 페이징, 필터, 데이터 상태
 const currentPage = ref(1);
-const pagination = ref({currentPage: 1, totalPage: 1});
+const pagination = ref({ currentPage: 1, totalPage: 1 });
 const filterValues = ref({});
-const appliedFilterValues = ref({});
 const contracts = ref([]);
-
 const showModal = ref(false);
 
+// 테이블 컬럼
 const columns = [
-  {key: 'empNo', label: '사번'},
-  {key: 'empName', label: '사원명'},
+  { key: 'empNo', label: '사번' },
+  { key: 'empName', label: '사원명' },
   // {key: 'deptName', label: '부서'},
   // {key: 'positionName', label: '직위'},
   {
-    key: 'type', label: '계약서 종류', format: val => {
+    key: 'type',
+    label: '계약서 종류',
+    format: val => {
       switch (val) {
-        case 'EMPLOYEE_AGREEMENT':
-          return '근로계약서';
-        case 'SALARY_AGREEMENT':
-          return '연봉계약서';
+        case 'EMPLOYEE_AGREEMENT': return '근로계약서';
+        case 'SALARY_AGREEMENT': return '연봉계약서';
+        default: return val;
       }
     }
   },
-  {key: 'createdAt', label: '등록일', format: val => val.split('T')[0]},
-  {key: 'action', label: '다운로드'},
-  /* TODO: 베이스테이블 수정 후 "삭제" 버튼 추가*/
+  {key: 'salary', label: '연봉', format: val => val == null? '-' : val},
+  { key: 'createdAt', label: '등록일', format: val => val.split('T')[0] },
+  // { key: 'action', label: '다운로드' },
 ];
 
-// 필터
+const rowActions = [
+  { key: 'download', icon: 'fa-download', label: '다운로드'},
+  { key: 'delete',   icon: 'fa-trash', label: '삭제'}
+];
+
+function handleRowAction({ action, row }) {
+  if (action === 'download') downloadFile(row);
+  if (action === 'delete') handleDeleteContract(row);
+}
+
+// 필터 옵션
 const filterOptions = computed(() => [
-  {key: 'empNo', type: 'input', label: '사번', icon: 'fa-id-badge', placeholder: '사번 입력'},
-  {key: 'empName', type: 'input', label: '사원명', icon: 'fa-user', placeholder: '이름 입력'},
+  { key: 'empNo', type: 'input', label: '사번', icon: 'fa-id-badge', placeholder: '사번 입력' },
+  { key: 'empName', type: 'input', label: '사원명', icon: 'fa-user', placeholder: '이름 입력' },
   // {key: 'deptId', type: 'select', label: '부서', icon: 'fa-building', options: deptOptions.value},
   // {key: 'positionId', type: 'select', label: '직위', icon: 'fa-user-tie', options: positionOptions.value},
-  {key: 'createdAt', type: 'date-range', label: '등록일', icon: 'fa-calendar-day'},
+  { key: 'createdAt', type: 'date-range', label: '등록일', icon: 'fa-calendar-day' },
   {
-    key: 'order', type: 'select', label: '정렬 (등록일)', icon: 'fa-filter', options: [
-      {label: '오름차순', value: 'ASC'},
-      {label: '내림차순', value: 'DESC'}
+    key: 'order',
+    type: 'select',
+    label: '정렬 (등록일)',
+    icon: 'fa-filter',
+    options: [
+      { label: '오름차순', value: 'ASC' },
+      { label: '내림차순', value: 'DESC' }
     ]
   },
   {
@@ -57,156 +74,262 @@ const filterOptions = computed(() => [
     type: 'select',
     label: '계약서 종류',
     options: [
-      {label: '전체', value: null},
-      {label: '근로계약서', value: 'EMPLOYEE_AGREEMENT'},
-      {label: '연봉계약서', value: 'SALARY_AGREEMENT'}
+      { label: '전체', value: null },
+      { label: '근로계약서', value: 'EMPLOYEE_AGREEMENT' },
+      { label: '연봉계약서', value: 'SALARY_AGREEMENT' }
     ]
   }
 ]);
 
-const setParams = (v) => {
-  return {
-    empNo: v.empNo || null,
-    empName: v.empName || null,
-    // deptId: v.deptId ?? null,
-    // positionId: v.positionId ?? null,
-    searchStartDate: v.createdAt_start || null,
-    searchEndDate: v.createdAt_end || null,
-    order: v.order || null,
-    type: v.type ?? null,
-  };
-}
+// 필터 값을 API 파라미터로 변환
+const setParams = (v) => ({
+  empNo: v.empNo || null,
+  empName: v.empName || null,
+  // deptId: v.deptId ?? null,
+  // positionId: v.positionId ?? null,
+  searchStartDate: v.createdAt_start || null,
+  searchEndDate: v.createdAt_end || null,
+  order: v.order || null,
+  type: v.type ?? null,
+});
 
-// 데이터 불러오기
+// 데이터 호출
 const fetchSummary = async (values) => {
   const params = {
     ...setParams(values),
     page: currentPage.value,
-    size: 10
+    size: 10,
   };
-
   try {
-    console.log(params);
     const resp = await getContracts(params);
-    console.log(resp);
     contracts.value = resp.contracts || [];
     const current = resp.pagination?.currentPage || 1;
     const total = resp.pagination?.totalPage > 0 ? resp.pagination.totalPage : 1;
-    pagination.value = {currentPage: current, totalPage: total};
-  } catch (err) {
+    pagination.value = { currentPage: current, totalPage: total };
+  } catch {
     contracts.value = [];
-    pagination.value = {currentPage: 1, totalPage: 1};
+    pagination.value = { currentPage: 1, totalPage: 1 };
   }
-}
+};
 
 const handleSearch = () => {
   currentPage.value = 1;
-  appliedFilterValues.value = {...filterValues.value}; // 검색 후에 column 변동
   fetchSummary(filterValues.value);
-}
+};
 
-onMounted(async () => {
-  // const positions = await getPositions();
+onMounted(() => {
   handleSearch();
   filterValues.value = {};
 });
 
 watch(currentPage, () => fetchSummary(filterValues.value));
 
-const req = ref({
-  empId: null,
-  type: null,
-  salary: null,
-  attachment:
-      {
-        s3Key: null,
-        type: null
-      }
-});
-
-const initializeRequest = () => {
-  req.value = {
+// reactive req 객체 초기화 함수
+function initializeRequest(type = null) {
+  return reactive({
     empId: null,
-    type: null,
+    type,
     salary: null,
-    attachment: {
+    attachment: reactive({
       s3Key: null,
-      type: null
+      type: null,
+      name: null,
+    }),
+  });
+}
+
+const req = reactive(initializeRequest());
+
+// modalSections 함수
+function getModalSections(type) {
+  const salaryEditable = type === 'SALARY_AGREEMENT';
+
+  // 기본 필드
+  const fields = [
+    { key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1' },
+    { key: 'attachment', label: '첨부 파일', type: 'file', editable: true, required: true },
+    {
+      key: 'type',
+      label: '계약서 종류',
+      type: 'select',
+      editable: true,
+      required: true,
+      options: [
+        { label: '근로계약서', value: 'EMPLOYEE_AGREEMENT' },
+        { label: '연봉계약서', value: 'SALARY_AGREEMENT' }
+      ],
     }
-  };
-}
+  ];
 
-const openCreateModal = () => {
-  initializeRequest()
-  showModal.value = true;
-};
-
-const downloadFile = async (row) => {
-  const s3Key = row.s3Key;
-  const fileName = row.fileName;
-
-  const response = await getFileUrl({ key: s3Key, fileName });
-  const signedUrl = response.data?.data?.signedUrl;
-
-  if (!signedUrl) {
-    console.error('Signed URL을 가져오지 못했습니다.');
-    return;
+  // SALARY_AGREEMENT일 때만 연봉 필드 추가
+  if (salaryEditable) {
+    fields.push({
+      key: 'salary',
+      label: '연봉',
+      type: 'input',
+      editable: true,
+      required: true,
+      placeholder: '40000000'
+    });
   }
-
-
-  const link = document.createElement('a');
-  link.href = signedUrl;
-  link.download = ''; // or you can set a filename
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-}
-
-const closeModal = () => {
-  showModal.value = false;
-}
-
-/* TODO
-* 1. empId 대신 조직도 타는 쪽으로 변경
-* 2. 파일 업로드 로직 및 form 작성
-* */
-const modalSections = computed(() => {
-  const salaryEditable = req.value.type === 'SALARY_AGREEMENT';
 
   return [
     {
       title: '계약서 정보',
       icon: 'fa-info-circle',
       layout: 'two-column',
-      fields: [
-        {key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1'},
-        {key: 'file', label: '첨부 파일', type: 'file', editable: true, required: true},
-        {
-          key: 'type', label: '계약서 종류', type: 'select', editable: true, required: true, options: [
-            {label: '근로계약서', value: 'EMPLOYEE_AGREEMENT'},
-            {label: '연봉계약서', value: 'SALARY_AGREEMENT'},
-          ],
-          value: req.value.type
-        },
-        {
-          key: 'salary',
-          label: '연봉',
-          type: 'input',
-          editable: salaryEditable,
-          placeholder: '40000000'
-        }
-      ]
+      fields
     }
   ];
+}
+
+const modalSections = computed(() => getModalSections(req.type));
+
+// SideModal 강제 재생성 key
+const modalKey = computed(() => `modal-${req.type || 'none'}`);
+
+// salary 초기화
+watch(() => req.type, (newType) => {
+  if (newType !== 'SALARY_AGREEMENT') {
+    req.salary = null;
+  }
 });
 
-const handleRegisterSubmit = async (req) => {
+const openCreateModal = () => {
+  Object.assign(req, initializeRequest());
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+};
+
+const downloadFile = async (row) => {
+  const s3Key = row.s3Key;
+  const fileName = row.fileName;
+  console.log(row)
+
   try {
-    const resp = await createEmployee(req);
-    closeModal();
-    handleSearch(); // 목록 새로고침
+    const response = await getFileUrl({ key: s3Key, fileName: fileName });
+    const signedUrl = response.data?.data?.signedUrl;
+
+    if (!signedUrl) {
+      toast.error('파일 다운로드 링크를 가져오지 못했습니다.');
+      return;
+    }
+
+    const fileResp = await fetch(signedUrl);
+    if (!fileResp.ok) {
+      toast.error('파일 다운로드 실패');
+      return;
+    }
+    const blob = await fileResp.blob();
+    const blobUrl = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(blobUrl);
+  } catch (err) {
+    toast.error('다운로드 중 오류 발생');
+    console.error(err);
+  }
+};
+
+const handleDeleteContract = async (row) => {
+  try {
+    const result = await new Promise((resolve) => {
+      toast(
+          {
+            component: DeleteConfirmToast,
+            props: { resolve },
+          },
+          {
+            timeout: false,
+            closeOnClick: false,
+            showCloseButtonOnHover: false,
+          }
+      );
+    });
+
+    if (!result) return;
+
+    await deleteContract(row.contractId);
+    toast.success('계약서가 삭제되었습니다.');
+    handleSearch();
   } catch (e) {
-    console.error('등록 실패:', e);
+    toast.error('삭제 실패: ' + (e.message || e));
+  }
+};
+
+const getContentTypeWithCharset = (type) => {
+  if (type.startsWith('text/') || type === 'text/csv') {
+    return `${type}; charset=UTF-8`;
+  }
+  return type;
+};
+
+const handleFileChange = async ({ fieldKey, file }) => {
+  if (!file) {
+    toast.error('파일이 선택되지 않았습니다.');
+    return;
+  }
+
+  try {
+    // 1. Content-Type에 charset 추가(텍스트 파일일 경우)
+    const contentType = getContentTypeWithCharset(file.type);
+    // 2. presigned URL 요청
+    const presignedResp = await generatePresignedUrl({
+      fileName: file.name,
+      sizeInBytes: file.size,
+      contentType,
+      prefixType: 'contract',
+    });
+
+    const { presignedUrl, s3Key } = presignedResp.data.data
+
+    // 3. S3에 PUT 요청으로 파일 업로드
+    const uploadResp = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': contentType,
+      },
+      body: file,
+    });
+
+    if (!uploadResp.ok) {
+      toast.error('파일 업로드 실패: S3 업로드 실패');
+      return;
+    }
+
+    // 4. 업로드 성공 시 req 객체에 메타데이터만 저장
+    if (fieldKey === 'attachment' || fieldKey.startsWith('attachment.')) {
+      req.attachment.s3Key = s3Key;
+      req.attachment.type = file.type;
+      req.attachment.name = file.name;
+    } else {
+      // 만약 다른 필드 키에 대해서도 처리해야 하면 여기에 작성
+      // 예: req[fieldKey] = ...
+    }
+
+    toast.success('파일 업로드 성공');
+  } catch (error) {
+    toast.error('파일 업로드 중 오류가 발생했습니다.');
+    toast.error('handleFileChange 예외 발생:');
+  }
+};
+
+const handleRegisterSubmit = async () => {
+  try {
+    await createContract(req);
+    closeModal();
+    handleSearch();
+    toast.success('계약서가 등록되었습니다.');
+  } catch (e) {
+    toast.error('등록 실패: ' + (e.message || e));
   }
 };
 
@@ -214,48 +337,43 @@ const handleHeaderButton = (event) => {
   if (event.value === 'create') {
     openCreateModal();
   }
-}
-
-watch(() => req.value.type, (newType) => {
-  if (newType !== 'SALARY_AGREEMENT') {
-    req.value.salary = null;
-  }
-}, { immediate: true });
-
+};
 </script>
 
 <template>
   <main>
     <HeaderWithTabs
         :headerItems="[
-        { label: '계약서 목록 조회', to: '/contracts', active: true },
-    ]"
-        :submitButtons="[{label: '계약서 등록', icon: 'fa-file-signature', event: 'click', value: 'create', variant: 'blue'}]"
+        { label: '계약서 목록 조회', to: '/contracts', active: true }
+      ]"
+        :submitButtons="[
+        { label: '계약서 등록', icon: 'fa-file-signature', event: 'click', value: 'create', variant: 'blue' }
+      ]"
         :showTabs="false"
         @click="handleHeaderButton"
     />
-    <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch"/>
 
-    <!-- Table Section -->
-    <BaseTable :columns="columns" :rows="contracts" @click-detail="downloadFile"/>
+    <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
 
-    <!-- Pagination -->
+    <BaseTable :columns="columns" :rows="contracts" :actions="rowActions" @action="handleRowAction" />
+
     <Pagination
         v-if="pagination.totalPage"
         v-model="currentPage"
-        :total-pages="pagination.totalPage"/>
+        :total-pages="pagination.totalPage"
+    />
 
-    <!-- 계약서 등록 모달 -->
     <SideModal
         v-if="showModal"
+        :key="modalKey"
         :visible="showModal"
         v-model:form="req"
         :title="'계약서 등록'"
         icon="fa-file-signature"
-        @close="closeModal"
         :sections="modalSections"
-        @submit="handleRegisterSubmit(req)"
+        @close="closeModal"
+        @submit="handleRegisterSubmit"
+        @file-change="handleFileChange"
     />
-
   </main>
 </template>
