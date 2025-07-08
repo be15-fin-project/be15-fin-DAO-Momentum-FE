@@ -27,6 +27,7 @@ const positionFilterOptions = ref([]);
 const showModal = ref(false);
 
 const columns = [
+  {key: 'profile', label: '#'},
   {key: 'empNo', label: '사번'},
   {key: 'name', label: '이름'},
   {key: 'deptName', label: '부서', format: val => val ?? '-'},
@@ -34,8 +35,8 @@ const columns = [
   {key: 'userRoles', label: '권한', format: val => val.map(x => roleMap[x]).join(", ")},
   {key: 'joinDate', label: '입사일', format: val => val},
   {
-    key: 'status', label: '재직 상태', format: val => {
-      switch (val) {
+    key: 'empStatus', label: '재직 상태', format: (val, row) => {
+      switch (row.status) {
         case 'EMPLOYED':
           return '재직';
         case 'ON_LEAVE':
