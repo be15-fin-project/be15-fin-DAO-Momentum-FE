@@ -1,5 +1,6 @@
 <template>
   <div class="calendar-wrapper">
+    <!-- 헤더 -->
     <div class="calendar-header">
       <button class="week-button" @click="toggleWeekMode">
         <i class="fas fa-calendar-alt"></i>
@@ -9,23 +10,20 @@
       <div class="day-button">
         <button class="header-button" @click="goToPrevMonth"><i class="fas fa-angle-left"></i></button>
 
+        <!-- 월/주차 선택 모달 -->
         <div class="month-picker-container" @click.self="isMonthPickerOpen = false">
           <button class="month-label" @click="(e) => { e.stopPropagation(); isMonthPickerOpen = true }">
             {{ getMonthLabel }}
           </button>
 
-          <!-- 월 + 주차 선택 모달 -->
           <div v-if="isMonthPickerOpen" class="month-picker-inline" ref="monthPickerRef">
             <div class="month-picker" @click.stop>
-
-              <!-- 연도 선택 -->
               <div class="year-select">
                 <button @click="changeYear(-1)">‹</button>
                 <span>{{ selectedYear }}년</span>
                 <button @click="changeYear(1)">›</button>
               </div>
 
-              <!-- 월 선택 -->
               <div class="months-grid">
                 <button
                     v-for="(month, index) in 12"
@@ -37,8 +35,7 @@
                 </button>
               </div>
 
-              <!-- 선택된 월의 주차 리스트 -->
-              <div v-if="selectedMonth !== null" class="weeks-row">
+              <div v-if="isWeekMode && selectedMonth !== null" class="weeks-row">
                 <button
                     v-for="(week, index) in getWeeksOfMonth(selectedYear, selectedMonth + 1)"
                     :key="index"
@@ -47,10 +44,8 @@
                   {{ index + 1 }}주차
                 </button>
               </div>
-
             </div>
           </div>
-
         </div>
 
         <button class="header-button" @click="goToNextMonth"><i class="fas fa-angle-right"></i></button>
@@ -68,11 +63,7 @@
 
     <!-- 월간 보기 -->
     <template v-if="!isWeekMode">
-      <div
-          v-for="(week, weekIndex) in weeks"
-          :key="weekIndex"
-          class="calendar-week-row"
-      >
+      <div v-for="(week, weekIndex) in weeks" :key="weekIndex" class="calendar-week-row">
         <div
             v-for="day in week"
             :key="day.date"
@@ -109,63 +100,47 @@
           <div class="day-number">{{ dayjs(day.date).date() }}</div>
         </div>
 
-        <!-- 주간 일정 바 표시 -->
         <template v-for="(row, rowIndex) in getEventRowsInWeek(getCurrentWeek)">
           <div
               v-for="(event, eventIndex) in row"
               :key="`${event.title}-${event.startDate}-${event.endDate}-row-${rowIndex}-i-${eventIndex}`"
               class="event-bar"
               :style="getEventStyle(event, getCurrentWeek, rowIndex)"
-              @click="handleClick(event)"
+              @click="$emit('clickEvent', event)"
           >
             <i :class="getEventIconClass(event.typeName)" class="event-icon"></i>
             {{ event.title }}
           </div>
         </template>
       </div>
-      <!-- Legend (옵션) -->
+
+      <!-- 범례 -->
       <div class="legend">
         <span class="legend-item"><i class="fas fa-circle" style="color: var(--label-pending)"></i> 대기</span>
         <span class="legend-item">
           <i class="fas fa-circle" style="color: var(--gray-300)"></i>
           <i class="fas fa-circle" style="color: var(--blue-100)"></i>
           <i class="fas fa-circle" style="color: var(--blue-200)"></i>
-          <i class="fas fa-circle" style="color: var(--blue-400)"></i>진행 중
+          <i class="fas fa-circle" style="color: var(--blue-400)"></i> 진행 중
         </span>
         <span class="legend-item"><i class="fas fa-circle" style="color: var(--green-200)"></i> 완료</span>
         <span class="legend-item"><i class="fas fa-circle" style="color: var(--warning)"></i> 기한 초과</span>
         <span class="legend-item"><i class="fas fa-circle" style="color: var(--success)"></i> 달성</span>
       </div>
-
     </template>
-
   </div>
 </template>
 
 <script setup>
-import {ref, computed, onMounted, onBeforeUnmount, watch} from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
-import {getMyKpiDashboard} from '@/features/performance/api.js'
-import {useRouter} from "vue-router";
-
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
-const props = defineProps({events: Array})
+const props = defineProps({ events: Array })
 const emit = defineEmits(['clickEvent', 'monthChanged'])
-const router = useRouter()
-
-const handleClick = (event) => {
-  if (event.typeName === 'KPI') {
-    // KPI 클릭 시 라우팅
-    router.push({ path: '/kpi/kpi-list', query: { kpiId: event.kpiId } })
-  } else {
-    // 그 외 (근태, 휴가 등)는 모달 이벤트 emit
-    emit('clickEvent', event)
-  }
-}
 
 const currentMonth = ref(dayjs())
 const selectedYear = ref(currentMonth.value.year())
@@ -173,35 +148,26 @@ const isMonthPickerOpen = ref(false)
 const isWeekMode = ref(false)
 const monthPickerRef = ref(null)
 const selectedMonth = ref(null)
-const selectedWeekIndex = computed(() => {
-  const startOfMonth = currentMonth.value.startOf('month').startOf('week')
-  const startOfWeek = currentMonth.value.startOf('week')
-  const diff = startOfWeek.diff(startOfMonth, 'week')
-  return diff >= 0 ? diff : 0
-})
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
+
+const isToday = (date) => dayjs().format('YYYY-MM-DD') === date
 
 const goToToday = () => {
   currentMonth.value = dayjs()
   selectedYear.value = currentMonth.value.year()
-  selectedWeekIndex.value = 0
   emit('monthChanged', currentMonth.value)
 }
 
 const toggleWeekMode = () => {
   isWeekMode.value = !isWeekMode.value
-  if (isWeekMode.value) {
-    const today = dayjs().format('YYYY-MM-DD')
-    selectedWeekIndex.value = weeks.value.findIndex(week => week.some(day => day.date === today))
-  }
+  selectedMonth.value = null
+  emit('monthChanged', currentMonth.value)
 }
 
-const isToday = (date) => dayjs().format('YYYY-MM-DD') === date
-
 const getMonthLabel = computed(() => {
-  if (!isWeekMode.value) return currentMonth.value.format('YYYY년 MM월')
-  return `${currentMonth.value.format('YYYY년 MM월')} ${selectedWeekIndex.value + 1}주차`
+  const base = currentMonth.value.format('YYYY년 MM월')
+  return isWeekMode.value ? `${base} ${selectedWeekIndex.value + 1}주차` : base
 })
 
 const weeks = computed(() => {
@@ -210,60 +176,22 @@ const weeks = computed(() => {
   const days = []
   let date = start
   while (date.isSameOrBefore(end)) {
-    days.push({date: date.format('YYYY-MM-DD'), inMonth: date.month() === currentMonth.value.month()})
+    days.push({ date: date.format('YYYY-MM-DD'), inMonth: date.month() === currentMonth.value.month() })
     date = date.add(1, 'day')
   }
-  const result = []
-  for (let i = 0; i < days.length; i += 7) result.push(days.slice(i, i + 7))
-  return result
+  return Array.from({ length: days.length / 7 }, (_, i) => days.slice(i * 7, i * 7 + 7))
 })
 
-const selectMonthForWeek = (monthIndex) => {
-  selectedMonth.value = monthIndex
-}
-
-const getWeeksOfMonth = (year, month) => {
-  const firstDay = dayjs(`${year}-${month}-01`).startOf('week')
-  const lastDay = dayjs(`${year}-${month}-01`).endOf('month').endOf('week')
-  const totalDays = lastDay.diff(firstDay, 'day') + 1
-  const weekCount = Math.ceil(totalDays / 7)
-  return Array.from({length: weekCount})
-}
-
-const selectWeek = (year, monthIndex, weekIndex) => {
-  const firstDayOfMonth = dayjs(`${year}-${monthIndex}-01`)
-  const firstCalendarDay = firstDayOfMonth.startOf('week')
-  const selectedWeekStart = firstCalendarDay.add(weekIndex * 7, 'day')
-  currentMonth.value = selectedWeekStart
-  selectedYear.value = selectedWeekStart.year()
-  selectedWeekIndex.value = weekIndex
-  isMonthPickerOpen.value = false
-  selectedMonth.value = null
-  emit('monthChanged', currentMonth.value)
-}
-
-const getEventIconClass = (typeName) => {
-  switch (typeName) {
-    case 'WORK':
-      return 'fas fa-briefcase'
-    case 'OVERTIME':
-      return 'fas fa-clock'
-    case 'VACATION':
-      return 'fas fa-umbrella-beach'
-    case 'BUSINESS_TRIP':
-      return 'fas fa-plane-departure'
-    case 'KPI':
-      return 'fas fa-tasks'
-    case 'EVALUATION':
-      return 'fas fa-clipboard-check'
-    default:
-      return 'fas fa-calendar-alt'
-  }
-}
+const selectedWeekIndex = computed(() => {
+  const startOfMonth = currentMonth.value.startOf('month').startOf('week')
+  const startOfWeek = currentMonth.value.startOf('week')
+  const diff = startOfWeek.diff(startOfMonth, 'week')
+  return diff >= 0 ? diff : 0
+})
 
 const getCurrentWeek = computed(() => {
   const start = currentMonth.value.startOf('week')
-  return Array.from({length: 7}, (_, i) => {
+  return Array.from({ length: 7 }, (_, i) => {
     const date = start.add(i, 'day')
     return {
       date: date.format('YYYY-MM-DD'),
@@ -272,63 +200,23 @@ const getCurrentWeek = computed(() => {
   })
 })
 
-
-const kpiEvents = ref([])
-
-const fetchKpiEvents = async () => {
-  const startDate = currentMonth.value.startOf('month').format('YYYY-MM-DD')
-  const endDate = currentMonth.value.endOf('month').format('YYYY-MM-DD')
-
-  try {
-    const data = await getMyKpiDashboard({startDate, endDate, limit: 10})
-    kpiEvents.value = data.map(kpi => ({
-      ...kpi,
-      title: kpi.goal,
-      typeName: 'KPI',
-      color: getKpiColor(kpi.statusType, kpi.kpiProgress, kpi.deadline),
-      startDate: kpi.createdAt,
-      endDate: kpi.deadline,
-    }))
-  } catch (e) {
-    console.error('KPI 내역 조회 실패:', e)
-    kpiEvents.value = []
-  }
+const getEventIconClass = (typeName) => {
+  return {
+    WORK: 'fas fa-briefcase',
+    OVERTIME: 'fas fa-clock',
+    VACATION: 'fas fa-umbrella-beach',
+    BUSINESS_TRIP: 'fas fa-plane-departure',
+    KPI: 'fas fa-tasks',
+    평가: 'fas fa-clipboard-check'
+  }[typeName] || 'fas fa-calendar-alt'
 }
-
-const getKpiColor = (statusType, progress, deadline) => {
-  const now = dayjs()
-  const isDeadlinePassed = deadline && dayjs(deadline).isBefore(now, 'day')
-
-  if (statusType === 'PENDING') return 'var(--label-pending)'
-
-  if (statusType === 'ACCEPTED') {
-    if (isDeadlinePassed && progress < 100) return 'var(--warning)' // 지연
-    if (isDeadlinePassed && progress === 100) return 'var(--success)' // 마감 후 완료
-
-    if (progress === 100) return 'var(--green-200)'
-    if (progress >= 75) return 'var(--blue-400)'
-    if (progress >= 50) return 'var(--blue-200)'
-    if (progress >= 25) return 'var(--blue-100)'
-    return 'var(--gray-300)' // 0~24%
-  }
-
-  return 'var(--gray-200)' // fallback
-}
-
-
-const allEvents = computed(() => {
-  return [...props.events, ...kpiEvents.value]
-})
-
 
 const getEventRowsInWeek = (week) => {
   const weekStart = dayjs(week[0].date)
   const weekEnd = dayjs(week[6].date)
 
-  const eventsInWeek = allEvents.value.filter(event => {
-    // 월간 모드에서는 KPI 제외
+  const eventsInWeek = props.events.filter(event => {
     if (!isWeekMode.value && event.typeName === 'KPI') return false
-
     const start = dayjs(event.startDate)
     const end = dayjs(event.endDate)
     return end.isSameOrAfter(weekStart, 'day') && start.isSameOrBefore(weekEnd, 'day')
@@ -346,13 +234,13 @@ const getEventRowsInWeek = (week) => {
           dayjs(e.endDate).isBefore(eventStart, 'day') ||
           dayjs(e.startDate).isAfter(eventEnd, 'day')
       )) {
-        row.push({...event, startDate: eventStart.format('YYYY-MM-DD'), endDate: eventEnd.format('YYYY-MM-DD')})
+        row.push({ ...event, startDate: eventStart.format('YYYY-MM-DD'), endDate: eventEnd.format('YYYY-MM-DD') })
         placed = true
         break
       }
     }
     if (!placed) {
-      rows.push([{...event, startDate: eventStart.format('YYYY-MM-DD'), endDate: eventEnd.format('YYYY-MM-DD')}])
+      rows.push([{ ...event, startDate: eventStart.format('YYYY-MM-DD'), endDate: eventEnd.format('YYYY-MM-DD') }])
     }
   }
   return rows
@@ -375,27 +263,52 @@ const getEventStyle = (event, week, rowIndex) => {
 }
 
 const goToPrevMonth = () => {
-  if (isWeekMode.value) {
-    currentMonth.value = currentMonth.value.subtract(1, 'week')
-    selectedWeekIndex.value = 0
-  } else {
-    currentMonth.value = currentMonth.value.subtract(1, 'month')
-    selectedWeekIndex.value = 0
-  }
+  currentMonth.value = isWeekMode.value
+      ? currentMonth.value.subtract(1, 'week')
+      : currentMonth.value.subtract(1, 'month')
   emit('monthChanged', currentMonth.value)
 }
 
 const goToNextMonth = () => {
-  if (isWeekMode.value) {
-    currentMonth.value = currentMonth.value.add(1, 'week')
-    selectedWeekIndex.value = 0
-  } else {
-    currentMonth.value = currentMonth.value.add(1, 'month')
-    selectedWeekIndex.value = 0
-  }
+  currentMonth.value = isWeekMode.value
+      ? currentMonth.value.add(1, 'week')
+      : currentMonth.value.add(1, 'month')
   emit('monthChanged', currentMonth.value)
 }
 
+const selectMonthForWeek = (monthIndex) => {
+  const newMonth = dayjs(`${selectedYear.value}-${monthIndex + 1}-01`)
+  currentMonth.value = newMonth
+  emit('monthChanged', newMonth)
+
+  if (!isWeekMode.value) {
+    // 월간 모드일 경우: 바로 닫고 selectedMonth는 사용하지 않음
+    isMonthPickerOpen.value = false
+    selectedMonth.value = null
+    return
+  }
+
+  // 주간 모드일 경우: 주차 선택 활성화
+  selectedMonth.value = monthIndex
+}
+
+
+const getWeeksOfMonth = (year, month) => {
+  const firstDay = dayjs(`${year}-${month}-01`).startOf('week')
+  const lastDay = dayjs(`${year}-${month}-01`).endOf('month').endOf('week')
+  const totalDays = lastDay.diff(firstDay, 'day') + 1
+  return Array.from({ length: Math.ceil(totalDays / 7) })
+}
+
+const selectWeek = (year, monthIndex, weekIndex) => {
+  const firstCalendarDay = dayjs(`${year}-${monthIndex}-01`).startOf('week')
+  const selectedWeekStart = firstCalendarDay.add(weekIndex * 7, 'day')
+  currentMonth.value = selectedWeekStart
+  selectedYear.value = selectedWeekStart.year()
+  isMonthPickerOpen.value = false
+  selectedMonth.value = null
+  emit('monthChanged', currentMonth.value)
+}
 
 const changeYear = (offset) => {
   selectedYear.value += offset
@@ -414,10 +327,6 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
-
-watch(currentMonth, () => {
-  fetchKpiEvents()
-}, {immediate: true})
 </script>
 
 <style scoped>

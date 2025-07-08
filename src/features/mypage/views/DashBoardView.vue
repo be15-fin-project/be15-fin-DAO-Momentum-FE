@@ -7,9 +7,9 @@
 
       <NoticeCard
           :notices="[
-          { title: '운영 보고서 안내', meta: '운영팀 · 2024.12.30' },
-          { title: '6월 워크샵 사전 신청', meta: '총무팀 · 2024.06.01' }
-        ]"
+            { title: '운영 보고서 안내', meta: '운영팀 · 2024.12.30' },
+            { title: '6월 워크샵 사전 신청', meta: '총무팀 · 2024.06.01' }
+          ]"
       />
     </aside>
 
@@ -24,14 +24,7 @@
 
       <DocumentCard/>
 
-      <KpiCard :kpis="[
-        {
-          category: '업무', title: '매출 향상', goal: '30%', progress: 50, progressLabel: '15%', variant: 'accent'
-        },
-        {
-          category: '개인', title: 'UI 개선안 제출', goal: '5건', progress: 60, progressLabel: '3건', variant: 'success'
-        }
-      ]"/>
+      <KpiCard :kpis="kpis"/>
     </section>
   </div>
 
@@ -50,8 +43,10 @@
 import { ref, computed, onMounted } from 'vue'
 import dayjs from 'dayjs'
 import { useRouter } from 'vue-router'
+import { useCalendarEvents } from '@/features/mypage/useCalendarEvents.js'
+import { getMyKpiDashboard } from '@/features/performance/api.js'
 
-// 컴포넌트 임포트
+// 컴포넌트
 import ProfileCard from '@/features/mypage/components/ProfileCard.vue'
 import AttendanceInfoCard from '@/features/mypage/components/AttendanceInfoCard.vue'
 import VacationInfoCard from '@/features/mypage/components/VacationInfoCard.vue'
@@ -61,37 +56,35 @@ import NoticeCard from '@/features/mypage/components/NoticeCard.vue'
 import CalendarAttendanceModal from '@/features/works/components/CalendarAttendanceModal.vue'
 import CustomCalendar from '@/features/mypage/components/CustomCalendar.vue'
 
-// API
-import { getMyWorks } from '@/features/works/api.js'
-import { getHolidaysPerMonth } from '@/features/company/api.js'
-import { getEvaluationRounds } from '@/features/performance/api.js'
-import isBetween from 'dayjs/plugin/isBetween'
-dayjs.extend(isBetween)
-
-// 상태
+// 상태 및 로직
 const currentMonth = ref(dayjs())
 const events = ref([])
-const holidays = ref([])
-const evaluationRounds = ref([])
-const params = ref({ searchStartDate: null, searchEndDate: null })
+const kpis = ref([])
 
 const showCalendarModal = ref(false)
 const selectedAttendance = ref(null)
 const isWork = computed(() => selectedAttendance.value?.typeName === 'WORK')
 const router = useRouter()
 
+// Calendar 공통 이벤트 로직 불러오기
+const { fetchCalendarEvents, kpiEvents } = useCalendarEvents()
+
 // 이벤트 클릭 핸들링
 const handleEventClick = (event) => {
   selectedAttendance.value = event
+
   if (event.typeName === '평가') {
     const today = dayjs()
     const start = dayjs(event.startDate)
     const end = dayjs(event.endDate)
-
     if (today.isBetween(start, end, null, '[]')) {
-      // 오늘이 평가 기간에 포함되면 제출 페이지로 이동
       router.push('/eval/submit')
     }
+    return
+  }
+
+  if (event.typeName === 'KPI') {
+    router.push({ path: '/kpi/kpi-list', query: { kpiId: event.kpiId } })
     return
   }
 
@@ -111,96 +104,30 @@ const goToCorrectionPage = () => {
 // 달 변경 핸들링
 const handleMonthChange = async (month) => {
   currentMonth.value = month
+  events.value = await fetchCalendarEvents(month)
 
-  const start = month.startOf('month').subtract(7, 'day').startOf('week').format('YYYY-MM-DD')
-  const end = month.endOf('month').endOf('week').format('YYYY-MM-DD')
-  params.value.searchStartDate = start
-  params.value.searchEndDate = end
+  const startDate = month.startOf('month').format('YYYY-MM-DD')
+  const endDate = month.endOf('month').format('YYYY-MM-DD')
+  const rawKpis = await getMyKpiDashboard({ startDate, endDate, limit: 3 })
 
-  const yearMonth = month.format('YYYY-MM')
-  const holidayResp = await getHolidaysPerMonth(yearMonth)
-  holidays.value = holidayResp.holidayGetDTOList || []
+  // KPI 데이터를 카드에서 사용 가능한 형식으로 가공
+  kpis.value = rawKpis.map((item) => ({
+    title: item.goal,
+    goal: item.goalValue + '%',
+    progress: item.kpiProgress,
+    progressLabel: item.kpiProgress + '%',
+    variant: getProgressVariant(item.kpiProgress),
+    statusType: item.statusType,
+    deadline: item.deadline
+  }))
 
-  const workResp = await getMyWorks(params.value)
-  const workEvents = workResp.works.map(convertWorkToEvent)
-  const holidayEvents = holidays.value.map(convertHolidayToEvent)
-
-  await loadEvaluationRounds()
-  const evaluation = evaluationEvents.value
-
-  events.value = [...workEvents, ...holidayEvents, ...evaluation]
 }
 
-// 평가 회차 로딩
-const loadEvaluationRounds = async () => {
-  try {
-    const res = await getEvaluationRounds()
-    evaluationRounds.value = res.list || []
-  } catch (e) {
-    console.error('평가 회차 불러오기 실패:', e)
-    evaluationRounds.value = []
-  }
-}
-
-// 평가 기간 이벤트 변환
-const evaluationEvents = computed(() => {
-  return evaluationRounds.value
-      .filter(round => {
-        if (!round.startAt || !round.endAt) return false
-        const start = dayjs(round.startAt)
-        const end = dayjs(round.endAt)
-        return (
-            start.isBefore(params.value.searchEndDate) &&
-            end.isAfter(dayjs(params.value.searchStartDate))
-        )
-      })
-      .map(round => ({
-        title: `평가기간 (${round.roundNo}회차)`,
-        startDate: round.startAt,
-        endDate: round.endAt, // 끝일 포함
-        color: 'var(--warning)',
-        typeName: '평가'
-      }))
-})
-
-// 근무 이벤트 변환
-const convertWorkToEvent = (item) => ({
-  title: parseTitle(item),
-  startDate: item.startAt,
-  endDate: item.endAt,
-  startTime: item.startAt,
-  endTime: item.endAt,
-  color: getColor(item),
-  workId: item.workId,
-  typeName: item.typeName,
-  vacationType: item.vacationType,
-  childTypeName: item.childTypeName,
-  breakTime: item.breakTime,
-  workTime: item.workTime
-})
-
-// 휴일 이벤트 변환
-const convertHolidayToEvent = (holiday) => ({
-  title: holiday.holidayName,
-  startDate: holiday.date,
-  endDate: holiday.date,
-  color: 'var(--error)',
-  typeName: '휴일'
-})
-
-// 이벤트 타이틀 변환
-const parseTitle = (item) => {
-  if (item.typeName === 'VACATION') return vacationType(item.vacationType)
-  if (item.typeName === 'ADDITIONAL') return workType(item.childTypeName)
-  return workType(item.typeName)
-}
-
-// 색상
-const getColor = (item) => {
-  switch (item.typeName) {
-    case 'VACATION': return 'var(--success)'
-    default: return 'var(--blue-400)'
-  }
+function getProgressVariant(progress) {
+  if (progress === 0) return 'danger'
+  if (progress >= 100) return 'success'
+  if (progress >= 50) return 'accent'
+  return '' // 기본 파란색
 }
 
 // 시간 포맷팅
@@ -233,17 +160,6 @@ const vacationInfo = {
     { date: '6월 28일 (금)', label: '반차', colorStyle: 'color:var(--warning);font-weight:500;' }
   ]
 }
-
-// 유형 변환
-const workType = (type) => ({
-  WORK: '근무', REMOTE_WORK: '재택 근무', BUSINESS_TRIP: '출장', ADDITIONAL: '초과근무',
-  OVERTIME: '연장근무', NIGHT: '야간근무', HOLIDAY: '휴일근무'
-})[type] || type
-
-const vacationType = (type) => ({
-  PAID_ETC: '기타 유급휴가', UNPAID_ETC: '기타 무급휴가', DAYOFF: '연차', AM_HALF_DAYOFF: '오전 반차',
-  PM_HALF_DAYOFF: '오후 반차', REFRESH: '리프레시 휴가', MILITARY_TRAINING: '군 소집 훈련', LIFE_EVENT: '경조사'
-})[type] || type
 
 // 최초 실행
 onMounted(() => handleMonthChange(currentMonth.value))

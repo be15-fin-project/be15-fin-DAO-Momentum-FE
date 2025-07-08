@@ -6,40 +6,63 @@
     <table class="kpi-table">
       <thead>
       <tr>
-        <th>구분</th>
-        <th>제목</th>
-        <th>목표치</th>
+        <th>목표</th>
+        <th>목표 수치</th>
         <th>진척도</th>
+        <th>승인 여부</th>
+        <th>마감기한</th>
       </tr>
       </thead>
       <tbody>
       <tr v-for="(item, idx) in kpis" :key="idx">
-        <td>{{ item.category }}</td>
         <td>{{ item.title }}</td>
         <td>{{ item.goal }}</td>
         <td>
-          <div class="kpi-progress-bar">
-            <div
-                class="kpi-progress-inner"
-                :class="item.variant"
-                :style="{ width: item.progress + '%' }"
-            ></div>
+          <div class="kpi-progress-wrapper">
+            <div class="kpi-progress-bar">
+              <div
+                  class="kpi-progress-inner"
+                  :class="item.variant"
+                  :style="{ width: item.progress + '%' }"
+              ></div>
+            </div>
+            <span class="kpi-progress-label">{{ item.progressLabel }}</span>
           </div>
-          <span class="kpi-progress-label">{{ item.progressLabel }}</span>
         </td>
+        <td>{{ getStatusLabel(item.statusType) }}</td>
+        <td>{{ formatDate(item.deadline) }}</td>
       </tr>
       </tbody>
     </table>
   </div>
 </template>
 
+
 <script setup>
+import dayjs from 'dayjs'
+
 defineProps({
   kpis: {
     type: Array,
     default: () => []
   }
 })
+
+// 승인 여부 텍스트 변환
+const getStatusLabel = (status) => {
+  switch (status) {
+    case 'ACCEPTED': return '승인'
+    case 'PENDING': return '대기'
+    case 'REJECTED': return '반려'
+    default: return status
+  }
+}
+
+// 날짜 포맷
+const formatDate = (dateStr) => {
+  return dateStr ? dayjs(dateStr).format('YYYY.MM.DD') : '-'
+}
+
 </script>
 
 <style scoped>
@@ -83,14 +106,29 @@ table.kpi-table {
   position: relative;
 }
 
+.kpi-progress-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: center;
+}
+
 .kpi-progress-bar {
-  width: 94%;
+  width: 80px;
   height: 8.5px;
   background: var(--gray-100);
   border-radius: 7px;
   overflow: hidden;
-  margin: 7px auto 0 auto;
+  flex-shrink: 0;
 }
+
+.kpi-progress-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--blue-400);
+  white-space: nowrap;
+}
+
 
 .kpi-progress-inner {
   height: 100%;
