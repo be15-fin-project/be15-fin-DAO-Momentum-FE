@@ -1,14 +1,12 @@
 <script setup>
-import {reactive, ref, watch} from "vue";
+import {onMounted, reactive, ref, watch} from "vue";
+import {putCompany} from "@/features/settings/api.js";
+import {fetchCompanyInfo} from "@/features/company/api.js";
+import {useToast} from "vue-toastification";
 
-const props = defineProps({
-  currentCompany:{
-    type: Object,
-    default: () => {}
-  },
-})
+const toast = useToast()
 
-const company = reactive({
+const company = ref({
   name: '',
   chairman: '',
   address: '',
@@ -20,26 +18,38 @@ const company = reactive({
   paymentDay: ''
 })
 
-watch(() => props.currentCompany, (newVal) => {
-  if (newVal) {
-    Object.assign(company, newVal)
-  }
-}, { immediate: true })
-
-const emit = defineEmits(['submit'])
-
 function handleInput(field, event) {
-  company[field] = event.target.value
+  company.value[field] = event.target.value
 }
 
-const handleSubmit = () => {
-  emit('submit', company);
+const submitCompany = async() => {
+  try {
+    const response = await putCompany(company.value);
+    await getCompanyInfo();
+    toast.success('회사 정보를 수정했습니다.');
+  }catch(e){
+    toast.error('회사 정보를 수정하지 못했습니다.');
+  }
 }
+
+const getCompanyInfo = async () => {
+  try{
+    const response = await fetchCompanyInfo();
+    company.value = response.data.companyInfoDTO;
+  }catch (error){
+    toast.error('회사 정보를 불러오지 못했습니다.');
+  }
+}
+
+onMounted(async () => {
+  await getCompanyInfo();
+})
+
 </script>
 
 <template>
   <div class="form-card">
-    <form class="form-container" @submit.prevent="handleSubmit">
+    <form class="form-container" @submit.prevent="submitCompany">
       <div class="form-grid form-grid-two">
         <div class="form-field">
           <label class="form-label"><i class="fas fa-building label-icon icon-indigo"></i>회사명</label>
@@ -193,74 +203,9 @@ const handleSubmit = () => {
   box-shadow: 0 8px 28px rgba(56, 104, 185, 0.13);
 }
 
-/* info cards */
-.info-cards {
-  display: grid;
-  gap: 2rem;
-  margin-top: 2rem;
-  grid-template-columns: repeat(3,1fr);
-}
-@media (max-width: 900px){
-  .info-cards { grid-template-columns: 1fr; }
-}
-
-.info-card {
-  background: #fff;
-  border-radius: 1.2rem;
-  padding: 2rem 1.2rem;
-  text-align: center;
-  box-shadow: 0 2px 18px 0 rgba(120, 127, 245, 0.09);
-  animation: fadeIn 0.7s cubic-bezier(0.33,1,0.68,1);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.info-card-icon {
-  width: 3.1rem;
-  height: 3.1rem;
-  border-radius: 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 0 1.05rem 0;
-  font-size: 1.55rem;
-  box-shadow: 0 2px 8px 0 rgba(56, 104, 185, 0.08);
-}
-.icon-bg-blue {
-  background: #e9f2fe;
-  color: #3868b9;
-}
-.icon-bg-purple {
-  background: #f6eaff;
-  color: #8847d8;
-}
-.icon-bg-green {
-  background: #e8f9ef;
-  color: #10b981;
-}
-.card-title {
-  font-weight: 700;
-  color: #3b4454;
-  margin-bottom: 0.4rem;
-  margin-top: 0;
-  font-size: 1.15rem;
-  letter-spacing: -0.01em;
-}
-.card-value {
-  font-size: 2.15rem;
-  font-weight: bold;
-  margin: 0;
-  letter-spacing: 0.01em;
-}
-.value-blue { color: #3868b9; }
-.value-purple { color: #8847d8; }
-.value-green { color: #10b981; }
-
 @media (max-width: 700px){
   .form-grid-two {
     grid-template-columns: 1fr;
   }
 }
-
-
 </style>
