@@ -82,7 +82,7 @@
 
 <script setup>
 // 외부 라이브러리
-import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, computed, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 // API
@@ -668,6 +668,14 @@ onMounted(() => {
 function handleBack() {
   router.push({ path: '../kpi/employees' });
 }
+
+watchEffect(() => {
+  const id = route.query.kpiId
+  if (id) {
+    openModalHandler(id)
+  }
+})
+
 
 </script>
 

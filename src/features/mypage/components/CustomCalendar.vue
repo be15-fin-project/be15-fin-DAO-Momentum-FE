@@ -1,109 +1,208 @@
 <template>
   <div class="calendar-wrapper">
     <div class="calendar-header">
-
-      <button class="week-button" @click="goWeekCalendar">
+      <button class="week-button" @click="toggleWeekMode">
         <i class="fas fa-calendar-alt"></i>
+        {{ isWeekMode ? '주간' : '월간' }}
       </button>
-      <div class="day-button">
 
+      <div class="day-button">
         <button class="header-button" @click="goToPrevMonth"><i class="fas fa-angle-left"></i></button>
 
         <div class="month-picker-container" @click.self="isMonthPickerOpen = false">
           <button class="month-label" @click="(e) => { e.stopPropagation(); isMonthPickerOpen = true }">
-            {{ currentMonth.format('YYYY년 MM월') }}
+            {{ getMonthLabel }}
           </button>
 
+          <!-- 월 + 주차 선택 모달 -->
           <div v-if="isMonthPickerOpen" class="month-picker-inline" ref="monthPickerRef">
             <div class="month-picker" @click.stop>
+
+              <!-- 연도 선택 -->
               <div class="year-select">
                 <button @click="changeYear(-1)">‹</button>
                 <span>{{ selectedYear }}년</span>
                 <button @click="changeYear(1)">›</button>
               </div>
+
+              <!-- 월 선택 -->
               <div class="months-grid">
                 <button
                     v-for="(month, index) in 12"
                     :key="index"
-                    @click="selectMonth(index)"
-                    :class="{ active: index === currentMonth.month() && selectedYear === currentMonth.year() }"
+                    @click="selectMonthForWeek(index)"
+                    :class="{ active: index === selectedMonth }"
                 >
                   {{ index + 1 }}월
                 </button>
               </div>
+
+              <!-- 선택된 월의 주차 리스트 -->
+              <div v-if="selectedMonth !== null" class="weeks-row">
+                <button
+                    v-for="(week, index) in getWeeksOfMonth(selectedYear, selectedMonth + 1)"
+                    :key="index"
+                    @click="selectWeek(selectedYear, selectedMonth + 1, index)"
+                >
+                  {{ index + 1 }}주차
+                </button>
+              </div>
+
             </div>
           </div>
+
         </div>
 
         <button class="header-button" @click="goToNextMonth"><i class="fas fa-angle-right"></i></button>
       </div>
+
       <button class="today-button" @click="goToToday">
         <i class="fas fa-sync-alt"></i>
       </button>
-
     </div>
 
+    <!-- 요일 헤더 -->
     <div class="calendar-grid calendar-weekdays">
       <div v-for="day in weekdays" :key="day" class="weekday">{{ day }}</div>
     </div>
 
-    <div
-        v-for="(week, weekIndex) in weeks"
-        :key="weekIndex"
-        class="calendar-week-row"
-    >
+    <!-- 월간 보기 -->
+    <template v-if="!isWeekMode">
       <div
-          v-for="day in week"
-          :key="day.date"
-          class="calendar-cell"
-          :class="{ today: isToday(day.date), 'not-this-month': !day.inMonth }"
+          v-for="(week, weekIndex) in weeks"
+          :key="weekIndex"
+          class="calendar-week-row"
       >
-        <div class="day-number">{{ dayjs(day.date).date() }}</div>
+        <div
+            v-for="day in week"
+            :key="day.date"
+            class="calendar-cell"
+            :class="{ today: isToday(day.date), 'not-this-month': !day.inMonth }"
+        >
+          <div class="day-number">{{ dayjs(day.date).date() }}</div>
+        </div>
+
+        <template v-for="(row, rowIndex) in getEventRowsInWeek(week)">
+          <div
+              v-for="(event, eventIndex) in row"
+              :key="`${event.title}-${event.startDate}-${event.endDate}-row-${rowIndex}-i-${eventIndex}`"
+              class="event-bar"
+              :style="getEventStyle(event, week, rowIndex)"
+              @click="$emit('clickEvent', event)"
+          >
+            <i :class="getEventIconClass(event.typeName)" class="event-icon"></i>
+            {{ event.title }}
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <!-- 주간 보기 -->
+    <template v-else>
+      <div class="calendar-week-row week-mode">
+        <div
+            v-for="day in getCurrentWeek"
+            :key="day.date"
+            class="calendar-cell week-mode-cell"
+            :class="{ today: isToday(day.date), 'not-this-month': !day.inMonth }"
+        >
+          <div class="day-number">{{ dayjs(day.date).date() }}</div>
+        </div>
+
+        <!-- 주간 일정 바 표시 -->
+        <template v-for="(row, rowIndex) in getEventRowsInWeek(getCurrentWeek)">
+          <div
+              v-for="(event, eventIndex) in row"
+              :key="`${event.title}-${event.startDate}-${event.endDate}-row-${rowIndex}-i-${eventIndex}`"
+              class="event-bar"
+              :style="getEventStyle(event, getCurrentWeek, rowIndex)"
+              @click="handleClick(event)"
+          >
+            <i :class="getEventIconClass(event.typeName)" class="event-icon"></i>
+            {{ event.title }}
+          </div>
+        </template>
+      </div>
+      <!-- Legend (옵션) -->
+      <div class="legend">
+        <span class="legend-item"><i class="fas fa-circle" style="color: var(--label-pending)"></i> 대기</span>
+        <span class="legend-item">
+          <i class="fas fa-circle" style="color: var(--gray-300)"></i>
+          <i class="fas fa-circle" style="color: var(--blue-100)"></i>
+          <i class="fas fa-circle" style="color: var(--blue-200)"></i>
+          <i class="fas fa-circle" style="color: var(--blue-400)"></i>진행 중
+        </span>
+        <span class="legend-item"><i class="fas fa-circle" style="color: var(--green-200)"></i> 완료</span>
+        <span class="legend-item"><i class="fas fa-circle" style="color: var(--warning)"></i> 기한 초과</span>
+        <span class="legend-item"><i class="fas fa-circle" style="color: var(--success)"></i> 달성</span>
       </div>
 
-      <!-- 이벤트 바 렌더링 -->
-      <template v-for="(row, rowIndex) in getEventRowsInWeek(week)">
-        <div
-            v-for="(event, eventIndex) in row"
-            :key="`${event.title}-${event.startDate}-${event.endDate}-row-${rowIndex}-i-${eventIndex}`"
-            class="event-bar"
-            :style="getEventStyle(event, week, rowIndex)"
-            @click="$emit('clickEvent', event)"
-        >
-          <i :class="getEventIconClass(event.typeName)" class="event-icon"></i>
-          {{ event.title }}
-        </div>
-      </template>
-    </div>
+    </template>
+
   </div>
 </template>
 
 <script setup>
-import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
+import {ref, computed, onMounted, onBeforeUnmount, watch} from 'vue'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
+import {getMyKpiDashboard} from '@/features/performance/api.js'
+import {useRouter} from "vue-router";
 
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
 const props = defineProps({events: Array})
 const emit = defineEmits(['clickEvent', 'monthChanged'])
+const router = useRouter()
+
+const handleClick = (event) => {
+  if (event.typeName === 'KPI') {
+    // KPI 클릭 시 라우팅
+    router.push({ path: '/kpi/kpi-list', query: { kpiId: event.kpiId } })
+  } else {
+    // 그 외 (근태, 휴가 등)는 모달 이벤트 emit
+    emit('clickEvent', event)
+  }
+}
 
 const currentMonth = ref(dayjs())
 const selectedYear = ref(currentMonth.value.year())
 const isMonthPickerOpen = ref(false)
+const isWeekMode = ref(false)
 const monthPickerRef = ref(null)
+const selectedMonth = ref(null)
+const selectedWeekIndex = computed(() => {
+  const startOfMonth = currentMonth.value.startOf('month').startOf('week')
+  const startOfWeek = currentMonth.value.startOf('week')
+  const diff = startOfWeek.diff(startOfMonth, 'week')
+  return diff >= 0 ? diff : 0
+})
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
-
-const isToday = (date) => dayjs().format('YYYY-MM-DD') === date
 
 const goToToday = () => {
   currentMonth.value = dayjs()
   selectedYear.value = currentMonth.value.year()
+  selectedWeekIndex.value = 0
   emit('monthChanged', currentMonth.value)
 }
+
+const toggleWeekMode = () => {
+  isWeekMode.value = !isWeekMode.value
+  if (isWeekMode.value) {
+    const today = dayjs().format('YYYY-MM-DD')
+    selectedWeekIndex.value = weeks.value.findIndex(week => week.some(day => day.date === today))
+  }
+}
+
+const isToday = (date) => dayjs().format('YYYY-MM-DD') === date
+
+const getMonthLabel = computed(() => {
+  if (!isWeekMode.value) return currentMonth.value.format('YYYY년 MM월')
+  return `${currentMonth.value.format('YYYY년 MM월')} ${selectedWeekIndex.value + 1}주차`
+})
 
 const weeks = computed(() => {
   const start = currentMonth.value.startOf('month').startOf('week')
@@ -119,6 +218,30 @@ const weeks = computed(() => {
   return result
 })
 
+const selectMonthForWeek = (monthIndex) => {
+  selectedMonth.value = monthIndex
+}
+
+const getWeeksOfMonth = (year, month) => {
+  const firstDay = dayjs(`${year}-${month}-01`).startOf('week')
+  const lastDay = dayjs(`${year}-${month}-01`).endOf('month').endOf('week')
+  const totalDays = lastDay.diff(firstDay, 'day') + 1
+  const weekCount = Math.ceil(totalDays / 7)
+  return Array.from({length: weekCount})
+}
+
+const selectWeek = (year, monthIndex, weekIndex) => {
+  const firstDayOfMonth = dayjs(`${year}-${monthIndex}-01`)
+  const firstCalendarDay = firstDayOfMonth.startOf('week')
+  const selectedWeekStart = firstCalendarDay.add(weekIndex * 7, 'day')
+  currentMonth.value = selectedWeekStart
+  selectedYear.value = selectedWeekStart.year()
+  selectedWeekIndex.value = weekIndex
+  isMonthPickerOpen.value = false
+  selectedMonth.value = null
+  emit('monthChanged', currentMonth.value)
+}
+
 const getEventIconClass = (typeName) => {
   switch (typeName) {
     case 'WORK':
@@ -130,7 +253,7 @@ const getEventIconClass = (typeName) => {
     case 'BUSINESS_TRIP':
       return 'fas fa-plane-departure'
     case 'KPI':
-      return 'fas fa-bullseye'
+      return 'fas fa-tasks'
     case 'EVALUATION':
       return 'fas fa-clipboard-check'
     default:
@@ -138,11 +261,74 @@ const getEventIconClass = (typeName) => {
   }
 }
 
+const getCurrentWeek = computed(() => {
+  const start = currentMonth.value.startOf('week')
+  return Array.from({length: 7}, (_, i) => {
+    const date = start.add(i, 'day')
+    return {
+      date: date.format('YYYY-MM-DD'),
+      inMonth: date.month() === currentMonth.value.month()
+    }
+  })
+})
+
+
+const kpiEvents = ref([])
+
+const fetchKpiEvents = async () => {
+  const startDate = currentMonth.value.startOf('month').format('YYYY-MM-DD')
+  const endDate = currentMonth.value.endOf('month').format('YYYY-MM-DD')
+
+  try {
+    const data = await getMyKpiDashboard({startDate, endDate, limit: 10})
+    kpiEvents.value = data.map(kpi => ({
+      ...kpi,
+      title: kpi.goal,
+      typeName: 'KPI',
+      color: getKpiColor(kpi.statusType, kpi.kpiProgress, kpi.deadline),
+      startDate: kpi.createdAt,
+      endDate: kpi.deadline,
+    }))
+  } catch (e) {
+    console.error('KPI 내역 조회 실패:', e)
+    kpiEvents.value = []
+  }
+}
+
+const getKpiColor = (statusType, progress, deadline) => {
+  const now = dayjs()
+  const isDeadlinePassed = deadline && dayjs(deadline).isBefore(now, 'day')
+
+  if (statusType === 'PENDING') return 'var(--label-pending)'
+
+  if (statusType === 'ACCEPTED') {
+    if (isDeadlinePassed && progress < 100) return 'var(--warning)' // 지연
+    if (isDeadlinePassed && progress === 100) return 'var(--success)' // 마감 후 완료
+
+    if (progress === 100) return 'var(--green-200)'
+    if (progress >= 75) return 'var(--blue-400)'
+    if (progress >= 50) return 'var(--blue-200)'
+    if (progress >= 25) return 'var(--blue-100)'
+    return 'var(--gray-300)' // 0~24%
+  }
+
+  return 'var(--gray-200)' // fallback
+}
+
+
+const allEvents = computed(() => {
+  return [...props.events, ...kpiEvents.value]
+})
+
+
 const getEventRowsInWeek = (week) => {
   const weekStart = dayjs(week[0].date)
   const weekEnd = dayjs(week[6].date)
 
-  const eventsInWeek = props.events.filter(event => {
+  const eventsInWeek = allEvents.value.filter(event => {
+    // 월간 모드에서는 KPI 제외
+    if (!isWeekMode.value && event.typeName === 'KPI') return false
+
     const start = dayjs(event.startDate)
     const end = dayjs(event.endDate)
     return end.isSameOrAfter(weekStart, 'day') && start.isSameOrBefore(weekEnd, 'day')
@@ -154,33 +340,21 @@ const getEventRowsInWeek = (week) => {
     const end = dayjs(event.endDate)
     const eventStart = start.isBefore(weekStart) ? weekStart : start
     const eventEnd = end.isAfter(weekEnd) ? weekEnd : end
-
     let placed = false
     for (const row of rows) {
-      if (
-          row.every(e =>
-              dayjs(e.endDate).isBefore(eventStart, 'day') ||
-              dayjs(e.startDate).isAfter(eventEnd, 'day')
-          )
-      ) {
-        row.push({
-          ...event,
-          startDate: eventStart.format('YYYY-MM-DD'),
-          endDate: eventEnd.format('YYYY-MM-DD'),
-        })
+      if (row.every(e =>
+          dayjs(e.endDate).isBefore(eventStart, 'day') ||
+          dayjs(e.startDate).isAfter(eventEnd, 'day')
+      )) {
+        row.push({...event, startDate: eventStart.format('YYYY-MM-DD'), endDate: eventEnd.format('YYYY-MM-DD')})
         placed = true
         break
       }
     }
     if (!placed) {
-      rows.push([{
-        ...event,
-        startDate: eventStart.format('YYYY-MM-DD'),
-        endDate: eventEnd.format('YYYY-MM-DD'),
-      }])
+      rows.push([{...event, startDate: eventStart.format('YYYY-MM-DD'), endDate: eventEnd.format('YYYY-MM-DD')}])
     }
   }
-
   return rows
 }
 
@@ -201,26 +375,32 @@ const getEventStyle = (event, week, rowIndex) => {
 }
 
 const goToPrevMonth = () => {
-  currentMonth.value = currentMonth.value.subtract(1, 'month')
+  if (isWeekMode.value) {
+    currentMonth.value = currentMonth.value.subtract(1, 'week')
+    selectedWeekIndex.value = 0
+  } else {
+    currentMonth.value = currentMonth.value.subtract(1, 'month')
+    selectedWeekIndex.value = 0
+  }
   emit('monthChanged', currentMonth.value)
 }
 
 const goToNextMonth = () => {
-  currentMonth.value = currentMonth.value.add(1, 'month')
+  if (isWeekMode.value) {
+    currentMonth.value = currentMonth.value.add(1, 'week')
+    selectedWeekIndex.value = 0
+  } else {
+    currentMonth.value = currentMonth.value.add(1, 'month')
+    selectedWeekIndex.value = 0
+  }
   emit('monthChanged', currentMonth.value)
 }
+
 
 const changeYear = (offset) => {
   selectedYear.value += offset
 }
 
-const selectMonth = (monthIndex) => {
-  currentMonth.value = dayjs(`${selectedYear.value}-${monthIndex + 1}-01`)
-  emit('monthChanged', currentMonth.value)
-  isMonthPickerOpen.value = false
-}
-
-// ✅ 전역 클릭 시 모달 닫힘 처리
 const handleClickOutside = (e) => {
   if (isMonthPickerOpen.value && monthPickerRef.value && !monthPickerRef.value.contains(e.target)) {
     isMonthPickerOpen.value = false
@@ -234,6 +414,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
+watch(currentMonth, () => {
+  fetchKpiEvents()
+}, {immediate: true})
 </script>
 
 <style scoped>
@@ -242,7 +426,6 @@ onBeforeUnmount(() => {
 }
 
 .calendar-header {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -250,35 +433,25 @@ onBeforeUnmount(() => {
 }
 
 .day-button {
-  position: relative;
   display: flex;
-  justify-content: center;
   align-items: center;
   gap: 20px;
   font-size: 1.2rem;
+  padding-right: 3rem;
 }
 
-.header-button {
-  font-size: 1.5rem;
+.header-button, .today-button, .week-button {
+  font-size: 1.1rem;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--blue-450);
-}
-.today-button,
-.week-button {
-  font-size: 1rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--blue-400);
 }
 
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 1px;
-  background: var(--font-none);
 }
 
 .calendar-weekdays {
@@ -296,17 +469,23 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 1px;
-  background: var(--font-none);
-  margin-bottom: 2px;
   position: relative;
   min-height: 100px;
 }
 
+.calendar-week-row.week-mode {
+  min-height: 140px;
+}
+
 .calendar-cell {
   background: var(--color-surface);
-  min-height: 100px;
   padding: 6px;
+  min-height: 100px;
   position: relative;
+}
+
+.calendar-cell.week-mode-cell {
+  min-height: 380px;
 }
 
 .calendar-cell.today {
@@ -404,4 +583,51 @@ onBeforeUnmount(() => {
   transform: translateX(-50%);
   z-index: 10;
 }
+
+.fa-calendar-alt {
+  margin-right: 4px;
+}
+
+.weeks-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  border-top: 1px solid var(--gray-200);
+  padding-top: 10px;
+}
+
+.weeks-row button {
+  padding: 4px 8px;
+  font-size: 0.85rem;
+  border: 1px solid var(--gray-300);
+  background: var(--gray-50);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.weeks-label {
+  width: 100%;
+  font-weight: bold;
+  margin-bottom: 6px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 12px 0;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--font-sub);
+  white-space: nowrap;
+}
+
 </style>
