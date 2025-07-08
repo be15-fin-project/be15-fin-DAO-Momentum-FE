@@ -48,12 +48,13 @@ function convertMinutesToHours(minutes) {
 }
 
 
-const currentDate = new Date().toLocaleDateString('ko-KR', {
-  year: 'numeric',
-  month: 'long',
-  day: 'numeric',
-  weekday: 'long',
+const currentDate = computed(() => {
+  const raw = props.attendanceData?.startTime
+  return raw
+      ? dayjs(raw).format('YYYY년 M월 D일 dddd')
+      : '--'
 })
+
 </script>
 
 <template>
