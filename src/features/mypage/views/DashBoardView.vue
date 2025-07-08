@@ -15,10 +15,6 @@
 
     <section class="dashboard-main">
       <div class="card calendar-card">
-        <div class="side-section-title">
-          <span class="material-icons">event_note</span>{{ currentMonth.format('YYYY년 MM월') }} 일정
-        </div>
-
         <CustomCalendar
             :events="events"
             @clickEvent="handleEventClick"

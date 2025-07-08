@@ -1,9 +1,46 @@
 <template>
   <div class="calendar-wrapper">
     <div class="calendar-header">
-      <button @click="goToPrevMonth"><i class="fas fa-angle-left"></i></button>
-      <span>{{ currentMonth.format('YYYY년 MM월') }}</span>
-      <button @click="goToNextMonth"><i class="fas fa-angle-right"></i></button>
+
+      <button class="week-button" @click="goWeekCalendar">
+        <i class="fas fa-calendar-alt"></i>
+      </button>
+      <div class="day-button">
+
+        <button class="header-button" @click="goToPrevMonth"><i class="fas fa-angle-left"></i></button>
+
+        <div class="month-picker-container" @click.self="isMonthPickerOpen = false">
+          <button class="month-label" @click="(e) => { e.stopPropagation(); isMonthPickerOpen = true }">
+            {{ currentMonth.format('YYYY년 MM월') }}
+          </button>
+
+          <div v-if="isMonthPickerOpen" class="month-picker-inline" ref="monthPickerRef">
+            <div class="month-picker" @click.stop>
+              <div class="year-select">
+                <button @click="changeYear(-1)">‹</button>
+                <span>{{ selectedYear }}년</span>
+                <button @click="changeYear(1)">›</button>
+              </div>
+              <div class="months-grid">
+                <button
+                    v-for="(month, index) in 12"
+                    :key="index"
+                    @click="selectMonth(index)"
+                    :class="{ active: index === currentMonth.month() && selectedYear === currentMonth.year() }"
+                >
+                  {{ index + 1 }}월
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button class="header-button" @click="goToNextMonth"><i class="fas fa-angle-right"></i></button>
+      </div>
+      <button class="today-button" @click="goToToday">
+        <i class="fas fa-sync-alt"></i>
+      </button>
+
     </div>
 
     <div class="calendar-grid calendar-weekdays">
@@ -42,7 +79,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
 import dayjs from 'dayjs'
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter'
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
@@ -50,13 +87,23 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore'
 dayjs.extend(isSameOrAfter)
 dayjs.extend(isSameOrBefore)
 
-const props = defineProps({ events: Array })
+const props = defineProps({events: Array})
 const emit = defineEmits(['clickEvent', 'monthChanged'])
 
 const currentMonth = ref(dayjs())
+const selectedYear = ref(currentMonth.value.year())
+const isMonthPickerOpen = ref(false)
+const monthPickerRef = ref(null)
+
 const weekdays = ['일', '월', '화', '수', '목', '금', '토']
 
 const isToday = (date) => dayjs().format('YYYY-MM-DD') === date
+
+const goToToday = () => {
+  currentMonth.value = dayjs()
+  selectedYear.value = currentMonth.value.year()
+  emit('monthChanged', currentMonth.value)
+}
 
 const weeks = computed(() => {
   const start = currentMonth.value.startOf('month').startOf('week')
@@ -64,7 +111,7 @@ const weeks = computed(() => {
   const days = []
   let date = start
   while (date.isSameOrBefore(end)) {
-    days.push({ date: date.format('YYYY-MM-DD'), inMonth: date.month() === currentMonth.value.month() })
+    days.push({date: date.format('YYYY-MM-DD'), inMonth: date.month() === currentMonth.value.month()})
     date = date.add(1, 'day')
   }
   const result = []
@@ -74,13 +121,20 @@ const weeks = computed(() => {
 
 const getEventIconClass = (typeName) => {
   switch (typeName) {
-    case 'WORK': return 'fas fa-briefcase'
-    case 'OVERTIME': return 'fas fa-clock'
-    case 'VACATION': return 'fas fa-umbrella-beach'
-    case 'BUSINESS_TRIP': return 'fas fa-plane-departure'
-    case 'KPI': return 'fas fa-bullseye'
-    case 'EVALUATION': return 'fas fa-clipboard-check'
-    default: return 'fas fa-calendar-alt'
+    case 'WORK':
+      return 'fas fa-briefcase'
+    case 'OVERTIME':
+      return 'fas fa-clock'
+    case 'VACATION':
+      return 'fas fa-umbrella-beach'
+    case 'BUSINESS_TRIP':
+      return 'fas fa-plane-departure'
+    case 'KPI':
+      return 'fas fa-bullseye'
+    case 'EVALUATION':
+      return 'fas fa-clipboard-check'
+    default:
+      return 'fas fa-calendar-alt'
   }
 }
 
@@ -155,43 +209,89 @@ const goToNextMonth = () => {
   currentMonth.value = currentMonth.value.add(1, 'month')
   emit('monthChanged', currentMonth.value)
 }
+
+const changeYear = (offset) => {
+  selectedYear.value += offset
+}
+
+const selectMonth = (monthIndex) => {
+  currentMonth.value = dayjs(`${selectedYear.value}-${monthIndex + 1}-01`)
+  emit('monthChanged', currentMonth.value)
+  isMonthPickerOpen.value = false
+}
+
+// ✅ 전역 클릭 시 모달 닫힘 처리
+const handleClickOutside = (e) => {
+  if (isMonthPickerOpen.value && monthPickerRef.value && !monthPickerRef.value.contains(e.target)) {
+    isMonthPickerOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <style scoped>
-.calendar-wrapper { width: 100%; }
+.calendar-wrapper {
+  width: 100%;
+}
+
 .calendar-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.day-button {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   gap: 20px;
   font-size: 1.2rem;
-  margin-bottom: 14px;
 }
-.calendar-header span {
-  color: var(--blue-400);
-  font-size: 1.2rem;
-  font-weight: 700;
-}
-.calendar-header button {
+
+.header-button {
   font-size: 1.5rem;
   background: none;
   border: none;
   cursor: pointer;
   color: var(--blue-450);
 }
+.today-button,
+.week-button {
+  font-size: 1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--blue-400);
+}
+
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 1px;
   background: var(--font-none);
 }
-.calendar-weekdays { margin-bottom: 6px; }
+
+.calendar-weekdays {
+  margin-bottom: 6px;
+}
+
 .weekday {
   text-align: center;
   font-weight: bold;
   background: var(--color-muted-light);
   padding: 10px 0;
 }
+
 .calendar-week-row {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -201,25 +301,30 @@ const goToNextMonth = () => {
   position: relative;
   min-height: 100px;
 }
+
 .calendar-cell {
   background: var(--color-surface);
   min-height: 100px;
   padding: 6px;
   position: relative;
 }
+
 .calendar-cell.today {
   background: var(--blue-50);
   border: 2px solid var(--blue-450);
 }
+
 .calendar-cell.not-this-month {
   color: var(--gray-300);
   background: var(--gray-50);
 }
+
 .day-number {
   font-weight: bold;
   font-size: 0.95rem;
   margin-bottom: 4px;
 }
+
 .event-bar {
   font-size: 0.75rem;
   padding: 4px 6px;
@@ -231,7 +336,72 @@ const goToNextMonth = () => {
   cursor: pointer;
   height: 24px;
 }
+
 .event-bar .event-icon {
   margin-right: 4px;
+}
+
+.month-label {
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--font-color);
+  cursor: pointer;
+}
+
+.month-picker-container {
+  position: relative;
+}
+
+.month-picker {
+  background: var(--color-surface);
+  padding: 20px;
+  border-radius: 8px;
+  width: 260px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.year-select {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.year-select button {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.months-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.months-grid button {
+  padding: 8px;
+  font-size: 1rem;
+  border: 1px solid var(--gray-300);
+  background: var(--gray-50);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.months-grid button.active {
+  background: var(--blue-400);
+  color: var(--color-surface);
+  font-weight: bold;
+}
+
+.month-picker-inline {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
 }
 </style>

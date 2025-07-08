@@ -112,7 +112,10 @@ const formSections = ref([]);
 // 테이블 컬럼
 const tableColumns = [
   { key: 'profile', label: '#' },
+  { key: 'empNo', label: '사번' },
   { key: 'employeeName', label: '작성자' },
+  { key: 'departmentName', label: '부서' },
+  { key: 'positionName', label: '직위' },
   { key: 'goal', label: '목표' },
   { key: 'goalValue', label: '목표 수치' },
   { key: 'kpiProgress', label: '진척도 (%)' },
@@ -229,10 +232,25 @@ async function loadTableData() {
 
     const res = await getKpiList(params);
 
-    tableData.value = (res.content ?? []).map(item => ({
-      ...item,
-      statusName: item.kpiProgress === 100 ? '달성' : '미달성',
-    }));
+    tableData.value = (res.content ?? []).map(item => {
+      const now = new Date();
+      const deadline = new Date(item.deadline);
+      const progress = item.kpiProgress;
+
+      let statusName = '진행중';
+
+      if (deadline >= now) {
+        statusName = progress === 0 ? '준비 중' : '수행 중';
+      } else {
+        statusName = progress === 100 ? '달성' : '기한 초과';
+      }
+
+      return {
+        ...item,
+        statusName,
+      };
+    });
+
 
     const current = res.pagination?.currentPage || 1;
     const total = res.pagination?.totalPage > 0 ? res.pagination.totalPage : 1;
