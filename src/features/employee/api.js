@@ -6,7 +6,7 @@ export const getEmployees = async (params) => {
 }
 
 export const getEmployeeDetails = async (empId) => {
-    const resp = await api.get($`/employees/{empId}`);
+    const resp = await api.get(`/employees/${empId}`);
     return resp.data.data;
 }
 
@@ -51,5 +51,15 @@ export const createEmployees = async (req) => {
 
 export const getCSVTemplate = async () => {
     const resp = await api.get('/employees/csv')
+    return resp.data.data;
+}
+
+export const updateEmpInfo = async (req, empId) => {
+    const resp = await api.put(`/employees/${empId}`, req)
+    return resp.data.data;
+}
+
+export const updateEmpRecords = async (req, empId) => {
+    const resp = await api.put(`/employees/${empId}/hr-info`, req)
     return resp.data.data;
 }

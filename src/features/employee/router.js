@@ -11,6 +11,11 @@ export const employeeRoutes = [
                 path: 'csv',
                 name: 'CSVUploadView',
                 component: () => import('@/features/employee/views/CSVUploadView.vue')
+            },
+            {
+                path: ':empId',
+                name: 'AdminEmployeeProfileView',
+                component: () => import('@/features/employee/views/AdminEmployeeProfileView.vue')
             }
         ]
     },
