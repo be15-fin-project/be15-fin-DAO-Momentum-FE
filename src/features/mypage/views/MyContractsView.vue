@@ -82,6 +82,10 @@ const handleSearch = () => {
   fetchSummary(filterValues.value);
 };
 
+function handleRowAction({ action, row }) {
+  if (action === 'download') downloadFile(row);
+}
+
 const downloadFile = async (row) => {
   const s3Key = row.s3Key;
   const fileName = row.fileName;
@@ -132,7 +136,7 @@ watch(currentPage, () => fetchSummary(filterValues.value));
         :showTabs="false"
     />
     <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
-    <BaseTable :columns="columns" :rows="contracts" :actions="rowActions" @action="downloadFile" />
+    <BaseTable :columns="columns" :rows="contracts" :actions="rowActions" @action="handleRowAction" />
     <Pagination
         v-if="pagination.totalPage"
         v-model="currentPage"

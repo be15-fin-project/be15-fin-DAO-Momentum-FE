@@ -207,8 +207,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:model', 'file-change']);
 
-const { model, field } = props;
-
 // null, undefined, 빈 문자열일 때 대체 표시값
 const displayValue = computed(() => {
   const raw = props.model?.[props.field.key];
@@ -227,13 +225,11 @@ const onPositiveIntegerInput = (key) => {
   // model[key] = cleaned !== '' ? parseInt(cleaned, 10) : '';
 };
 
-const fileState = ref({});
-
 const onFileChange = (e) => {
   const file = e.target.files[0];
   console.log('FieldRenderer: selected file:', file);
   if (!file) return;
-  emit('file-change', { fieldKey: field.key, file });
+  emit('file-change', { fieldKey: props.field.key, file });
 };
 
 

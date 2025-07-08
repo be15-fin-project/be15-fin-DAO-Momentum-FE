@@ -141,17 +141,32 @@ const modalSections = computed(() => [
   {
     title: '발령 정보',
     icon: 'fa-user',
-    layout: 'two-column',
+    layout: 'one-column',
     fields: [
-      /* TODO: 트리에서 가져오는 것으로 수정 */
-      {key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1'},
+      {
+        key: 'empId',
+        label: '사원',
+        type: 'memberPicker',
+        treeData: departmentTree.value || [],
+        editable: true,
+        required: true,
+        placeholder: '1'
+      },
       {
         key: 'type', label: '발령 종류', type: 'select', editable: true, required: true, options: [
           {label: '소속 이동', value: 'DEPARTMENT_TRANSFER'},
           {label: '승진', value: 'PROMOTION'}
         ], value: req.type
       },
-      {key: 'positionId', label: '발령 직위', type: 'select', editable: true, required: true, options: positionOptions.value || [], value: req.positionId},
+      {
+        key: 'positionId',
+        label: '발령 직위',
+        type: 'select',
+        editable: true,
+        required: true,
+        options: positionOptions.value || [],
+        value: req.positionId
+      },
       {key: 'deptId', label: '발령 부서', type: 'tree', editable: true, required: true, options: deptOptions.value || []},
       {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
     ]
