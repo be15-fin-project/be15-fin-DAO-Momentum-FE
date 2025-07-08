@@ -14,7 +14,12 @@
       </tr>
       </thead>
       <tbody>
-      <tr v-for="(item, idx) in kpis" :key="idx">
+      <tr
+          v-for="(item, idx) in kpis"
+          :key="idx"
+          class="kpi-row"
+          @click="$emit('clickKpi', item.kpiId)"
+      >
         <td>{{ item.title }}</td>
         <td>{{ item.goal }}</td>
         <td>
@@ -104,6 +109,14 @@ table.kpi-table {
   color: var(--font-main);
   background: #fff;
   position: relative;
+}
+
+.kpi-row {
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.kpi-row:hover {
+  background: var(--gray-100);
 }
 
 .kpi-progress-wrapper {

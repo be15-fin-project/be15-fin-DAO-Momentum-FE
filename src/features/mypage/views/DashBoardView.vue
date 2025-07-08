@@ -24,7 +24,7 @@
 
       <DocumentCard/>
 
-      <KpiCard :kpis="kpis"/>
+      <KpiCard :kpis="kpis" @clickKpi="handleKpiClick"/>
     </section>
   </div>
 
@@ -112,6 +112,7 @@ const handleMonthChange = async (month) => {
 
   // KPI 데이터를 카드에서 사용 가능한 형식으로 가공
   kpis.value = rawKpis.map((item) => ({
+    kpiId: item.kpiId,
     title: item.goal,
     goal: item.goalValue + '%',
     progress: item.kpiProgress,
@@ -159,6 +160,12 @@ const vacationInfo = {
     { date: '6월 19일 (수)', label: '외근 (고객사 방문)', colorStyle: 'color:var(--blue-400);font-weight:500;' },
     { date: '6월 28일 (금)', label: '반차', colorStyle: 'color:var(--warning);font-weight:500;' }
   ]
+}
+
+const handleKpiClick = (kpiId) => {
+  if (kpiId) {
+    router.push({ path: '/kpi/kpi-list', query: { kpiId } })
+  }
 }
 
 // 최초 실행
