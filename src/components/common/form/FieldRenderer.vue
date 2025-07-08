@@ -61,14 +61,12 @@
       />
     </template>
 
-
     <!-- 읽기 전용 -->
     <div
         v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart'].includes(field.type)"
         class="form-input readonly"
         v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
     />
-
 
     <!-- 입력 가능 -->
     <template v-else>
@@ -309,6 +307,7 @@ function onCheckboxChange(e, value) {
   model[field.key] = [...arr]; // 새 배열 대입하여 반응성 보장
   emit('update:model', { ...model });
 }
+
 </script>
 
 <style scoped>

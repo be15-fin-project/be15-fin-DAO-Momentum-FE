@@ -10,6 +10,7 @@ import {useAuthStore} from "@/stores/auth.js";
 import {companyRoutes} from "@/features/company/router.js";
 import {myPageRoutes} from "@/features/mypage/router.js";
 import {announcementRoutes} from "@/features/announcement/router.js";
+import {settingsRoutes} from "@/features/settings/router.js";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -27,7 +28,8 @@ const router = createRouter({
                 ...myPageRoutes,
                 ...retentionRoutes,
                 ...myPageRoutes,
-                ...announcementRoutes
+                ...announcementRoutes,
+                ...settingsRoutes
             ]
         },
         ...commonRoutes

@@ -163,7 +163,7 @@ const menuItems = [
     icon: 'fa-users',
     subItems: [
       { label: '사원 목록 조회', hrefs: ['/employees'] },
-      { label: '인사 발령 내역', hrefs: ['/appoints'] },
+      { label: '인사 발령 내역 조회', hrefs: ['/appoints'] },
       { label: '계약서 목록 조회', hrefs: ['/contracts'] }
     ],
     requireRole: ['MASTER', 'HR_MANAGER']
@@ -180,7 +180,7 @@ const menuItems = [
     subItems: [
       { label: '대시보드', hrefs: ['/mypage/dashboard'] },
       { label: '내 정보 조회', hrefs: ['/mypage/profile'] },
-      { label: '계약서 내역 조회', hrefs: ['/mypage/contracts'] }
+      { label: '내 계약서 조회', hrefs: ['/mypage/contracts'] }
     ]
   },
   {
