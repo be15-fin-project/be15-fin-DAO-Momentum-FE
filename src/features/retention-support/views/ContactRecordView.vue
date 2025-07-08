@@ -56,10 +56,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue';
-import { useRoute } from 'vue-router';
-import { storeToRefs } from 'pinia';
-import { useAuthStore } from '@/stores/auth.js';
+import {ref, onMounted, watch, computed} from 'vue';
+import {useRoute} from 'vue-router';
+import {storeToRefs} from 'pinia';
+import {useAuthStore} from '@/stores/auth.js';
 
 import {
   getRetentionContacts,
@@ -67,14 +67,14 @@ import {
   createRetentionContact,
   submitRetentionFeedback
 } from '@/features/retention-support/api.js';
-import { getDepartments, getPositions } from '@/features/works/api.js';
+import {getDepartments, getPositions} from '@/features/works/api.js';
 
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
-import { useToast } from 'vue-toastification';
+import {useToast} from 'vue-toastification';
 
 const toast = useToast();
 
@@ -82,7 +82,7 @@ const toast = useToast();
 const currentPage = ref(1);
 const filterValues = ref({});
 const tableData = ref([]);
-const pagination = ref({ currentPage: 1, totalPage: 1 });
+const pagination = ref({currentPage: 1, totalPage: 1});
 
 const isOpen = ref(false);
 const isSubmitModalOpen = ref(false);
@@ -99,7 +99,7 @@ const filterOptions = ref([]);
 
 const route = useRoute();
 const authStore = useAuthStore();
-const { userRole } = storeToRefs(authStore);
+const {userRole} = storeToRefs(authStore);
 
 /* ===== 초기 로딩 ===== */
 onMounted(async () => {
@@ -163,7 +163,7 @@ const initFilters = () => {
 };
 
 const normalizeFilterParams = (values) => {
-  const normalized = { ...values };
+  const normalized = {...values};
 
   if (normalized.date_start) {
     normalized.startDate = normalized.date_start;
@@ -191,14 +191,14 @@ const normalizeFilterParams = (values) => {
 };
 /* ===== 테이블 컬럼 ===== */
 const tableColumns = [
-  { key: 'profile', label: '#'},
-  { key: 'targetName', label: '대상자' },
-  { key: 'deptName', label: '부서' },
-  { key: 'positionName', label: '직위' },
-  { key: 'managerName', label: '진행자' },
-  { key: 'reason', label: '요청 사유' },
-  { key: 'createdAt', label: '요청일' },
-  { key: 'action', label: '상세' }
+  {key: 'profile', label: '#'},
+  {key: 'targetName', label: '대상자'},
+  {key: 'deptName', label: '부서'},
+  {key: 'positionName', label: '직위'},
+  {key: 'managerName', label: '진행자'},
+  {key: 'reason', label: '요청 사유'},
+  {key: 'createdAt', label: '요청일'},
+  {key: 'action', label: '상세'}
 ];
 
 
@@ -251,7 +251,7 @@ const openModalHandler = async (row) => {
       response: detail.response ?? '-',
       responseAt: detail.responseAt
           ? detail.responseAt.split('T')[0]
-          : new Date().toISOString().split('T')[0],
+          : '-',
       feedback: detail.feedback ?? '-'
     };
 
@@ -261,10 +261,10 @@ const openModalHandler = async (row) => {
         icon: 'fa-user',
         layout: 'two-column',
         fields: [
-          { key: 'deptName', label: '부서', type: 'input', editable: false },
-          { key: 'positionName', label: '직위', type: 'input', editable: false },
-          { key: 'target', label: '대상자', type: 'input', editable: false },
-          { key: 'createdAt', label: '요청일', type: 'input', editable: false },
+          {key: 'deptName', label: '부서', type: 'input', editable: false},
+          {key: 'positionName', label: '직위', type: 'input', editable: false},
+          {key: 'target', label: '대상자', type: 'input', editable: false},
+          {key: 'createdAt', label: '요청일', type: 'input', editable: false},
         ]
       },
       {
@@ -272,8 +272,8 @@ const openModalHandler = async (row) => {
         icon: 'fa-user-tie',
         layout: 'two-column',
         fields: [
-          { key: 'managerName', label: '진행자 이름', type: 'input', editable: false },
-          { key: 'managerNo', label: '진행자 사번', type: 'input', editable: false }
+          {key: 'managerName', label: '진행자 이름', type: 'input', editable: false},
+          {key: 'managerNo', label: '진행자 사번', type: 'input', editable: false}
         ]
       },
       {
@@ -281,7 +281,7 @@ const openModalHandler = async (row) => {
         icon: 'fa-envelope-open-text',
         layout: 'one-column',
         fields: [
-          { key: 'reason', label: '요청 사유', type: 'textarea', editable: false }
+          {key: 'reason', label: '요청 사유', type: 'textarea', editable: false}
         ]
       },
       {
@@ -346,27 +346,69 @@ const handleSubmitModal = () => {
   };
   submitFormSections.value = [
     {
-      title: '면담 요청 등록',
-      icon: 'fa-paper-plane',
+      title: '면담 대상자',
+      icon: 'fa-user',
+      layout: 'memberPicker',
+      fields: [
+        {
+          key: 'targetId',
+          label: '대상자 선택',
+          type: 'memberPicker',
+          treeData: departmentTree.value,
+          required: true
+        }
+      ]
+    },
+    {
+      title: '진행자(상급자)',
+      icon: 'fa-user-tie',
+      layout: 'memberPicker',
+      fields: [
+        {
+          key: 'managerId',
+          label: '상급자 선택',
+          type: 'memberPicker',
+          treeData: departmentTree.value,
+          required: true
+        }
+      ]
+    },
+    {
+      title: '면담 요청 사유',
+      icon: 'fa-envelope-open-text',
       layout: 'one-column',
       fields: [
-        { key: 'targetId', label: '대상자 ID', type: 'input', placeholder: '예: 51', editable: true, required: true },
-        { key: 'managerId', label: '상급자 ID', type: 'input', placeholder: '예: 34', editable: true, required: true },
-        { key: 'reason', label: '요청 사유', type: 'textarea', placeholder: '면담 요청 사유를 입력해주세요', editable: true, required: true }
+        {
+          key: 'reason',
+          label: '요청 사유',
+          type: 'textarea',
+          placeholder: '면담 요청 사유를 입력해주세요',
+          required: true,
+          editable: true
+        }
       ]
     }
   ];
 };
 
 /* ===== 등록 처리 ===== */
+// 등록 전에 로딩 상태 표시
+const isLoading = ref(false);
+
 const handleCreateContact = async () => {
-  const { targetId, managerId, reason } = formData.value;
+  const {targetId, managerId, reason} = formData.value;
 
   if (!targetId || !managerId || !reason?.trim()) {
     toast.error('모든 항목을 입력해주세요.');
     return;
   }
 
+  if (targetId === managerId) {
+    toast.error('대상자와 진행자는 서로 달라야 합니다.');
+    return;
+  }
+
+  isLoading.value = true;
   try {
     await createRetentionContact(formData.value);
     toast.success('면담 요청이 등록되었습니다.');
@@ -374,6 +416,8 @@ const handleCreateContact = async () => {
     await handleSearch(filterValues.value);
   } catch (e) {
     toast.error('면담 요청 중 오류가 발생했습니다.');
+  } finally {
+    isLoading.value = false;
   }
 };
 
@@ -382,7 +426,7 @@ watch(currentPage, () => handleSearch(filterValues.value));
 
 /* ===== 상단 탭 ===== */
 const headerTabs = computed(() => [
-  { label: '면담 요청 내역', to: '/retention/my-contacts', active: route.path === '/retention/my-contacts' },
-  { label: '면담 내역', to: '/retention/contact-list', active: route.path === '/retention/contact-list' }
+  {label: '면담 요청 내역', to: '/retention/my-contacts', active: route.path === '/retention/my-contacts'},
+  {label: '면담 내역', to: '/retention/contact-list', active: route.path === '/retention/contact-list'}
 ]);
 </script>
