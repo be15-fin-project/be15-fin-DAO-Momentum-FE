@@ -4,7 +4,7 @@
         <div>
           <div class = "first-header">
             <SectionHeader :icon-class="'fas fa-id-card'" :title="'개인정보'"/>
-            <BaseButton :icon="'fas fa-edit'" :variant="'edit'" @click="openModal">개인정보 수정</BaseButton>
+            <BaseButton :icon="'fas fa-edit'" :variant="'edit'" @click="openModal">정보 수정</BaseButton>
           </div>
           <InfoTable :headers = "personalInfo.headers" :rows="personalInfo.rows" />
         </div>
