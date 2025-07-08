@@ -179,6 +179,11 @@
           {{ opt.label }}
         </option>
       </select>
+      <DeptList
+          v-else-if="field.type === 'deptList'"
+          :list="field.list"
+          v-model="model[field.key]"
+      />
     </template>
   </div>
 </template>
@@ -192,6 +197,7 @@ import ProgressTimeline from "@/components/common/form/ProgressTimeline.vue";
 import ScoreBarChart from "@/components/common/form/ScoreBarChart.vue";
 import TreeNode from "@/components/common/TreeNode.vue";
 import MemberPickerField from "@/components/common/form/MemberPickerField.vue";
+import DeptList from "@/components/common/form/DeptList.vue";
 
 const props = defineProps({
   field: Object,
