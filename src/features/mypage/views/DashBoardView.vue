@@ -1,234 +1,3 @@
-<script setup>
-import {computed, ref} from 'vue'
-import FullCalendar from '@fullcalendar/vue3'
-import dayGridPlugin from '@fullcalendar/daygrid'
-import interactionPlugin from '@fullcalendar/interaction'
-import koLocale from '@fullcalendar/core/locales/ko'
-
-import ProfileCard from '@/features/mypage/components/ProfileCard.vue'
-import AttendanceInfoCard from '@/features/mypage/components/AttendanceInfoCard.vue'
-import VacationInfoCard from '@/features/mypage/components/VacationInfoCard.vue'
-import {getMyWorks} from "@/features/works/api.js";
-import {getHolidaysPerMonth} from "@/features/company/api.js";
-import CalendarAttendanceModal from "@/features/works/components/CalendarAttendanceModal.vue";
-import {useRouter} from "vue-router";
-import DocumentCard from "@/features/mypage/components/DocumentCard.vue";
-import KpiCard from "@/features/mypage/components/KpiCard.vue";
-import NoticeCard from "@/features/mypage/components/NoticeCard.vue";
-
-const BLUE = "#3b82f6"
-const RED = "#ef4444"
-const GREEN = "#10b981"
-
-const events = ref([]);
-const params = ref({
-  searchStartDate: null,
-  searchEndDate: null
-})
-const holidays = ref([])
-
-const currentView = ref('dayGridMonth')
-const titleHead = computed(() => {
-  switch (currentView.value) {
-    case 'dayGridMonth': return '월간 ';
-    case 'dayGridWeek' : return '주간 ';
-    case 'dayGridDay' : return '일일 ';
-    default: return ''
-  }
-})
-
-// 예시 데이터 (임시로 직접 주입)
-const profile = {
-  name: '이수진',
-  position: 'UX/UI 디자이너',
-  status: '재직중',
-  department: '디자인팀'
-}
-
-const attendance = {
-  startTime: '2025.06.08 오전 9:05',
-  endTime: '오후 6:30',
-  note: '초과근무 승인 반영'
-}
-
-const vacationInfo = {
-  remainingDays: 15,
-  vacations: [
-    {date: '6월 12일 (수)', label: '연차', colorStyle: 'color:var(--warning);font-weight:500;'},
-    {date: '6월 19일 (수)', label: '외근 (고객사 방문)', colorStyle: 'color:var(--blue-400);font-weight:500;'},
-    {date: '6월 28일 (금)', label: '반차', colorStyle: 'color:var(--warning);font-weight:500;'}
-  ]
-}
-
-/* 캘린더 모달 */
-const showCalendarModal = ref(false)
-const selectedAttendance = ref(null)
-const isWork = computed(() => selectedAttendance.value?.typeName === 'WORK')
-
-const handleEventClick = (info) => {
-  const event = info.event
-
-  selectedAttendance.value = {
-    workId: event.extendedProps?.workId,
-    typeName: event.extendedProps?.typeName,
-    startTime: event.start,
-    endTime: event.end,
-    breakTime: event.extendedProps?.breakTime,
-    workTime: event.extendedProps?.workTime,
-    title: event.title,
-    // 필요한 필드 더 추가 가능
-  }
-
-  if (selectedAttendance.value.typeName === '휴일') {
-    return;
-  }
-
-  if (selectedAttendance.value.typeName !== 'WORK') {
-    return;
-  }
-  console.log('선택된 이벤트:', selectedAttendance.value)
-  console.log('typeName:', selectedAttendance.value?.typeName)
-  showCalendarModal.value = true
-}
-
-/* TODO: workId를 실어서 출퇴근 정정 페이지로 이동 */
-const router = useRouter()
-
-const goToCorrectionPage = () => {
-  const workId = selectedAttendance.value?.workId
-  // if (!workId) return
-  // router.push({ name: 'WorkCorrectionRequest', query: { date } })
-}
-
-// 휴일 데이터를 이벤트로 변환하는 함수
-const convertHolidayToEvent = (holiday) => ({
-  title: holiday.holidayName,
-  start: holiday.date,
-  allDay: true,
-  color: RED,
-  extendedProps: {
-    typeName: '휴일', // "HOLIDAY"는 휴일 근무이므로 구별하기 위해 한글 사용
-  }
-})
-
-const fetchHolidaysForMonth = async (yearMonth) => {
-  const response = await getHolidaysPerMonth(yearMonth)
-
-  holidays.value = response.holidayGetDTOList || []
-}
-
-const parseTitle = (item) => {
-  if (item.typeName === 'VACATION') {
-    return vacationType(item.vacationType)
-  } else if (item.typeName === 'ADDITIONAL') {
-    return workType(item.childTypeName)
-  } else {
-    return workType(item.typeName)
-  }
-}
-
-const getColor = (item) => {
-  switch (item.typeName) {
-    case 'VACATION':
-      return GREEN;
-    default:
-      return BLUE;
-  }
-}
-
-const convertWorkToEvent = (item) => ({
-  title: parseTitle(item),
-  start: item.startAt,
-  end: item.endAt,
-  color: getColor(item),
-  extendedProps: {
-    workId: item.workId,
-    typeName: item.typeName,
-    vacationType: item.vacationType,
-    childTypeName: item.childTypeName,
-    breakTime: item.breakTime,
-    workTime: item.workTime
-  }
-})
-
-function formatTime(datetime) {
-  if (!datetime) return '-';
-
-  return datetime.toLocaleString().slice(0, -3);
-}
-
-function formatDuration(minutes) {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  const parts = [];
-  if (h > 0) parts.push(`${h}시간`);
-  if (m > 0) parts.push(`${m}분`);
-  return parts.length ? parts.join(' ') : '0분';
-}
-
-// 날짜 바뀔 때마다 데이터 다시 불러와서 이벤트 채워주는 함수
-const handleDatesSet = async (info) => {
-  params.value.searchStartDate = info.startStr
-  params.value.searchEndDate = info.endStr
-
-  currentView.value = info.view.type
-
-  const yearMonth = info.startStr.slice(0, 7) // yyyy-MM 형식
-  await fetchHolidaysForMonth(yearMonth)
-
-  const resp = await getMyWorks(params.value)
-  const workEvents = resp.works.map(convertWorkToEvent)
-  const holidayEvents = holidays.value.map(convertHolidayToEvent)
-
-  events.value = [...workEvents, ...holidayEvents]
-}
-
-const workType = (type) => ({
-  WORK: '근무',
-  REMOTE_WORK: '재택 근무',
-  BUSINESS_TRIP: '출장',
-  ADDITIONAL: '초과근무',
-  OVERTIME: '연장근무',
-  NIGHT: '야간근무',
-  HOLIDAY: '휴일근무',
-}[type] || type)
-
-const vacationType = (type) => ({
-  PAID_ETC: '기타 유급휴가',
-  UNPAID_ETC: '기타 무급휴가',
-  DAYOFF: '연차',
-  AM_HALF_DAYOFF: '오전 반차',
-  PM_HALF_DAYOFF: '오후 반차',
-  REFRESH: '리프레시 휴가',
-  MILITARY_TRAINING: '군 소집 훈련',
-  LIFE_EVENT: '경조사',
-}[type] || type)
-
-// FullCalendar 옵션
-const calendarOptions = computed(() => ({
-  plugins: [dayGridPlugin, interactionPlugin],
-  initialView: 'dayGridMonth',
-  locale: koLocale,
-  selectable: true,
-  height: 600,
-  headerToolbar: {
-    left: 'prev,next today',
-    center: 'title',
-    /* 일단 잘 돼서 넣어둠. 문제 생기면 이거 지우고 아래 주석 풀어서 사용 (월간 일정만 보기) */
-    right: 'dayGridMonth dayGridWeek dayGridDay'
-    // right: ''
-  },
-  buttonText: {
-    today: '오늘',
-    month: '월'
-  },
-  events: events.value,
-  datesSet: handleDatesSet,
-  eventClick: handleEventClick,
-}));
-
-</script>
-
 <template>
   <div class="dashboard-layout">
     <aside class="dashboard-side">
@@ -238,43 +7,35 @@ const calendarOptions = computed(() => ({
 
       <NoticeCard
           :notices="[
-              { title: '운영 보고서 안내', meta: '운영팀 · 2024.12.30' },
-              { title: '6월 워크샵 사전 신청', meta: '총무팀 · 2024.06.01' }
-            ]"
+          { title: '운영 보고서 안내', meta: '운영팀 · 2024.12.30' },
+          { title: '6월 워크샵 사전 신청', meta: '총무팀 · 2024.06.01' }
+        ]"
       />
     </aside>
 
     <section class="dashboard-main">
       <div class="card calendar-card">
         <div class="side-section-title">
-          <span class="material-icons">event_note</span>{{ titleHead }}일정
+          <span class="material-icons">event_note</span>{{ currentMonth.format('YYYY년 MM월') }} 일정
         </div>
-        <FullCalendar :options="calendarOptions"/>
+
+        <CustomCalendar
+            :events="events"
+            @clickEvent="handleEventClick"
+            @monthChanged="handleMonthChange"
+        />
       </div>
 
-      <!-- 결재문서 카드 -->
       <DocumentCard/>
-      <!-- KPI 카드 -->
-      <KpiCard
-          :kpis="[
-    {
-      category: '업무',
-      title: '매출 향상',
-      goal: '30%',
-      progress: 50,
-      progressLabel: '15%',
-      variant: 'accent'
-    },
-    {
-      category: '개인',
-      title: 'UI 개선안 제출',
-      goal: '5건',
-      progress: 60,
-      progressLabel: '3건',
-      variant: 'success'
-    }
-  ]"
-      />
+
+      <KpiCard :kpis="[
+        {
+          category: '업무', title: '매출 향상', goal: '30%', progress: 50, progressLabel: '15%', variant: 'accent'
+        },
+        {
+          category: '개인', title: 'UI 개선안 제출', goal: '5건', progress: 60, progressLabel: '3건', variant: 'success'
+        }
+      ]"/>
     </section>
   </div>
 
@@ -288,6 +49,209 @@ const calendarOptions = computed(() => ({
       @editRequest="goToCorrectionPage"
   />
 </template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue'
+import dayjs from 'dayjs'
+import { useRouter } from 'vue-router'
+
+// 컴포넌트 임포트
+import ProfileCard from '@/features/mypage/components/ProfileCard.vue'
+import AttendanceInfoCard from '@/features/mypage/components/AttendanceInfoCard.vue'
+import VacationInfoCard from '@/features/mypage/components/VacationInfoCard.vue'
+import DocumentCard from '@/features/mypage/components/DocumentCard.vue'
+import KpiCard from '@/features/mypage/components/KpiCard.vue'
+import NoticeCard from '@/features/mypage/components/NoticeCard.vue'
+import CalendarAttendanceModal from '@/features/works/components/CalendarAttendanceModal.vue'
+import CustomCalendar from '@/features/mypage/components/CustomCalendar.vue'
+
+// API
+import { getMyWorks } from '@/features/works/api.js'
+import { getHolidaysPerMonth } from '@/features/company/api.js'
+import { getEvaluationRounds } from '@/features/performance/api.js'
+import isBetween from 'dayjs/plugin/isBetween'
+dayjs.extend(isBetween)
+
+// 상태
+const currentMonth = ref(dayjs())
+const events = ref([])
+const holidays = ref([])
+const evaluationRounds = ref([])
+const params = ref({ searchStartDate: null, searchEndDate: null })
+
+const showCalendarModal = ref(false)
+const selectedAttendance = ref(null)
+const isWork = computed(() => selectedAttendance.value?.typeName === 'WORK')
+const router = useRouter()
+
+// 이벤트 클릭 핸들링
+const handleEventClick = (event) => {
+  selectedAttendance.value = event
+  if (event.typeName === '평가') {
+    const today = dayjs()
+    const start = dayjs(event.startDate)
+    const end = dayjs(event.endDate)
+
+    if (today.isBetween(start, end, null, '[]')) {
+      // 오늘이 평가 기간에 포함되면 제출 페이지로 이동
+      router.push('/eval/submit')
+    }
+    return
+  }
+
+  if (event.typeName !== '휴일') {
+    showCalendarModal.value = true
+  }
+}
+
+// 교정 요청 페이지 이동
+const goToCorrectionPage = () => {
+  const workId = selectedAttendance.value?.workId
+  if (workId) {
+    router.push({ name: 'WorkCorrectionRequest', query: { workId } })
+  }
+}
+
+// 달 변경 핸들링
+const handleMonthChange = async (month) => {
+  currentMonth.value = month
+
+  const start = month.startOf('month').subtract(7, 'day').startOf('week').format('YYYY-MM-DD')
+  const end = month.endOf('month').endOf('week').format('YYYY-MM-DD')
+  params.value.searchStartDate = start
+  params.value.searchEndDate = end
+
+  const yearMonth = month.format('YYYY-MM')
+  const holidayResp = await getHolidaysPerMonth(yearMonth)
+  holidays.value = holidayResp.holidayGetDTOList || []
+
+  const workResp = await getMyWorks(params.value)
+  const workEvents = workResp.works.map(convertWorkToEvent)
+  const holidayEvents = holidays.value.map(convertHolidayToEvent)
+
+  await loadEvaluationRounds()
+  const evaluation = evaluationEvents.value
+
+  events.value = [...workEvents, ...holidayEvents, ...evaluation]
+}
+
+// 평가 회차 로딩
+const loadEvaluationRounds = async () => {
+  try {
+    const res = await getEvaluationRounds()
+    evaluationRounds.value = res.list || []
+  } catch (e) {
+    console.error('평가 회차 불러오기 실패:', e)
+    evaluationRounds.value = []
+  }
+}
+
+// 평가 기간 이벤트 변환
+const evaluationEvents = computed(() => {
+  return evaluationRounds.value
+      .filter(round => {
+        if (!round.startAt || !round.endAt) return false
+        const start = dayjs(round.startAt)
+        const end = dayjs(round.endAt)
+        return (
+            start.isBefore(params.value.searchEndDate) &&
+            end.isAfter(dayjs(params.value.searchStartDate))
+        )
+      })
+      .map(round => ({
+        title: `평가기간 (${round.roundNo}회차)`,
+        startDate: round.startAt,
+        endDate: round.endAt, // 끝일 포함
+        color: 'var(--warning)',
+        typeName: '평가'
+      }))
+})
+
+// 근무 이벤트 변환
+const convertWorkToEvent = (item) => ({
+  title: parseTitle(item),
+  startDate: item.startAt,
+  endDate: item.endAt,
+  startTime: item.startAt,
+  endTime: item.endAt,
+  color: getColor(item),
+  workId: item.workId,
+  typeName: item.typeName,
+  vacationType: item.vacationType,
+  childTypeName: item.childTypeName,
+  breakTime: item.breakTime,
+  workTime: item.workTime
+})
+
+// 휴일 이벤트 변환
+const convertHolidayToEvent = (holiday) => ({
+  title: holiday.holidayName,
+  startDate: holiday.date,
+  endDate: holiday.date,
+  color: 'var(--error)',
+  typeName: '휴일'
+})
+
+// 이벤트 타이틀 변환
+const parseTitle = (item) => {
+  if (item.typeName === 'VACATION') return vacationType(item.vacationType)
+  if (item.typeName === 'ADDITIONAL') return workType(item.childTypeName)
+  return workType(item.typeName)
+}
+
+// 색상
+const getColor = (item) => {
+  switch (item.typeName) {
+    case 'VACATION': return 'var(--success)'
+    default: return 'var(--blue-400)'
+  }
+}
+
+// 시간 포맷팅
+function formatTime(datetime) {
+  if (!datetime) return '-'
+  return dayjs(datetime).format('YYYY.MM.DD HH:mm')
+}
+
+// 시간 길이 포맷팅
+function formatDuration(minutes) {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  return [`${h && `${h}시간`}`, `${m && `${m}분`}`].filter(Boolean).join(' ') || '0분'
+}
+
+// 더미 데이터
+const profile = {
+  name: '이수진', position: 'UX/UI 디자이너', status: '재직중', department: '디자인팀'
+}
+
+const attendance = {
+  startTime: '2025.06.08 오전 9:05', endTime: '오후 6:30', note: '초과근무 승인 반영'
+}
+
+const vacationInfo = {
+  remainingDays: 15,
+  vacations: [
+    { date: '6월 12일 (수)', label: '연차', colorStyle: 'color:var(--warning);font-weight:500;' },
+    { date: '6월 19일 (수)', label: '외근 (고객사 방문)', colorStyle: 'color:var(--blue-400);font-weight:500;' },
+    { date: '6월 28일 (금)', label: '반차', colorStyle: 'color:var(--warning);font-weight:500;' }
+  ]
+}
+
+// 유형 변환
+const workType = (type) => ({
+  WORK: '근무', REMOTE_WORK: '재택 근무', BUSINESS_TRIP: '출장', ADDITIONAL: '초과근무',
+  OVERTIME: '연장근무', NIGHT: '야간근무', HOLIDAY: '휴일근무'
+})[type] || type
+
+const vacationType = (type) => ({
+  PAID_ETC: '기타 유급휴가', UNPAID_ETC: '기타 무급휴가', DAYOFF: '연차', AM_HALF_DAYOFF: '오전 반차',
+  PM_HALF_DAYOFF: '오후 반차', REFRESH: '리프레시 휴가', MILITARY_TRAINING: '군 소집 훈련', LIFE_EVENT: '경조사'
+})[type] || type
+
+// 최초 실행
+onMounted(() => handleMonthChange(currentMonth.value))
+</script>
 
 <style scoped>
 /* ===== 레이아웃 ===== */
