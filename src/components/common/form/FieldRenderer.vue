@@ -40,6 +40,13 @@
         :editable="isEditMode"
     />
 
+    <MemberPickerField
+        v-else-if="field.type === 'memberPicker'"
+        v-model="model[field.key]"
+        :field="field"
+        :readonly="readonly"
+    />
+
     <template v-if="field.type === 'progressTimeline'">
       <ProgressTimeline
           v-if="!readonly && field.editable"
@@ -65,7 +72,7 @@
 
     <!-- 읽기 전용 -->
     <div
-        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart'].includes(field.type)"
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart', 'memberPicker'].includes(field.type)"
         class="form-input readonly"
         v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
     />
@@ -137,6 +144,7 @@ import LikertScale from "@/components/common/form/LikertScale.vue";
 import RadarChart from "@/components/common/form/RadarChart.vue";
 import ProgressTimeline from "@/components/common/form/ProgressTimeline.vue";
 import ScoreBarChart from "@/components/common/form/ScoreBarChart.vue";
+import MemberPickerField from "@/components/common/form/MemberPickerField.vue";
 
 const props = defineProps({
   field: Object,
