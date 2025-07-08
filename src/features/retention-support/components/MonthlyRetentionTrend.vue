@@ -11,7 +11,33 @@
 
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue';
-import Chart from 'chart.js/auto';
+import {
+  Chart,
+  LineController,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+import {
+  LineWithErrorBarsController,
+  PointWithErrorBar,
+} from 'chartjs-chart-error-bars';
+
+// Chart.js + error bar 플러그인 등록
+Chart.register(
+    LineController,
+    LineElement,
+    PointElement,
+    CategoryScale,
+    LinearScale,
+    Tooltip,
+    Legend,
+    LineWithErrorBarsController,
+    PointWithErrorBar
+);
 
 const props = defineProps({
   data: {
@@ -23,45 +49,79 @@ const props = defineProps({
 const canvasRef = ref(null);
 let chartInstance = null;
 
-// Function to get CSS variables (for consistent theming)
+// CSS 변수 가져오기
 function getCssVar(name) {
-  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return getComputedStyle(document.documentElement)
+      .getPropertyValue(name)
+      .trim();
 }
 
-// Function to render the chart
+// 차트 렌더링 함수
 function renderChart() {
-  if (!props.data || !canvasRef.value) return;
+  if (!canvasRef.value) return;
 
-  const labels = props.data.map(item => `${item.month}월`);
-  const averageScores = props.data.map(item => item.averageScore);
-  const stdDeviations = props.data.map(item => item.stdDeviation);
+  const fullMonths = Array.from({ length: 12 }, (_, i) => `${i + 1}월`);
+  const monthDataMap = new Map(props.data.map((item) => [item.month, item]));
 
-  const color = getCssVar('--main-color');
-  const bgColor = getCssVar('--main-color-light') || '#cfe2ff';
+  const averageScores = [];
+  const errorBarData = [];
+
+  for (let i = 1; i <= 12; i++) {
+    const item = monthDataMap.get(i);
+
+    if (
+        item &&
+        Number.isFinite(item.averageScore) &&
+        Number.isFinite(item.stdDeviation)
+    ) {
+      averageScores.push(item.averageScore);
+      errorBarData.push({
+        y: item.averageScore,
+        yMin: item.averageScore - item.stdDeviation,
+        yMax: item.averageScore + item.stdDeviation,
+      });
+    } else {
+      averageScores.push(null);
+      errorBarData.push({
+        y: null,
+        yMin: null,
+        yMax: null,
+      });
+    }
+  }
+
+  const mainColor = getCssVar('--main-color') || '#4e79a7';
+  const errorBarColor = '#888';
 
   if (chartInstance) chartInstance.destroy();
 
   const ctx = canvasRef.value.getContext('2d');
   chartInstance = new Chart(ctx, {
-    type: 'bar',
+    type: 'line',
     data: {
-      labels,
+      labels: fullMonths,
       datasets: [
         {
           type: 'line',
           label: '평균 근속 지수',
           data: averageScores,
-          borderColor: color,
-          backgroundColor: color,
+          borderColor: mainColor,
+          backgroundColor: mainColor,
           tension: 0.3,
           fill: false,
+          pointRadius: 3,
           yAxisID: 'y',
         },
         {
-          type: 'bar',
-          label: '월별 표준편차',
-          data: stdDeviations,
-          backgroundColor: bgColor,
+          type: 'lineWithErrorBars',
+          label: '표준편차',
+          data: errorBarData,
+          borderColor: errorBarColor,
+          errorBarColor: errorBarColor,
+          errorBarWhiskerColor: errorBarColor,
+          errorBarLineWidth: 1.5,
+          errorBarWhiskerLineWidth: 1.5,
+          pointRadius: 0,
           yAxisID: 'y',
         },
       ],
@@ -70,32 +130,34 @@ function renderChart() {
       responsive: true,
       scales: {
         x: {
-          title: {
-            display: true,
-            text: '월',
-          },
+          title: { display: true, text: '월' },
         },
         y: {
           beginAtZero: true,
-          title: {
-            display: true,
-            text: '근속 지수',
-          },
+          title: { display: true, text: '근속 지수' },
         },
       },
       plugins: {
         legend: { position: 'bottom' },
+        tooltip: {
+          callbacks: {
+            label: (ctx) =>
+                ctx.raw != null
+                    ? `${ctx.dataset.label}: ${ctx.formattedValue}`
+                    : null,
+          },
+        },
       },
     },
   });
 }
 
+// 생명주기 + watch
 onMounted(renderChart);
 onBeforeUnmount(() => chartInstance?.destroy());
-
-// Watch for data changes to update the chart
 watch(() => props.data, renderChart);
 </script>
+
 
 <style scoped>
 .chart-box {
