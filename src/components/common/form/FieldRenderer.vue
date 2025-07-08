@@ -100,6 +100,16 @@
           class="form-input"
           v-model="model[field.key]"
       />
+      <!-- file -->
+      <div v-else-if="field.type === 'file'" class="form-input file-upload">
+        <label for="file-input" class="file-label">
+          <input
+              id="file-input"
+              type="file"
+              @change="onFileChange"
+          />
+        </label>
+      </div>
       <textarea
           v-else-if="field.type === 'textarea'"
           class="form-textarea"
@@ -121,7 +131,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import {computed, ref} from 'vue';
 import SliderGroup from "@/components/common/form/SliderGroup.vue";
 import LikertScale from "@/components/common/form/LikertScale.vue";
 import RadarChart from "@/components/common/form/RadarChart.vue";
@@ -133,6 +143,10 @@ const props = defineProps({
   model: Object,
   readonly: Boolean
 });
+
+const emit = defineEmits(['file-change']);
+
+const { model, field } = props;
 
 // null, undefined, 빈 문자열일 때 대체 표시값
 const displayValue = computed(() => {
@@ -152,11 +166,32 @@ const onPositiveIntegerInput = (key) => {
   // model[key] = cleaned !== '' ? parseInt(cleaned, 10) : '';
 };
 
+const fileState = ref({});
+
+const onFileChange = (e) => {
+  const file = e.target.files[0];
+  console.log('FieldRenderer: selected file:', file);
+  if (!file) return;
+  emit('file-change', { fieldKey: field.key, file });
+};
+
+
 const scoreWidth = computed(() => {
   const raw = props.field.value ?? props.model?.[props.field.key];
   const num = parseInt(raw);
   return isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
 });
+
+function getValueByPath(obj, path) {
+  return path.split('.').reduce((o, k) => o?.[k], obj);
+}
+function setValueByPath(obj, path, value) {
+  const keys = path.split('.');
+  const lastKey = keys.pop();
+  const target = keys.reduce((o, k) => o[k] ??= {}, obj);
+  target[lastKey] = value;
+}
+
 </script>
 
 <style scoped>
