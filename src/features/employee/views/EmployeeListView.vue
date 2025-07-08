@@ -8,8 +8,12 @@ import SideModal from "@/components/common/SideModal.vue";
 import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createEmployee, getEmployees} from "@/features/employee/api.js";
 import {useRouter} from "vue-router";
+import {useToast} from "vue-toastification";
 
+const toast = useToast();
 const router = useRouter();
+
+const isSubmitting = ref(false);
 
 const currentPage = ref(1);
 const pagination = ref({currentPage: 1, totalPage: 1});
@@ -244,13 +248,18 @@ const handleHeaderButton = (event) => {
 
 /* TODO: 프론트 검증 로직 작성 */
 const handleRegisterSubmit = async (req) => {
-  console.log('req.employeeRoles:', req.employeeRoles); // 👈 콘솔 찍어보기
+  if (isSubmitting.value) return;
+
+  isSubmitting.value = true;
   try {
     const resp = await createEmployee(req);
     closeModal();
-    handleSearch(); // 목록 새로고침
+    toast.success('사원 등록 완료');
+    handleSearch();
   } catch (e) {
-    console.error('등록 실패:', e);
+    toast.error('사원 등록 실패');
+  } finally {
+    isSubmitting.value = false;
   }
 };
 </script>
@@ -285,6 +294,7 @@ const handleRegisterSubmit = async (req) => {
         icon="fa-user-plus"
         @close="closeModal"
         :sections="modalSections"
+        :submitDisabled="isSubmitting"
         @submit="handleRegisterSubmit(req)"
     />
   </main>
