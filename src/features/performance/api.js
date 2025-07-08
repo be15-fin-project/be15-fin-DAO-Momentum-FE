@@ -5,6 +5,12 @@ import api from '@/api/axios.js';
 // KPI 대시보드 API
 // ==================================================
 
+// KPI 대시보드 내 KPI 내역 조회
+export async function getMyKpiDashboard(params) {
+    const res = await api.get('/kpi/dashboard', { params });
+    return res.data.data;
+}
+
 // KPI 통계 조회
 export async function getKpiStatistics(params) {
     const res = await api.get('/kpi/statistics', { params });

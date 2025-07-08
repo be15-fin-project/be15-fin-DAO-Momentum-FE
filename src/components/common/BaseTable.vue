@@ -1,10 +1,11 @@
 <script setup>
 defineProps({
   columns: {type: Array, required: true},
-  rows: {type: Array, default: () => []}
+  rows: {type: Array, default: () => []},
+  actions: { type: Array, default: () => [] }
 })
 
-const emit = defineEmits(['click-detail']);
+const emit = defineEmits(['click-detail', 'action']);
 </script>
 
 <template>
@@ -17,6 +18,7 @@ const emit = defineEmits(['click-detail']);
           <th v-for="col in columns" :key="col.key">
             {{ col.label }}
           </th>
+          <th v-for="action in actions" :key="`action-header-${action.key}`">{{action.label || '동작'}}</th>
         </tr>
         </thead>
 
@@ -72,7 +74,18 @@ const emit = defineEmits(['click-detail']);
                 <i class="fas fa-angle-right"></i>
               </button>
             </template>
+          </td>
 
+          <td
+            v-for="action in actions"
+            :key="`action-cell-${action.key}-${idx}`"
+          >
+            <button
+                class="action-button"
+                @click="emit('action', { action: action.key, row })"
+            >
+              <i :class="['fas', action.icon]"></i>
+            </button>
           </td>
         </tr>
         </tbody>

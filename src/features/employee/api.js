@@ -6,7 +6,7 @@ export const getEmployees = async (params) => {
 }
 
 export const getEmployeeDetails = async (empId) => {
-    const resp = await api.get($`/employees/{empId}`);
+    const resp = await api.get(`/employees/${empId}`);
     return resp.data.data;
 }
 
@@ -20,14 +20,19 @@ export const getContracts = async (params) => {
     return resp.data.data;
 }
 
-export const getDownloadUrl = async (s3Key) => {
-    const resp = await api.post("/file/download-url", {key: s3Key});
-    return resp.data.data.signedUrl;
+export const getMyContracts = async (params) => {
+    const resp = await api.get("/contracts/me", {params});
+    return resp.data.data;
 }
 
 export const createContract = async (req) => {
     const resp = await api.post('/contracts', req);
     return resp.data.data;
+}
+
+export const deleteContract = async (contractId) => {
+    const resp = await api.delete(`/contracts/${contractId}`);
+    return resp.data.data
 }
 
 export const getAppoints = async (params) => {
@@ -51,5 +56,15 @@ export const createEmployees = async (req) => {
 
 export const getCSVTemplate = async () => {
     const resp = await api.get('/employees/csv')
+    return resp.data.data;
+}
+
+export const updateEmpInfo = async (req, empId) => {
+    const resp = await api.put(`/employees/${empId}`, req)
+    return resp.data.data;
+}
+
+export const updateEmpRecords = async (req, empId) => {
+    const resp = await api.put(`/employees/${empId}/hr-info`, req)
     return resp.data.data;
 }

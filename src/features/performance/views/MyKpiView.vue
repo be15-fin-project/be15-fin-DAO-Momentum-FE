@@ -52,7 +52,7 @@
         :title="`KPI 상세 정보`"
         icon="fa-chart-line"
         :sections="formSections"
-        :showReject="canCancelRequest"
+        :showReject="canCancelRequest || canReject"
         :reject-text="rejectText"
         :showSubmit="canEditProgress"
         :submit-text="submitText"
@@ -82,7 +82,7 @@
 
 <script setup>
 // 외부 라이브러리
-import { ref, onMounted, onBeforeUnmount, watch, computed } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, computed, watchEffect } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 // API
@@ -93,7 +93,7 @@ import {
   createMyKpi,
   getKpiDetail,
   updateKpiProgress,
-  deleteKpi
+  deleteKpi, withdrawKpi
 } from '@/features/performance/api.js';
 
 // 컴포넌트
@@ -105,6 +105,37 @@ import BaseTable from '@/components/common/BaseTable.vue';
 import DonutChart from '@/features/performance/components/DonutChart.vue';
 import LineChart from '@/features/performance/components/LineChart.vue';
 import { useToast } from 'vue-toastification';
+import DeleteConfirmToast from '@/components/common/DeleteConfirmToast.vue';
+
+const showDeleteConfirm = () => {
+  return new Promise((resolve) => {
+    const id = toast(
+        {
+          component: DeleteConfirmToast,
+          props: {
+            toastId: '',
+            resolve
+          }
+        },
+        {
+          type: 'error',
+          timeout: false,
+          closeOnClick: false,
+          draggable: false
+        }
+    );
+
+    toast.update(id, {
+      content: {
+        component: DeleteConfirmToast,
+        props: {
+          toastId: id,
+          resolve
+        }
+      }
+    });
+  });
+};
 
 const toast = useToast();
 // 라우터 관련
@@ -169,6 +200,11 @@ const canCancelRequest = computed(() => {
       detail.statusType === 'ACCEPTED' &&
       new Date(detail.deadline) > new Date()
   );
+});
+
+const canReject = computed(() => {
+  const detail = createForm.value;
+  return detail.statusType === 'PENDING';
 });
 
 // 페이지 변경 감지 → KPI 목록 재조회
@@ -455,7 +491,23 @@ function startCancelRequest() {
 }
 
 // 취소 버튼 핸들러
-function handleDetailModalReject() {
+async function handleDetailModalReject() {
+  // 대기 상태일 경우 철회 확인 토스트 띄우기
+  if (canReject.value) {
+    const confirmed = await showDeleteConfirm();
+    if (!confirmed) return;
+
+    try {
+      const res = await withdrawKpi(selectedKpiId.value, { reason: '사용자 철회' });
+      toast.success(res.data?.message || 'KPI가 성공적으로 철회되었습니다.');
+      isOpen.value = false;
+      await handleSearch(filterValues.value);
+    } catch (e) {
+      toast.error('KPI 철회 중 오류가 발생했습니다.');
+    }
+    return;
+  }
+
   if (editMode.value === 'cancel' || editMode.value === 'progress') {
     // 편집 취소
     editMode.value = null;
@@ -616,6 +668,14 @@ onMounted(() => {
 function handleBack() {
   router.push({ path: '../kpi/employees' });
 }
+
+watchEffect(() => {
+  const id = route.query.kpiId
+  if (id) {
+    openModalHandler(id)
+  }
+})
+
 
 </script>
 

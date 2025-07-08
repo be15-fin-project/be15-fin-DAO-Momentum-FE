@@ -3,6 +3,7 @@
   <button
       type="button"
       :class="buttonClass"
+      :disabled="disabled"
       @click="handleClick"
   >
     <i v-if="icon" :class="`fas fa-${icon}`"></i>
@@ -16,6 +17,7 @@ export default {
   props: {
     variant: { type: String, default: 'default' },
     icon: { type: String, default: '' },
+    disabled: { type: Boolean, default: false },
   },
   methods: {
     handleClick(event) {
@@ -101,5 +103,13 @@ export default {
 .btn-edit:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 25px rgba(239, 68, 68, 0.35);
+}
+
+.btn-action:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+  transform: none;
+  box-shadow: none;
 }
 </style>
