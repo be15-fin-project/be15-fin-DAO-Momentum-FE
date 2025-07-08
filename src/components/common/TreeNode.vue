@@ -16,7 +16,7 @@
       <span
           class="tree-label"
           :class="{ active: selectedId === node.deptId }"
-          @click.stop="emit('select', node.deptId)"
+          @click.stop="emit('select', node.deptId, node.name)"
       >
         {{ node.name }}
       </span>
@@ -29,7 +29,7 @@
           :node="child"
           :selected-id="selectedId"
           :depth="depth + 1"
-          @select="emit('select', $event)"
+          @select="(id, name) => emit('select', id, name)"
       />
     </div>
   </div>

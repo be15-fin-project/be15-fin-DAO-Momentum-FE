@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, ref, watch} from "vue";
+import {computed, onMounted, reactive, ref, watch} from "vue";
 import Pagination from "@/components/common/Pagination.vue";
 import Filter from "@/components/common/Filter.vue";
 import BaseTable from "@/components/common/BaseTable.vue";
@@ -127,10 +127,9 @@ roleOptions.value = [
 
 onMounted(async () => {
   const depts = await getDepartments()
-  departmentTree.value = depts.data?.departmentInfoDTOList || [];
-  deptOptions.value = [
-    // ...depts.map(p => ({label: p.name, value: p.deptId}))
-  ];
+  const raw = depts.data?.departmentInfoDTOList || [];
+  departmentTree.value = raw;
+  deptOptions.value = raw;
 
   const positions = await getPositions();
   positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({label: p.name, value: p.positionId}))];
@@ -148,7 +147,7 @@ const goToDetailsPage = (emp) => {
 
 const departmentTree = ref([]);
 
-const req = {
+const req = reactive({
   name: '',
   birthDate: null,
   email: '',
@@ -162,7 +161,7 @@ const req = {
   remainingDayoffHours: 0,
   remainingRefreshDays: 0,
   gender: null,
-};
+});
 
 
 const openCreateModal = () => {
@@ -179,17 +178,18 @@ const modalSections = computed(() => [
     icon: 'fa-user',
     layout: 'two-column',
     fields: [
-      {key: 'name', label: '이름', type: 'input', editable: true, required: true, placeholder: '홍길동'},
+      { key: 'name', label: '이름', type: 'input', editable: true, required: true, placeholder: '홍길동' },
       {
-        key: 'gender', label: '성별', type: 'select', editable: true, required: true, options: [
-          {label: '남성', value: 'M'},
-          {label: '여성', value: 'F'}
+        key: 'gender', label: '성별', type: 'select', editable: true, required: true,
+        options: [
+          { label: '남성', value: 'M' },
+          { label: '여성', value: 'F' }
         ]
       },
-      {key: 'birthDate', label: '생년월일', type: 'date', editable: true, required: true},
-      {key: 'email', label: '이메일', type: 'input', editable: true, required: true, placeholder: 'gildong@example.com'},
-      {key: 'contact', label: '연락처', type: 'input', editable: true, required: true, placeholder: '010-0000-0000'},
-      {key: 'address', label: '주소', type: 'input', editable: true, required: true, placeholder: '도로명 주소를 입력하세요.'},
+      { key: 'birthDate', label: '생년월일', type: 'date', editable: true, required: true },
+      { key: 'email', label: '이메일', type: 'input', editable: true, required: true, placeholder: 'gildong@example.com' },
+      { key: 'contact', label: '연락처', type: 'input', editable: true, required: true, placeholder: '010-0000-0000' },
+      { key: 'address', label: '주소', type: 'input', editable: true, required: true, placeholder: '도로명 주소를 입력하세요.' },
     ]
   },
   {
@@ -197,33 +197,38 @@ const modalSections = computed(() => [
     icon: 'fa-briefcase',
     layout: 'two-column',
     fields: [
-      {key: 'deptId', label: '부서', type: 'select', editable: true, options: deptOptions.value || []},
-      {key: 'positionId', label: '직위', type: 'select', editable: true, required: true, options: positionOptions.value || []},
+      { key: 'deptId', label: '부서', type: 'tree', editable: true, options: deptOptions.value || [] },
+      { key: 'positionId', label: '직위', type: 'select', editable: true, required: true, options: positionOptions.value || [] },
       {
-        key: 'status',
-        label: '재직 상태',
-        type: 'select',
-        editable: true,
-        required: true,
+        key: 'status', label: '재직 상태', type: 'select', editable: true, required: true,
         options: [
-          {label: '재직', value: 'EMPLOYED'},
-          {label: '휴직', value: 'ON_LEAVE'},
-          {label: '퇴사', value: 'RESIGNED'}
+          { label: '재직', value: 'EMPLOYED' },
+          { label: '휴직', value: 'ON_LEAVE' },
+          { label: '퇴사', value: 'RESIGNED' }
         ]
       },
-      {key: 'joinDate', label: '입사일', type: 'date', editable: true, required: true},
-      {key: 'remainingDayoffHours', label: '부여 연차 시간 (예: 15일 -> 120)', type: 'number', editable: true, required: true, placeholder: '120'},
-      {key: 'remainingRefreshDays', label: '부여 리프레시 휴가 일수', type: 'number', editable: true, required: true},
-      /* TODO: 멀티 셀렉트 형태로 수정 필요 (현재는 선택값 없는 경우만 등록 가능) */
+      { key: 'joinDate', label: '입사일', type: 'date', editable: true, required: true },
+      { key: 'remainingDayoffHours', label: '부여 연차 시간 (예: 15일 -> 120)', type: 'number', editable: true, required: true, placeholder: '120' },
+      { key: 'remainingRefreshDays', label: '부여 리프레시 휴가 일수', type: 'number', editable: true, required: true },
+    ]
+  },
+  {
+    title: '권한 설정 정보',
+    icon: 'fa-shield-alt',
+    layout: 'one-column',
+    fields: [
       {
         key: 'employeeRoles',
         label: '권한',
-        type: 'select',
+        type: 'checkbox-group',
+        style: 'permission',
         editable: true,
-        options: Object.keys(roleMap).filter(key => key !== 'EMPLOYEE').map(key => ({label: roleMap[key], value: key}))
-      },
+        options: Object.keys(roleMap).filter(k => k !== 'EMPLOYEE').map(k => ({
+          label: roleMap[k], value: k
+        }))
+      }
     ]
-  },
+  }
 ]);
 
 const handleHeaderButton = (event) => {
@@ -239,6 +244,7 @@ const handleHeaderButton = (event) => {
 
 /* TODO: 프론트 검증 로직 작성 */
 const handleRegisterSubmit = async (req) => {
+  console.log('req.employeeRoles:', req.employeeRoles); // 👈 콘솔 찍어보기
   try {
     const resp = await createEmployee(req);
     closeModal();

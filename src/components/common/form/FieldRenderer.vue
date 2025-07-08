@@ -62,14 +62,12 @@
     </template>
 
 
-
     <!-- 읽기 전용 -->
     <div
         v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart'].includes(field.type)"
         class="form-input readonly"
         v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
     />
-
 
 
     <!-- 입력 가능 -->
@@ -82,7 +80,7 @@
           :placeholder="field.placeholder || field.label"
       />
       <template v-if="field.type === 'html'">
-        <div class="html-field" v-html="field.value" />
+        <div class="html-field" v-html="field.value"/>
       </template>
       <input
           v-else-if="field.type === 'number'"
@@ -100,17 +98,77 @@
           class="form-input"
           v-model="model[field.key]"
       />
+      <!-- file -->
+      <div v-else-if="field.type === 'file'" class="form-input file-upload">
+        <label for="file-input" class="file-label">
+          <input
+              id="file-input"
+              type="file"
+              @change="onFileChange"
+          />
+        </label>
+      </div>
       <textarea
           v-else-if="field.type === 'textarea'"
           class="form-textarea"
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
       />
+      <div v-else-if="field.type === 'tree'" class="tree-field">
+        <button
+            type="button"
+            class="form-select tree-trigger"
+            @click="toggleDropdown"
+        >
+          {{ selectedLabel || field.placeholder || '선택하세요' }}
+          <i class="fas fa-chevron-down select-icon"></i>
+        </button>
+        <div v-show="dropdownOpen" class="tree-dropdown">
+          <TreeNode
+              v-for="node in field.options"
+              :key="node.deptId"
+              :node="node"
+              :selected-id="model[field.key]"
+              :depth="0"
+              @select="onSelect"
+          />
+        </div>
+      </div>
+
+      <template v-else-if="field.type === 'checkbox-group'">
+        <div v-if="field.style === 'permission'" class="permission-group">
+          <div
+              v-for="opt in field.options"
+              :key="opt.value"
+              class="permission-card"
+              :class="opt.value.toLowerCase()"
+          >
+            <div class="card-header">
+              <div class="card-icon">
+                <i :class="getRoleIcon(opt.value) + ' icon'"></i>
+              </div>
+              <div class="card-info">
+                <h4 class="card-title">{{ opt.label }}</h4>
+                <p class="card-desc">{{ getRoleDescription(opt.value) }}</p>
+              </div>
+            </div>
+            <label class="toggle-switch">
+              <input
+                  type="checkbox"
+                  :value="opt.value"
+                  :checked="model[field.key]?.includes(opt.value)"
+                  :disabled="readonly || !field.editable"
+                  @change="onCheckboxChange($event, opt.value)"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </template>
       <select
           v-else-if="field.type === 'select'"
           class="form-select"
           v-model="model[field.key]"
-          :value="field.value"
       >
         <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
           {{ opt.label }}
@@ -121,18 +179,23 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import {computed, ref} from 'vue';
 import SliderGroup from "@/components/common/form/SliderGroup.vue";
 import LikertScale from "@/components/common/form/LikertScale.vue";
 import RadarChart from "@/components/common/form/RadarChart.vue";
 import ProgressTimeline from "@/components/common/form/ProgressTimeline.vue";
 import ScoreBarChart from "@/components/common/form/ScoreBarChart.vue";
+import TreeNode from "@/components/common/TreeNode.vue";
 
 const props = defineProps({
   field: Object,
   model: Object,
   readonly: Boolean
 });
+
+const emit = defineEmits(['update:model', 'file-change']);
+
+const { model, field } = props;
 
 // null, undefined, 빈 문자열일 때 대체 표시값
 const displayValue = computed(() => {
@@ -152,11 +215,100 @@ const onPositiveIntegerInput = (key) => {
   // model[key] = cleaned !== '' ? parseInt(cleaned, 10) : '';
 };
 
+const fileState = ref({});
+
+const onFileChange = (e) => {
+  const file = e.target.files[0];
+  console.log('FieldRenderer: selected file:', file);
+  if (!file) return;
+  emit('file-change', { fieldKey: field.key, file });
+};
+
+
 const scoreWidth = computed(() => {
   const raw = props.field.value ?? props.model?.[props.field.key];
   const num = parseInt(raw);
   return isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
 });
+
+/* 트리 */
+const dropdownOpen = ref(false)
+
+function toggleDropdown() {
+  dropdownOpen.value = !dropdownOpen.value
+}
+
+function onSelect(id, label) {
+  props.model[props.field.key] = id
+  emit('update:model', {...props.model})
+  dropdownOpen.value = false
+}
+
+const selectedLabel = computed(() => {
+// 선택된 ID → 레이블 매핑
+  function findLabel(list, targetId) {
+    for (const n of list) {
+      if (n.deptId === targetId) return n.name;
+      if (n.childDept) {
+        const child = findLabel(n.childDept, targetId);
+        if (child) return child;
+      }
+    }
+  }
+
+  return props.field.options ?
+      findLabel(props.field.options, props.model[props.field.key]) : '';
+})
+
+
+function getValueByPath(obj, path) {
+  return path.split('.').reduce((o, k) => o?.[k], obj);
+}
+function setValueByPath(obj, path, value) {
+  const keys = path.split('.');
+  const lastKey = keys.pop();
+  const target = keys.reduce((o, k) => o[k] ??= {}, obj);
+  target[lastKey] = value;
+}
+
+function getRoleIcon(role) {
+  switch (role) {
+    case 'MASTER':
+      return 'fas fa-crown';
+    case 'HR_MANAGER':
+      return 'fas fa-users';
+    case 'BOOKKEEPING':
+      return 'fas fa-calculator';
+    case 'MANAGER':
+      return 'fas fa-user-tie';
+    default:
+      return 'fas fa-user';
+  }
+}
+
+function getRoleDescription(role) {
+  const map = {
+    MASTER: '시스템 전체 권한 관리',
+    HR_MANAGER: '인사 정보 열람 및 관리',
+    BOOKKEEPING: '재무 출력 등록 및 조회',
+    MANAGER: '팀 관리 및 승인 권한',
+  };
+  return map[role] ?? '';
+}
+
+function onCheckboxChange(e, value) {
+  const arr = Array.isArray(model[field.key]) ? model[field.key] : [];
+
+  if (e.target.checked) {
+    if (!arr.includes(value)) arr.push(value);
+  } else {
+    const index = arr.indexOf(value);
+    if (index > -1) arr.splice(index, 1);
+  }
+
+  model[field.key] = [...arr]; // 새 배열 대입하여 반응성 보장
+  emit('update:model', { ...model });
+}
 </script>
 
 <style scoped>
@@ -214,6 +366,7 @@ const scoreWidth = computed(() => {
   color: var(--gray-400);
   font-style: italic;
 }
+
 .score-bar-wrapper {
   background: var(--color-muted-light);
   border-radius: var(--radius-ss);
@@ -238,6 +391,7 @@ const scoreWidth = computed(() => {
   position: relative;
   z-index: 2;
 }
+
 .html-field {
   padding: 8px 12px;
   background: #f9f9f9;
@@ -245,4 +399,107 @@ const scoreWidth = computed(() => {
   font-size: 14px;
 }
 
+.tree-trigger {
+  /* form-select 스타일을 그대로 물려받고… */
+  width: 100%; /* 칸 전체 너비 채우기 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+}
+
+.tree-dropdown {
+  width: 100%;
+}
+
+/* 체크박스 그룹 스타일 */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type='checkbox'] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.permission-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px; /* 카드 간 간격 */
+}
+
+.permission-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--color-muted);
+  border-radius: 8px;
+  background-color: #fff;
+
+  width: calc(50% - 6px); /* 2열 배치, 좌우 간격 고려 */
+  box-sizing: border-box;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-icon {
+  font-size: 20px;
+  color: var(--purple-500);
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  display: none;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.toggle-slider::before {
+  position: absolute;
+  content: "";
+  height: 18px; width: 18px;
+  left: 3px; bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--purple-500);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+}
 </style>
