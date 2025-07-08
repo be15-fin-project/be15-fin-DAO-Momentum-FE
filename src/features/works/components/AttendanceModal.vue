@@ -1,8 +1,11 @@
 <script setup>
-import {computed, reactive, watch} from 'vue'
+import { computed } from 'vue'
 import CommonModal from '@/components/common/CommonModal.vue'
-import FieldRenderer from "@/components/common/form/FieldRenderer.vue";
-import FormSection from "@/components/common/form/FormSection.vue";
+import AttendanceCard from '@/features/works/components/AttendanceCard.vue'
+
+import dayjs from 'dayjs'
+import 'dayjs/locale/ko'
+dayjs.locale('ko')
 
 const props = defineProps({
   visible: Boolean,
@@ -10,50 +13,44 @@ const props = defineProps({
   clockInfo: Object,
   formatTime: Function,
   formatDuration: Function,
-})
-
-const now = computed(() => props.clockInfo.now ?? null)
-const startTime = computed(() => props.clockInfo.startTime ?? null)
-const endTime = computed(() => props.clockInfo.endTime ?? null)
-const breakTime = computed(() => props.clockInfo?.breakTime ?? 0)
-const workTime = computed(() => props.clockInfo?.workTime ?? 0)
-
-watch(() => props.clockInfo, (newVal) => {
-  console.log('clockInfo changed', newVal)
+  mode: {
+    type: String,
+    default: 'start',
+    validator: (val) => ['start', 'end'].includes(val),
+  },
 })
 
 const emit = defineEmits(['confirm', 'cancel'])
 
-const readonly = true
-const model = reactive({
-  now: '',
-  startTime: '',
-  endTime: '',
-  breakTime: '',
-  workTime: '',
-})
+const now = computed(() => props.clockInfo?.now ?? null)
+const startTime = computed(() => props.clockInfo?.startTime ?? null)
+const endTime = computed(() => props.clockInfo?.endTime ?? null)
+const breakTime = computed(() => props.clockInfo?.breakTime ?? 0)
+const workTime = computed(() => props.clockInfo?.workTime ?? 0)
 
-watch(() => props.clockInfo, () => {
-  model.now = props.formatTime(now.value) || '-'
-  model.startTime = props.formatTime(startTime.value) || '-'
-  model.endTime = props.formatTime(endTime.value) || '-'
-  model.breakTime = props.formatDuration(breakTime.value)
-  model.workTime = props.formatDuration(workTime.value)
-}, { immediate: true , deep: true})
-
-const fields = computed(() =>
-    props.isAttended
-        ? [
-          { key: 'startTime', label: '출근 일시', type: 'input' },
-          { key: 'endTime', label: '퇴근 일시', type: 'input' },
-          { key: 'breakTime', label: '휴게시간', type: 'input' },
-          { key: 'workTime', label: '근무시간', type: 'input' },
-        ]
-        : [
-          { key: 'now', label: '현재 시각', type: 'input' },
-          { key: 'endTime', label: '예상 퇴근 일시', type: 'input' },
-        ]
+const confirmButtonText = computed(() =>
+    props.mode === 'start' ? '출근 등록' : '퇴근 등록'
 )
+
+function convertMinutesToHours(minutes) {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (h === 0) return `${m}분`
+  if (m === 0) return `${h}시간`
+  return `${h}시간 ${m}분`
+}
+
+const formattedNow = computed(() =>
+    now.value ? dayjs(now.value).format('A h시 mm분') : '--:--'
+)
+const formattedStart = computed(() =>
+    startTime.value ? dayjs(startTime.value).format('HH : mm') : '--:--'
+)
+const formattedEnd = computed(() =>
+    endTime.value ? dayjs(endTime.value).format('HH : mm') : '--:--'
+)
+const formattedWork = computed(() => convertMinutesToHours(workTime.value))
+const formattedBreak = computed(() => convertMinutesToHours(breakTime.value))
 </script>
 
 <template>
@@ -61,45 +58,34 @@ const fields = computed(() =>
       class="attendance-modal"
       :visible="visible"
       :confirm-visible="true"
-      :confirm-text="'등록'"
+      :confirm-text="confirmButtonText"
       @confirm="$emit('confirm')"
       @cancel="$emit('cancel')"
   >
     <template #default>
-      <FormSection
-          :fields="fields"
-          :layout="'two-column'"
-      >
-        <template #title>
-          <h3 class="section-title">{{ isAttended ? '퇴근' : '출근' }} 등록</h3>
-        </template>
-
-        <FieldRenderer
-            v-for="field in fields"
-            :key="field.key"
-            :field="field"
-            :model="model"
-            :readonly="readonly"
-        >
-          {{ field.key }} : {{ model[field.key] }}
-        </FieldRenderer>
-      </FormSection>
+      <AttendanceCard
+          :currentTime="formattedNow"
+          :current-date="new Date().toLocaleDateString('ko-KR', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          weekday: 'long'
+        })"
+          :startTime="formattedStart"
+          :endTime="formattedEnd"
+          :workHours="formattedWork"
+          :breakHours="formattedBreak"
+          :mode="mode"
+          @ready="$emit('confirm')"
+          @register="$emit('confirm')"
+          @cancel="$emit('cancel')"
+      />
     </template>
   </CommonModal>
 </template>
 
 <style scoped>
-.attendance-text {
-  color: black;
-  white-space: pre-line;
-  font-size: 1rem; /* 필요한 크기 맞춰서 조절 */
-  line-height: 1.5;
-  padding: 0.5rem 1rem;
+.attendance-modal {
+  max-width: 400px;
 }
-
-.form-grid {
-  display: grid;
-  gap: 1rem;
-}
-
 </style>

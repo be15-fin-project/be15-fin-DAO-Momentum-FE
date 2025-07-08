@@ -78,16 +78,6 @@
       </div>
     </nav>
 
-    <!-- 출퇴근 모달 -->
-    <AttendanceModal
-        :visible="showAttendanceModal"
-        :is-attended="isAttended"
-        :clock-info="clockInfo"
-        :format-time="formatTime"
-        :format-duration="formatDuration"
-        @confirm="submitAttendance"
-        @cancel="closeAttendanceModal"
-    />
 
     <!-- Footer -->
     <div class="sidebar-footer">
@@ -101,6 +91,18 @@
       </div>
     </div>
   </aside>
+
+
+  <!-- 출퇴근 모달 -->
+  <AttendanceModal
+      :visible="showAttendanceModal"
+      :clock-info="clockInfo"
+      :format-time="formatTime"
+      :format-duration="formatDuration"
+      :mode="isAttended ? 'end' : 'start'"
+      @confirm="submitAttendance"
+      @cancel="closeAttendanceModal"
+  />
 </template>
 
 <script setup>
