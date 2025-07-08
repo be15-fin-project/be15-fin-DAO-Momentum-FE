@@ -36,8 +36,25 @@ export function getApprovalDetail(documentId) {
 }
 
 /* 5. 결재 문서 작성 */
+export function submitApproval(request) {
+    return api.post(`/approval/documents`, request);
+}
 
-/* 6. 결재 문서 승인/반려 */
+/* 6. 영수증 ocr api 불러오기 */
+export function getOcrApi(formData) {
+    return api.post(`/approval/ocr/receipt`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data'
+        }
+    });
+}
+
+/* 7. 사원의 상사 불러오기 */
+export function getEmployeeLeader() {
+    return api.get(`/approval/leader`)
+}
+
+/* 8. 결재 문서 승인/반려 */
 export function approveOrReject(approvalConfirmRequest) {
     return api.patch(`/approval/decision`, approvalConfirmRequest);
 }
