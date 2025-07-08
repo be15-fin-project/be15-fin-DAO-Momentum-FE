@@ -35,35 +35,39 @@ watch(() => props.visible, (val) => {
 </script>
 
 <template>
-  <div
-      v-if="visible"
-      class="modal"
-      tabindex="0"
-      @keydown.enter="handleConfirm"
-      @keydown.esc="handleCancel"
-      @click.self="handleCancel"
-  >
-    <div class="modal-content">
-      <slot/>
-      <div class="modal-buttons">
-        <BaseButton
-            icon="paper-plane"
-            v-if="confirmVisible"
-            variant="submit"
-            @button-click="handleConfirm"
-        >
-          {{ confirmText }}
-        </BaseButton>
-        <BaseButton
-            variant="cancel"
-            icon="rotate-left"
-            @button-click="handleCancel"
-        >
-          {{ cancelText }}
-        </BaseButton>
+  <teleport to="body">
+    <transition name="modal-fade">
+      <div
+          v-if="visible"
+          class="modal"
+          tabindex="0"
+          @keydown.enter="handleConfirm"
+          @keydown.esc="handleCancel"
+          @click.self="handleCancel"
+      >
+        <div class="modal-content">
+          <slot/>
+          <div class="modal-buttons">
+            <BaseButton
+                icon="paper-plane"
+                v-if="confirmVisible"
+                variant="submit"
+                @button-click="handleConfirm"
+            >
+              {{ confirmText }}
+            </BaseButton>
+            <BaseButton
+                variant="cancel"
+                icon="rotate-left"
+                @button-click="handleCancel"
+            >
+              {{ cancelText }}
+            </BaseButton>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
+    </transition>
+  </teleport>
 </template>
 
 <style scoped>
@@ -130,4 +134,46 @@ watch(() => props.visible, (val) => {
   background-color: var(--color-badge-text);
   color: var(--color-surface);
 }
+
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+.modal-fade-enter-to,
+.modal-fade-leave-from {
+  opacity: 1;
+}
+.modal-content {
+  transition: all 0.3s ease;
+}
+
+/* 등장할 때 초기 상태 */
+.modal-fade-enter-from .modal-content {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+/* 등장 완료 상태 */
+.modal-fade-enter-to .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* 퇴장 시작 상태 */
+.modal-fade-leave-from .modal-content {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* 퇴장 완료 상태 */
+.modal-fade-leave-to .modal-content {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+
 </style>

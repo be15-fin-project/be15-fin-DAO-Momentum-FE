@@ -1,8 +1,8 @@
 <script setup>
 import { computed, reactive, watch } from 'vue'
 import CommonModal from '@/components/common/CommonModal.vue'
-import FieldRenderer from "@/components/common/form/FieldRenderer.vue"
-import FormSection from "@/components/common/form/FormSection.vue"
+import AttendanceCard from '@/features/works/components/AttendanceCard.vue'
+import dayjs from "dayjs";
 
 const props = defineProps({
   visible: Boolean,
@@ -18,27 +18,43 @@ const model = reactive({
   startTime: '',
   endTime: '',
   breakTime: '',
-  workTime: ''
+  workTime: '',
 })
 
 watch(() => props.attendanceData, () => {
   const a = props.attendanceData || {}
-  model.startTime = props.formatTime(a.startTime) || '-'
-  model.endTime = props.formatTime(a.endTime) || '-'
-  model.breakTime = props.formatDuration(a.breakTime || 0)
-  model.workTime = props.formatDuration(a.workTime || 0)
+  model.startTime = props.formatTime(a.startTime) || '--:--'
+  model.endTime = props.formatTime(a.endTime) || '--:--'
+  model.breakTime = a.breakTime || 0
+  model.workTime = a.workTime || 0
 }, { immediate: true, deep: true })
 
-// watch(() => props.isWork, val => {
-//   console.log('CalendarAttendanceModal isWork prop:', val)
-// }, { immediate: true })
+const formattedStart = computed(() =>
+    model.startTime ? dayjs(model.startTime ).format('HH : mm') : '--:--'
+)
+const formattedEnd = computed(() =>
+    model.endTime ? dayjs(model.endTime).format('HH : mm') : '--:--'
+)
 
-const fields = computed(() => [
-  { key: 'startTime', label: '출근 일시', type: 'input' },
-  { key: 'endTime', label: '퇴근 일시', type: 'input' },
-  { key: 'breakTime', label: '휴게시간', type: 'input' },
-  { key: 'workTime', label: '근무시간', type: 'input' },
-])
+const formattedWork = computed(() => convertMinutesToHours(model.workTime))
+const formattedBreak = computed(() => convertMinutesToHours(model.breakTime))
+
+function convertMinutesToHours(minutes) {
+  const h = Math.floor(minutes / 60)
+  const m = minutes % 60
+  if (h === 0) return `${m}분`
+  if (m === 0) return `${h}시간`
+  return `${h}시간 ${m}분`
+}
+
+
+const currentDate = computed(() => {
+  const raw = props.attendanceData?.startTime
+  return raw
+      ? dayjs(raw).format('YYYY년 M월 D일 dddd')
+      : '--'
+})
+
 </script>
 
 <template>
@@ -51,20 +67,19 @@ const fields = computed(() => [
       @cancel="$emit('close')"
       @confirm="$emit('editRequest')"
   >
-    <FormSection :fields="fields" layout="two-column">
-      <template #title>
-        <h3 class="section-title">출퇴근 상세 정보</h3>
-      </template>
-      <FieldRenderer
-          v-for="field in fields"
-          :key="field.key"
-          :field="field"
-          :model="model"
-          :readonly="true"
-      />
-    </FormSection>
+    <AttendanceCard
+        :current-date="currentDate"
+        :startTime="formattedStart"
+        :endTime="formattedEnd"
+        :breakHours="formattedBreak"
+        :workHours="formattedWork"
+        mode="calendar"
+    />
   </CommonModal>
 </template>
 
 <style scoped>
+.calendar-attendance-modal {
+  max-width: 400px;
+}
 </style>
