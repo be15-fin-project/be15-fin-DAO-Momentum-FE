@@ -285,7 +285,7 @@ async function handleSubmit() {
         const factor = factorData.factors.find(f => f.propertyName === section.title)
         const prompt = factor?.prompts?.find(p => p.content === promptLabel)
         if (!prompt) continue
-        const converted = prompt.positive ? score : 7 - score
+        const converted = prompt.isPositive ? score + 1 : 8 - score
         scores.push(converted)
       }
       factorScoreMap.set(section.title, scores)
@@ -319,6 +319,36 @@ async function handleSubmit() {
     toast.error('제출 중 오류가 발생했습니다.')
   }
 }
+
+// 문항 순차 입력을 위한 포커스 인덱스
+const focusIndex = ref(0)
+
+function handleKeydown(e) {
+  const key = e.key
+  if (!/^[1-7]$/.test(key)) return
+
+  const score = parseInt(key)
+
+  // 평가 항목만 필터링 (평가 정보, 사유 제외)
+  const responseSections = formSections.value.filter(s => s.title !== '평가 정보' && s.title !== '평가 사유')
+  const allFields = responseSections.flatMap(s => s.fields)
+
+  if (focusIndex.value < allFields.length) {
+    allFields[focusIndex.value].value = score
+    focusIndex.value += 1
+  }
+}
+
+// 모달 열릴 때 키 입력 리스너 등록
+watch(isModalOpen, (open) => {
+  if (open) {
+    focusIndex.value = 0
+    window.addEventListener('keydown', handleKeydown)
+  } else {
+    window.removeEventListener('keydown', handleKeydown)
+  }
+})
+
 
 watch(currentPage, () => handleSearch(filterValues.value))
 
