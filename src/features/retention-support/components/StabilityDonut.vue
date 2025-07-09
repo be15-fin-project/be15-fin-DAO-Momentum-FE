@@ -68,6 +68,7 @@ watch(() => props.distribution, renderChart);
 <style scoped>
 .chart-box {
   display: flex;
+  height: 100%;
   flex-direction: column;
   gap: 30px;
   background: var(--color-surface);
@@ -90,15 +91,15 @@ watch(() => props.distribution, renderChart);
 }
 
 .chart-content {
-  margin: 0 auto;
+  margin: auto auto;
   padding: 0;
   display: flex;
   justify-content: center;
+  height: auto;
 }
 .chart-content canvas {
   max-width: 100%;
   max-height: 100%;
-  height: 400px;
   width: 100%;
   height: auto;
 }

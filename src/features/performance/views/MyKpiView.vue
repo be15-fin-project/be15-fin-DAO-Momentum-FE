@@ -82,7 +82,7 @@
 
 <script setup>
 // 외부 라이브러리
-import { ref, onMounted, onBeforeUnmount, watch, computed, watchEffect } from 'vue';
+import {ref, onMounted, onBeforeUnmount, watch, computed, watchEffect, nextTick} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 
 // API
@@ -106,6 +106,7 @@ import DonutChart from '@/features/performance/components/DonutChart.vue';
 import LineChart from '@/features/performance/components/LineChart.vue';
 import { useToast } from 'vue-toastification';
 import DeleteConfirmToast from '@/components/common/DeleteConfirmToast.vue';
+import dayjs from "dayjs";
 
 const showDeleteConfirm = () => {
   return new Promise((resolve) => {
@@ -151,16 +152,31 @@ const filterValues = ref({ status: '승인' });
 // KPI 등록 모달 상태
 const isCreateModalOpen = ref(false);
 const createForm = ref({
-  goal: '',
-  goalValue: '',
+  goal: '목표',
+  goalValue: '100',
   kpiProgress: 0,
-  progress25: '',
-  progress50: '',
-  progress75: '',
-  progress100: '',
-  deadline: ''
+  deadline: dayjs().add(1, 'month').format('YYYY-MM-DD'),
+  timeline: {
+    progress25: '25% 진척 기준',
+    progress50: '50% 진척 기준',
+    progress75: '75% 진척 기준',
+    progress100: '100% 진척 기준'
+  }
 });
 const createFormSections = ref([]);
+function resetCreateForm() {
+  createForm.value.goal = '목표';
+  createForm.value.goalValue = '100';
+  createForm.value.kpiProgress = 0;
+  createForm.value.deadline = dayjs().add(1, 'month').format('YYYY-MM-DD'),
+  createForm.value.timeline = {
+    progress25: '25% 진척 기준',
+    progress50: '50% 진척 기준',
+    progress75: '75% 진척 기준',
+    progress100: '100% 진척 기준'
+  };
+}
+
 
 // KPI 상세 모달 상태
 const isOpen = ref(false);
@@ -571,23 +587,12 @@ async function submitEditOrCancel() {
 
 // KPI 등록 모달 열기
 function handleSubmitModal() {
-  createForm.value = {
-    goal: '',
-    goalValue: '',
-    kpiProgress: 0,
-    progress25: '',
-    progress50: '',
-    progress75: '',
-    progress100: '',
-    deadline: '',
-    timeline: {
-      kpiProgress: 0,
-      progress25: '',
-      progress50: '',
-      progress75: '',
-      progress100: ''
-    }
-  };
+  resetCreateForm();
+  isCreateModalOpen.value = false;
+  nextTick(() => {
+    isCreateModalOpen.value = true;
+  });
+
 
   createFormSections.value = [
     {
@@ -626,11 +631,14 @@ async function submitKpiForm() {
 
   const required = ['goal', 'goalValue', 'deadline'];
   const timelineFields = ['progress25', 'progress50', 'progress75', 'progress100'];
-  const missing = required.some(field => !createForm.value[field]?.toString().trim()) ||
-      timelineFields.some(field => !createForm.value.timeline?.[field]?.toString().trim());
 
-  if (missing) {
-    toast.error('필수 정보를 모두 입력해주세요.');
+  const missing = required.some(field => !createForm.value[field]?.toString().trim());
+  const timeline = createForm.value.timeline || {};
+
+  const timelineEmpty = timelineFields.some(key => !timeline[key]?.toString().trim());
+
+  if (missing || timelineEmpty) {
+    toast.error('모든 KPI 정보와 진척도 기준을 입력해주세요.');
     return;
   }
 
@@ -642,15 +650,16 @@ async function submitKpiForm() {
       goalValue: createForm.value.goalValue,
       deadline: createForm.value.deadline,
       kpiProgress: 0,
-      progress25: createForm.value.timeline?.progress25,
-      progress50: createForm.value.timeline?.progress50,
-      progress75: createForm.value.timeline?.progress75,
-      progress100: createForm.value.timeline?.progress100
+      progress25: timeline.progress25.trim(),
+      progress50: timeline.progress50.trim(),
+      progress75: timeline.progress75.trim(),
+      progress100: timeline.progress100.trim()
     };
 
     const result = await createMyKpi(payload);
     toast.success(result.message || 'KPI가 성공적으로 생성되었습니다.');
     isCreateModalOpen.value = false;
+    resetCreateForm();
     await handleSearch(filterValues.value);
   } catch (e) {
     toast.error('KPI 생성 중 오류가 발생했습니다.');

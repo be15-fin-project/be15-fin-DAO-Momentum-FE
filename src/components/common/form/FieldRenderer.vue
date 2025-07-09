@@ -47,26 +47,12 @@
         :readonly="readonly"
     />
 
-    <template v-if="field.type === 'progressTimeline'">
-      <ProgressTimeline
-          v-if="!readonly && field.editable"
-          :kpiProgress="model[field.key]?.kpiProgress"
-          v-model:progress25="model[field.key].progress25"
-          v-model:progress50="model[field.key].progress50"
-          v-model:progress75="model[field.key].progress75"
-          v-model:progress100="model[field.key].progress100"
-          :editable="true"
-      />
-      <ProgressTimeline
-          v-else
-          :kpiProgress="field.value?.kpiProgress"
-          :progress25="field.value?.progress25"
-          :progress50="field.value?.progress50"
-          :progress75="field.value?.progress75"
-          :progress100="field.value?.progress100"
-          :editable="false"
-      />
-    </template>
+    <ProgressTimeline
+        v-if="field.type === 'progressTimeline'"
+        v-model="model[field.key]"
+        :kpiProgress="model.kpiProgress"
+        :editable="!readonly && field.editable"
+    />
 
     <!-- 읽기 전용 -->
     <div

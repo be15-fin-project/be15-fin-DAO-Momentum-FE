@@ -124,19 +124,18 @@ function handleFileChange(file) {
 watch(
     () => props.sections,
     (newSections) => {
-      if (!initialized.value && newSections?.length && form) {
+      if (newSections?.length && form) {
         newSections.forEach((section) => {
           section.fields?.forEach((field) => {
-            if (!(field.key in form)) {
-              form[field.key] = field.value ?? '';
-            }
+            form[field.key] = field.value ?? '';
           });
         });
-        initialized.value = true;
       }
     },
     { immediate: true }
 );
+
+
 </script>
 
 <style scoped>

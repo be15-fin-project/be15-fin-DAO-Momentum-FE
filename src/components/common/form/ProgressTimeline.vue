@@ -1,3 +1,73 @@
+<script setup>
+import {computed, watch, ref, onMounted} from 'vue'
+
+const props = defineProps({
+  modelValue: {
+    type: Object,
+    default: () => ({
+      progress25: '',
+      progress50: '',
+      progress75: '',
+      progress100: ''
+    })
+  },
+  kpiProgress: {
+    type: Number,
+    required: true
+  },
+  editable: {
+    type: Boolean,
+    default: false
+  }
+})
+
+const emit = defineEmits(['update:modelValue']);
+
+const internalModel = ref({ ...props.modelValue });
+
+watch(() => props.modelValue, (newVal) => {
+  internalModel.value = { ...newVal };
+});
+
+const update = (key, value) => {
+  internalModel.value[key] = value;
+  emit('update:modelValue', { ...internalModel.value });
+};
+
+const steps = computed(() => {
+  const progress = props.kpiProgress ?? 0
+
+  const getStatus = (threshold) => {
+    if (progress >= threshold) return 'completed'
+    if (progress >= threshold - 25) return 'in-progress'
+    return 'pending'
+  }
+
+  return [25, 50, 75, 100].map((percent) => ({
+    percent,
+    label: internalModel.value[`progress${percent}`] ?? '',
+    status: getStatus(percent)
+  }))
+})
+
+const badgeClass = (status) => ({
+  completed: 'done',
+  'in-progress': 'doing',
+  pending: 'waiting'
+}[status])
+
+const statusHtml = (status) => ({
+  completed: '<i class="fas fa-check-circle"></i> 완료',
+  'in-progress': '<i class="fas fa-spinner fa-spin"></i> 진행중',
+  pending: '<i class="fas fa-hourglass-half"></i> 대기'
+}[status])
+
+onMounted(() => {
+  emit('update:modelValue', { ...internalModel.value });
+});
+
+</script>
+
 <template>
   <section class="progress-timeline">
     <div class="timeline">
@@ -12,8 +82,7 @@
           <div class="step-title">
             <template v-if="editable">
               <input
-                  v-model="labelsMap[step.percent]"
-                  @input="handleLabelChange(step.percent)"
+                  v-model="modelValue[`progress${step.percent}`]"
                   class="editable-input"
               />
             </template>
@@ -21,83 +90,17 @@
               {{ step.label }}
             </template>
           </div>
-          <div class="badge" :class="badgeClass(step.status)" v-html="statusHtml(step.status)" />
-
+          <div
+              class="badge"
+              :class="badgeClass(step.status)"
+              v-html="statusHtml(step.status)"
+          />
         </div>
       </div>
     </div>
   </section>
 </template>
 
-<script setup>
-import { computed, reactive } from 'vue';
-
-const props = defineProps({
-  kpiProgress: {
-    type: Number,
-    required: true,
-  },
-  progress25: String,
-  progress50: String,
-  progress75: String,
-  progress100: String,
-  editable: {
-    type: Boolean,
-    default: false,
-  },
-});
-
-const emit = defineEmits([
-  'update:progress25',
-  'update:progress50',
-  'update:progress75',
-  'update:progress100',
-]);
-
-const labelsMap = reactive({
-  25: props.progress25 || '25% 목표',
-  50: props.progress50 || '50% 목표',
-  75: props.progress75 || '75% 목표',
-  100: props.progress100 || '100% 목표',
-});
-
-const handleLabelChange = (percent) => {
-  emit(`update:progress${percent}`, labelsMap[percent]);
-};
-
-const steps = computed(() => {
-  const progress = props.kpiProgress ?? 0;
-
-  const getStatus = (threshold) => {
-    if (progress >= threshold) return 'completed';
-    if (progress >= threshold - 25) return 'in-progress';
-    return 'pending';
-  };
-
-  return [25, 50, 75, 100].map((percent) => ({
-    percent,
-    label: labelsMap[percent],
-    status: getStatus(percent),
-  }));
-});
-
-const badgeClass = (status) => {
-  return {
-    completed: 'done',
-    'in-progress': 'doing',
-    pending: 'waiting',
-  }[status];
-};
-
-const statusHtml = (status) => {
-  return {
-    completed: '<i class="fas fa-check-circle"></i> 완료',
-    'in-progress': '<i class="fas fa-spinner fa-spin"></i> 진행중',
-    pending: '<i class="fas fa-hourglass-half"></i> 대기',
-  }[status];
-};
-
-</script>
 
 <style scoped>
 .progress-timeline {
