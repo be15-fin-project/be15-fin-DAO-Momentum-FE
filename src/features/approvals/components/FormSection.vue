@@ -54,17 +54,17 @@ const selectedFormComponent = computed(() => {
 
 const emit = defineEmits(['approve', 'reject']);
 
-  /* 반려 하기 */
-  function handleReject() {
-    if (!reason.value || reason.value.trim() === '') {
-      rejectError.value = '반려 사유는 반드시 입력해야 합니다.';
-      return;
-    }
-    console.log('emit reject:', reason.value); // ← 이 값이 null이 아닌지 확인
-
-    rejectError.value = '';
-    emit('reject', reason.value);
+/* 반려 하기 */
+function handleReject() {
+  if (!reason.value || reason.value.trim() === '') {
+    rejectError.value = '반려 사유는 반드시 입력해야 합니다.';
+    return;
   }
+  console.log('emit reject:', reason.value);
+
+  rejectError.value = '';
+  emit('reject', reason.value);
+}
 </script>
 
 <template>
@@ -274,31 +274,6 @@ const emit = defineEmits(['approve', 'reject']);
   resize: vertical;
   height: 200px;
   max-height: 300px;
-}
-
-.upload-box {
-  border: 2px dashed var(--gray-300);
-  border-radius: var(--radius-lg);
-  padding: 40px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: block;
-  background: linear-gradient(135deg, var(--gray-100) 0%, var(--gray-50) 100%);
-}
-
-.upload-box:hover {
-  border-color: var(--blue-450);
-  background: linear-gradient(135deg, var(--blue-50) 0%, var(--blue-100) 100%);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-soft);
-}
-
-.upload-box i {
-  font-size: 2rem;
-  color: var(--gray-500);
-  margin-bottom: 12px;
-  display: block;
 }
 
 .approve-action-wrapper {
