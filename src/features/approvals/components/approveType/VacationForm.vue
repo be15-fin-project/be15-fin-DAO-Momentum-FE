@@ -1,11 +1,13 @@
 <script setup>
-import {computed, onMounted, ref, watch} from 'vue';
-import {getFileUrl} from "@/features/common/api.js";
+import { computed, onMounted, ref, watch } from 'vue';
+import { getFileUrl } from "@/features/common/api.js";
+import { generatePresignedUrl } from "@/features/announcement/api.js";
 
 /* 파일과 관련된 변수들 */
 const file = ref(null);
 const signedUrl = ref(null);
 const fileName = ref(null);
+const uploadedFile = ref(null);
 
 /* 부모에게 전달 받은 데이터 */
 const props = defineProps({
@@ -16,14 +18,14 @@ const props = defineProps({
 
 /* 휴가 종류 매핑하기 위한 부분 */
 const vacationTypeOptions = [
-  { label: '기타 유급휴가', value: 'PAID_ETC' },
-  { label: '기타 무급휴가', value: 'UNPAID_ETC' },
-  { label: '연차', value: 'DAYOFF' },
-  { label: '오전 반차', value: 'AM_HALF_DAYOFF' },
-  { label: '오후 반차', value: 'PM_HALF_DAYOFF' },
-  { label: '리프레시 휴가', value: 'REFRESH' },
-  { label: '군 소집 훈련', value: 'MILITARY_TRAINING' },
-  { label: '경조사', value: 'LIFE_EVENT' }
+  { label: '기타 유급휴가', value: 1 },
+  { label: '기타 무급휴가', value: 2 },
+  { label: '연차', value: 3 },
+  { label: '오전 반차', value: 4 },
+  { label: '오후 반차', value: 5 },
+  { label: '리프레시 휴가', value: 6 },
+  { label: '군 소집 훈련', value: 7 },
+  { label: '경조사', value: 8 }
 ];
 
 /* 반차인 경우 - 오전 반차, 오후 반차 */
@@ -47,7 +49,6 @@ const isInvalidDateRange = computed(() => {
     props.formData.endDate < props.formData.startDate;
 });
 
-
 /* 만약 반차인 경우에는 시작 날짜와 끝나는 날짜가 같으므로 이 부분 처리하기 */
 watch(() => props.formData.vacationType, (newType) => {
   if (newType === 'AM_HALF_DAYOFF' || newType === 'PM_HALF_DAYOFF') {
@@ -55,6 +56,7 @@ watch(() => props.formData.vacationType, (newType) => {
   }
 });
 
+/* 연반차는 시작과 끝나는 날짜가 같음 */
 watch(() => props.formData.startDate, (newDate) => {
   if (isHalfDay.value) {
     props.formData.endDate = newDate;
@@ -96,6 +98,51 @@ function handleFileClick() {
   document.body.removeChild(link);
 }
 
+/* 파일 업로드 하기 */
+async function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  uploadedFile.value = file;
+
+  /* 업로드용 presigned url 요청 */
+  try {
+    const res = await generatePresignedUrl({
+      fileName: file.name,
+      contentType: file.type,
+      prefixType: 'approve'
+    });
+
+    const { presignedUrl, s3Key } = res.data.data;
+
+    /* S3 업로드 */
+    await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type
+      },
+      body: file
+    });
+
+    /* 첨부파일 정보 저장 */
+    props.formData.attachments = [{
+      name: file.name,
+      s3Key,
+      type: file.type.split('/')[1] || ''
+    }];
+
+  } catch (err) {
+    console.error("파일 업로드 실패:", err);
+    alert("파일 업로드 중 오류가 발생했습니다.");
+  }
+}
+
+/* 파일 삭제하기 */
+function removeFile() {
+  uploadedFile.value = null;
+  props.formData.file = null;
+}
+
 onMounted(fetchVacationFile);
 </script>
 
@@ -109,8 +156,8 @@ onMounted(fetchVacationFile);
         <div v-if="isReadOnly" class="readonly-box">
           {{ vacationTypeOptions.find(o => o.value === formData.vacationType)?.label || '선택되지 않음' }}
         </div>
-        <select v-else v-model="formData.vacationType" class="form-input" required>
-          <option disabled value="">선택하세요</option>
+        <select v-else v-model="formData.vacationTypeId" class="form-input" required>
+          <option disabled value="">휴가 종류를 선택하세요.</option>
           <option v-for="option in vacationTypeOptions" :key="option.value" :value="option.value">
             {{ option.label }}
           </option>
@@ -158,20 +205,35 @@ onMounted(fetchVacationFile);
 
       <div class="form-group full-width">
         <label class="form-label">첨부파일</label>
-        <div class="readonly-box" v-if="file && signedUrl">
+        <div class="readonly-box" v-if="file && signedUrl&&isReadOnly">
           <span class="file-link" @click="handleFileClick">
             <i class="fas fa-download file-icon"></i>
               {{ fileName }}
           </span>
         </div>
-        <div class="readonly-box" v-else>첨부파일 없음</div>
+        <div class="readonly-box" v-if="isReadOnly">첨부파일 없음</div>
+
+        <div v-if="!isReadOnly" class="upload-wrapper">
+          <label class="upload-box">
+            <i class="fas fa-upload"></i>
+            <span class="upload-text">
+              {{ uploadedFile ? uploadedFile.name : '파일을 선택하거나 클릭하세요' }}
+            </span>
+            <input type="file" @change="handleFileUpload" accept="*/*" hidden />
+          </label>
+
+          <div v-if="uploadedFile" class="file-preview">
+            <i class="fas fa-paperclip file-icon"></i>
+            {{ uploadedFile.name }}
+            <i class="fas fa-times remove-icon" @click="removeFile"></i>
+          </div>
+        </div>
       </div>
 
     </div>
   </div>
 </template>
 
-<style scoped>
 <style scoped>
 .form-section {
   margin-bottom: 40px;
@@ -225,8 +287,6 @@ select.form-input {
 .form-textarea:focus,
 select.form-input:focus {
   outline: none;
-  border-color: var(--purple-50);
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
   transform: translateY(-1px);
 }
 
@@ -249,6 +309,10 @@ select.form-input:focus {
   color: var(--blue-100);
 }
 
+.remove-icon {
+  color: var(--blue-100);
+}
+
 .warning-text {
   color: var(--error-500);
   font-size: 0.9rem;
@@ -263,5 +327,45 @@ select.form-input:focus {
   margin-top: -12px;
   margin-bottom: 12px;
   grid-column: 1 / -1;
+}
+
+.upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.upload-box {
+  border: 2px dashed var(--gray-200);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.3s ease, background-color 0.2s ease;
+  background-color: #f9fafb;
+}
+
+.upload-box i {
+  font-size: 1.5rem;
+  color: var(--blue-100);
+  margin-bottom: 8px;
+  display: block;
+}
+
+.upload-text {
+  font-size: 0.95rem;
+  color: var(--gray-600);
+}
+
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: var(--gray-800);
+}
+
+.file-icon {
+  color: var(--blue-100);
 }
 </style>

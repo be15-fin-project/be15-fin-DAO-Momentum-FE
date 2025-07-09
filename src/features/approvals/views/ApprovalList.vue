@@ -312,7 +312,8 @@ onMounted(fetchApprovals);
 
 /* 결재 내역 상세 보기로 이동 */
 function handleDetailClick(row) {
-  router.push(`/approval/detail/${row.approveId}`)
+    router.push(`/approval/detail/${row.approveId}`)
+      .catch(err => console.error('라우팅 실패:', err))
 }
 </script>
 

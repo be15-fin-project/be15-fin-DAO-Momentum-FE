@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, ref, watch} from "vue";
+import {computed, onMounted, reactive, ref, watch} from "vue";
 import Pagination from "@/components/common/Pagination.vue";
 import Filter from "@/components/common/Filter.vue";
 import BaseTable from "@/components/common/BaseTable.vue";
@@ -7,7 +7,9 @@ import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createAppoint, getAppoints} from "@/features/employee/api.js";
+import {useToast} from "vue-toastification";
 
+const toast = useToast();
 const currentPage = ref(1);
 const pagination = ref({currentPage: 1, totalPage: 1});
 const filterValues = ref({});
@@ -101,10 +103,9 @@ const handleSearch = () => {
 
 onMounted(async () => {
   const depts = await getDepartments();
-  departmentTree.value = depts.data?.departmentInfoDTOList || [];
-  deptOptions.value = [
-
-  ]
+  const raw = depts.data?.departmentInfoDTOList || [];
+  departmentTree.value = raw;
+  deptOptions.value = raw;
 
   const positions = await getPositions();
   positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({
@@ -120,21 +121,13 @@ watch(currentPage, () => fetchSummary(filterValues.value));
 
 const positionOptions = ref({});
 
-const req = {
-  name: '',
-  birthDate: null,
-  email: '',
-  contact: '',
-  address: '',
-  deptId: null,
+const req = reactive({
+  empId: null,
+  type: null,
   positionId: null,
-  employeeRoles: [],
-  status: 'EMPLOYED',
-  joinDate: null,
-  remainingDayoffHours: 0,
-  remainingRefreshDays: 0,
-  gender: null,
-};
+  deptId: null,
+  appointDate: null
+});
 
 const openCreateModal = () => {
   showModal.value = true;
@@ -148,18 +141,33 @@ const modalSections = computed(() => [
   {
     title: '발령 정보',
     icon: 'fa-user',
-    layout: 'two-column',
+    layout: 'one-column',
     fields: [
-        /* TODO: 트리에서 가져오는 것으로 수정 */
-      {key: 'empId', label: '사원ID', type: 'number', editable: true, required: true, placeholder: '1'},
+      {
+        key: 'empId',
+        label: '사원',
+        type: 'memberPicker',
+        treeData: departmentTree.value || [],
+        editable: true,
+        required: true,
+        placeholder: '1'
+      },
       {
         key: 'type', label: '발령 종류', type: 'select', editable: true, required: true, options: [
           {label: '소속 이동', value: 'DEPARTMENT_TRANSFER'},
           {label: '승진', value: 'PROMOTION'}
-        ]
+        ], value: req.type
       },
-      {key: 'positionId', label: '발령 직위', type: 'select', editable: true, required: true, options: positionOptions.value || []},
-      {key: 'deptId', label: '발령 부서', type: 'select', editable: true, required: true, options: deptOptions.value || []},
+      {
+        key: 'positionId',
+        label: '발령 직위',
+        type: 'select',
+        editable: true,
+        required: true,
+        options: positionOptions.value || [],
+        value: req.positionId
+      },
+      {key: 'deptId', label: '발령 부서', type: 'tree', editable: true, required: true, options: deptOptions.value || []},
       {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
     ]
   }
@@ -171,14 +179,15 @@ const handleHeaderButton = (event) => {
   }
 }
 
-/* TODO: 프론트 예외 처리, 토스트 알림 추가 */
+/* TODO: 프론트 예외 처리 */
 const handleRegisterSubmit = async (req) => {
   try {
     const resp = await createAppoint(req);
     closeModal();
     handleSearch(); // 목록 새로고침
+    toast.success("발령 등록 성공")
   } catch (e) {
-    console.error('등록 실패:', e);
+    toast.error('발령 등록 실패');
   }
 };
 </script>

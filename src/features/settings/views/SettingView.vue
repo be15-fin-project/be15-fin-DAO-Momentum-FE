@@ -2,12 +2,12 @@
 import {onMounted, reactive, ref, toRefs} from "vue";
 import TabNav from "@/components/common/NavigationTab.vue";
 import CompanyBanner from "@/features/settings/components/CompanyBanner.vue";
-import CompanyForm from "@/features/settings/components/CompanyForm.vue";
 import {fetchCompanyInfo} from "@/features/company/api.js";
-import {putCompany} from "@/features/settings/api.js";
 import {useToast} from "vue-toastification";
+import {useRouter} from "vue-router";
 
 const toast = useToast()
+const route = useRouter();
 
 const tabItems = [
   { label: '회사 관리', value: 'COMPANY', icon: 'fa-building' },
@@ -18,27 +18,22 @@ const tabItems = [
 const selectedTab = ref('COMPANY');
 
 const company = ref({
-  address:'주소',
-  businessRegistrationNumber:'00-000-0000',
   chairman:'회사 대표',
-  companyId: Number,
-  contact:'010-000-0000',
-  deptCount:0,
-  email:'null@example.com',
   employeeCount:0,
-  establishDate:String,
   name:'회사명',
-  paymentDay:Number,
-  workStartTime:String
 })
 
-const submitCompany = async(newValue) => {
-  try {
-    const response = await putCompany(newValue);
-    await getCompanyInfo();
-    toast.success('회사 정보를 수정했습니다.');
-  }catch(e){
-    toast.error('회사 정보를 수정하지 못했습니다.');
+
+const changeTab = async () => {
+  switch(selectedTab.value){
+    case 'COMPANY':
+      await route.push("/setting/company");
+      //await getCompanyInfo();
+      break;
+    case 'DEPARTMENT':
+      await route.push("/setting/department")
+      //await getDepartments()
+      break;
   }
 }
 
@@ -57,7 +52,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <main class="main">
+  <div class="main">
     <div class="main-section">
       <CompanyBanner :name = "company.name" :chairman="company.chairman" :employeeCount="company.employeeCount"></CompanyBanner>
       <!-- Navigation Tabs -->
@@ -67,34 +62,39 @@ onMounted(async () => {
             <TabNav
                 :tabs="tabItems"
                 v-model:selected="selectedTab"
+                @tab-click="changeTab"
             />
           </div>
         </div>
       </nav>
-      <!-- Permission Management -->
       <div class="body-content">
-        <!-- 회사 수정 폼 카드 -->
-        <CompanyForm v-if="selectedTab==='COMPANY'" :currentCompany = "company" @submit="submitCompany"/>
+        <router-view/>
       </div>
     </div>
-  </main>
+  </div>
 </template>
 
 <style scoped>
 /* 카드 및 폼 */
-
 .main-section{
     width: 100%;
-    min-height: 100vh;
-    height: 100%;
+    height:100%;
     background: var(--blue-50);
     transition: padding-left 0.3s ease; /* ← 여기에 트랜지션 추가 */
-  padding:20px;
+    padding-left:20px;
+    padding-right:20px;
+    display: flex;
+  flex-direction: column;
+}
+
+.body-content{
+  height:100%;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(22px);}
   to { opacity: 1; transform: translateY(0);}
 }
+
 
 </style>

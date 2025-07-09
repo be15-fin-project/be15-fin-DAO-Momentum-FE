@@ -2,7 +2,7 @@
 defineProps({
   columns: {type: Array, required: true},
   rows: {type: Array, default: () => []},
-  actions: { type: Array, default: () => [] }
+  actions: {type: Array, default: () => []}
 })
 
 const emit = defineEmits(['click-detail', 'action']);
@@ -18,7 +18,7 @@ const emit = defineEmits(['click-detail', 'action']);
           <th v-for="col in columns" :key="col.key">
             {{ col.label }}
           </th>
-          <th v-for="action in actions" :key="`action-header-${action.key}`">{{action.label || '동작'}}</th>
+          <th v-for="action in actions" :key="`action-header-${action.key}`">{{ action.label || '동작' }}</th>
         </tr>
         </thead>
 
@@ -50,6 +50,35 @@ const emit = defineEmits(['click-detail', 'action']);
               </span>
             </template>
 
+            <!-- 재직 상태 배지 처리 -->
+            <template v-else-if="col.key === 'empStatus'">
+              <span
+                  :class="{
+                  'badge-employed': (col.format ? col.format(null, row) : '-') === '재직',
+                  'badge-on-leave': (col.format ? col.format(null, row) : '-') === '휴직',
+                  'badge-resigned': (col.format ? col.format(null, row) : '-') === '퇴사'
+                }"
+              >
+                {{ col.format ? col.format(null, row) : '-' }}
+              </span>
+            </template>
+
+            <!-- 근무 유형 배지 처리 -->
+            <template v-else-if="col.key === 'workType'">
+              <span
+                  :class="{
+                  'badge-work': (col.format ? col.format(null, row) : '-') === '근무',
+                  'badge-remote': (col.format ? col.format(null, row) : '-') === '재택근무',
+                  'badge-vacation': (col.format ? col.format(null, row) : '-')=== '휴가',
+                  'badge-business': (col.format ? col.format(null, row) : '-') === '출장',
+                  'badge-additional': (col.format ? col.format(null, row) : '-') === '초과근무',
+                }"
+              >
+                {{ col.format ? col.format(row[col.key], row) : row[col.key] }}
+              </span>
+            </template>
+
+
             <template v-else-if="col.key === 'showDetail'">
               <button
                   v-if="row.showDetail"
@@ -77,8 +106,8 @@ const emit = defineEmits(['click-detail', 'action']);
           </td>
 
           <td
-            v-for="action in actions"
-            :key="`action-cell-${action.key}-${idx}`"
+              v-for="action in actions"
+              :key="`action-cell-${action.key}-${idx}`"
           >
             <button
                 class="action-button"
@@ -221,5 +250,66 @@ const emit = defineEmits(['click-detail', 'action']);
 .status-wait {
   background-color: var(--label-pending);
   color: var(--text-on-label-pending);
+}
+
+/* 재직 상태 */
+.badge-employed,
+.badge-on-leave,
+.badge-resigned {
+  border-radius: 30%;
+  padding: 3px 6px;
+}
+
+.badge-employed {
+  background-color: var(--label-approved); /* 예: 초록색 계열 */
+  color: var(--text-on-label-approved);
+}
+
+.badge-on-leave {
+  background-color: var(--label-pending); /* 예: 노란색 계열 */
+  color: var(--text-on-label-pending);
+}
+
+.badge-resigned {
+  background-color: var(--label-rejected); /* 예: 빨간색 계열 */
+  color: var(--text-on-label-rejected);
+}
+
+/* 근무 유형 뱃지 스타일 */
+.badge-work,
+.badge-remote,
+.badge-vacation,
+.badge-business,
+.badge-additional {
+  display: inline-block;
+  border-radius: 9999px;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.badge-work {
+  background-color: var(--label-approved);
+  color: var(--text-on-label-approved);
+}
+
+.badge-remote {
+  background-color: var(--blue-200);
+  color: var(--blue-500);
+}
+
+.badge-vacation {
+  background-color: var(--label-pending);
+  color: var(--text-on-label-pending);
+}
+
+.badge-business {
+  background-color: var(--gray-300);
+  color: var(--gray-900);
+}
+
+.badge-additional {
+  background-color: var(--label-rejected);
+  color: var(--text-on-label-rejected);
 }
 </style>
