@@ -180,7 +180,7 @@ const menuItems = [
     subItems: [
       { label: '대시보드', hrefs: ['/mypage/dashboard'] },
       { label: '내 정보 조회', hrefs: ['/mypage/profile'] },
-      { label: '내 계약서 조회', hrefs: ['/mypage/contracts'] }
+      { label: '내 계약서 조회', hrefs: ['/mypage/my-contracts'] }
     ]
   },
   {

@@ -13,7 +13,7 @@ export const myPageRoutes = [
                 component: () => import('@/features/mypage/views/EmployeeProfileView.vue')
             },
             {
-                path: 'contracts',
+                path: 'my-contracts',
                 name: 'MyContractsView',
                 component: () => import('@/features/mypage/views/MyContractsView.vue')
             }
