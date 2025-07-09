@@ -55,8 +55,9 @@
         :sections="formSections"
         :showReject="false"
         :showSubmit="false"
-        :submit-text="제출"
+        :submit-text="`제출`"
         @close="isOpen = false"
+        v-model:form="formData"
     />
 
   </main>
@@ -91,6 +92,7 @@ const currentPage = ref(1);
 const filterValues = ref({ status: '승인' });
 const tableData = ref([]);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
+const formData = ref({});
 
 const isOpen = ref(false);
 const selectedKpiId = ref(null);
@@ -249,6 +251,15 @@ async function openModalHandler(kpiId) {
 
   try {
     const detail = await getKpiDetail(kpiId);
+    formData.value = {
+      kpiProgress: detail.kpiProgress,
+      timeline: {
+        progress25: detail.progress25,
+        progress50: detail.progress50,
+        progress75: detail.progress75,
+        progress100: detail.progress100,
+      }
+    }
 
     formSections.value = [
       {
@@ -270,6 +281,7 @@ async function openModalHandler(kpiId) {
         fields: [
           {
             label: '진척도 타임라인',
+            key: 'timeline',
             type: 'progressTimeline',
             editable: false,
             value: {

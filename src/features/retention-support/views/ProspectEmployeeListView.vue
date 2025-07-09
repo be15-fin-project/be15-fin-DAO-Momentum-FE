@@ -183,7 +183,6 @@ const tableColumns = [
   { key: 'empName', label: '이름' },
   { key: 'deptName', label: '부서명' },
   { key: 'positionName', label: '직위명' },
-  { key: 'retentionGrade', label: '근속 등급' },
   { key: 'stabilityType', label: '안정성 유형' },
   { key: 'roundNo', label: '회차' },
   { key: 'action', label: '상세' },

@@ -1,6 +1,6 @@
 <template>
   <div class="chart-box">
-    <h3 class="chart-title"><i class="fas fa-chart-pie icon-blue" /> 전체 안정성 비율</h3>
+    <h3 class="chart-title"><i class="fas fa-chart-pie icon-blue" /> 전체 근속 전망 분포</h3>
     <div class="chart-content donut">
       <canvas ref="canvasRef" />
     </div>

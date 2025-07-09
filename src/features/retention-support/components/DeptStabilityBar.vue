@@ -1,6 +1,6 @@
 <template>
   <div class="chart-box full">
-    <h3 class="chart-title"><i class="fas fa-bar-chart icon-blue" /> 부서별 안정성 분포</h3>
+    <h3 class="chart-title"><i class="fas fa-bar-chart icon-blue" /> 부서별 근속 전망 분포</h3>
     <div class="chart-content">
       <canvas ref="canvasRef" />
     </div>
