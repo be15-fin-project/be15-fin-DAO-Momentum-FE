@@ -55,6 +55,7 @@
         :showReject="false"
         :showSubmit="false"
         @close="isOpen = false"
+        v-model:form="formData"
     />
 
   </main>
@@ -99,6 +100,7 @@ const chartRefs = {
   donut: null,
   monthly: null
 }
+const formData = ref({});
 
 // 필터 옵션, 조직 구조
 const departmentTree = ref([]);
@@ -276,7 +278,15 @@ const openDetailModal = async (kpiId) => {
 
   try {
     const detail = await getKpiDetail(kpiId);
-
+    formData.value = {
+      kpiProgress: detail.kpiProgress,
+      timeline: {
+        progress25: detail.progress25,
+        progress50: detail.progress50,
+        progress75: detail.progress75,
+        progress100: detail.progress100,
+      }
+    }
     formSections.value = [
       {
         title: 'KPI 정보',

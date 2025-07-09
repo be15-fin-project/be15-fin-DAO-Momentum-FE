@@ -134,11 +134,10 @@ const handleSearch = async () => {
 };
 
 const tableColumns = [
-  { key: 'roundNo', label: '회차 번호' },
+  { key: 'roundNo', label: '회차' },
   { key: 'year', label: '연도' },
   { key: 'month', label: '월' },
   { key: 'participantCount', label: '인원' },
-  { key: 'status', label: '상태' },
 ];
 
 const openCreateModal = () => {
@@ -165,7 +164,7 @@ const handleCreate = async () => {
       return;
     }
 
-    if (roundNo && (isNaN(roundNo) || roundNo < 1)) {
+    if (roundNo && (Number.isNaN(roundNo) || roundNo < 1)) {
       toast.error('회차 번호는 1 이상의 숫자여야 합니다.');
       return;
     }
@@ -183,7 +182,6 @@ const handleCreate = async () => {
     await handleSearch();
   } catch (err) {
     toast.error('근속 전망 회차 등록에 실패했습니다.');
-    alert('등록에 실패했습니다.');
   }
 };
 </script>
