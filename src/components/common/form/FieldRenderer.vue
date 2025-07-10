@@ -6,7 +6,7 @@
 
     <template v-if="field.type === 'scoreChart'">
       <ScoreBarChart
-          :scores="field.value"
+          v-model="field.value"
           :editable="!readonly && field.editable"
       />
     </template>

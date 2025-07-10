@@ -108,7 +108,7 @@ const tableColumns = [
   { key: 'roundNo', label: '회차' },
   { key: 'statusType', label: '상태' },
   { key: 'createdAt', label: '평가일' },
-  { key: 'score', label: '등급' },
+  { key: 'score', label: '점수' },
   { key: 'action', label: '상세' },
 ];
 
@@ -375,7 +375,7 @@ function buildFormSections(content, factorScores, weightInfo, rateInfo, editable
       fields: [
         { label: '회차', value: content.roundNo, type: 'input', editable: false },
         { label: '사원명', value: `${content.empName} (${content.empNo})`, type: 'input', editable: false },
-        { label: '등급', value: content.overallGrade, type: 'input', editable: false },
+        { label: '점수', value: content.overallGrade, type: 'input', editable: false },
         { label: '평가일', value: content.evaluatedAt?.split(' ')[0], type: 'input', editable: false },
       ]
     },
