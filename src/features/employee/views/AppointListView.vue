@@ -163,18 +163,58 @@ const closeModal = () => {
   showModal.value = false;
 }
 
-const modalSections = computed(() => {
-  function findDeptName(list, id) {
-    for (const n of list) {
-      if (n.deptId === id) return n.name;
-      if (n.childDept) {
-        const v = findDeptName(n.childDept, id);
-        if (v) return v;
-      }
+function findDeptName(list, id) {
+  for (const n of list) {
+    if (n.deptId === id) return n.name;
+    if (n.childDept) {
+      const v = findDeptName(n.childDept, id);
+      if (v) return v;
     }
   }
+}
 
-  return [
+function getPositionField() {
+  const positionField = {
+    key: 'positionId',
+    label: '발령 직위',
+    type: 'select',
+    editable: !isPromotion.value,
+    required: true,
+    options: positionOptions.value || [],
+  };
+  if (isPromotion.value) {
+    positionField.value = positionOptions.value.find(o => o.value === req.positionId)?.label || ''
+  } else {
+    positionField.value = req.positionId
+  }
+
+  return positionField
+}
+
+function getDeptField() {
+  if (isPromotion.value) {
+    return {
+      key: 'deptId',
+      label: '발령 부서',
+      type: 'input',
+      editable: false,
+      required: true,
+      value: findDeptName(deptOptions.value, req.deptId)
+    };
+  }
+  return {
+    key: 'deptId',
+    label: '발령 부서',
+    type: 'deptList',
+    editable: true,
+    required: true,
+    list: deptOptions.value,
+    value: req.deptId
+  };
+}
+
+const isPromotion = computed(() => req.type === 'PROMOTION')
+const modalSections = computed(() => [
     {
       title: '발령 정보',
       icon: 'fa-user',
@@ -195,40 +235,13 @@ const modalSections = computed(() => {
             {label: '승진', value: 'PROMOTION'}
           ]
         },
-        {
-          key: 'positionId',
-          label: '발령 직위',
-          type: 'select',
-          editable: req.type !== 'PROMOTION', // ← PROMOTION 일 때 비활성화
-          required: true,
-          options: positionOptions.value || [],
-          value: req.type === 'PROMOTION'
-              ? (positionOptions.value.find(o => o.value === req.positionId)?.label || '')
-              : req.positionId
-        },
-        req.type === 'PROMOTION'
-            ? {
-              key:   'deptId',
-              label: '발령 부서',
-              type:  'input',                // 읽기 전용 텍스트
-              editable: false,
-              required: true,
-              value: findDeptName(deptOptions.value, req.deptId) || ''
-            }
-            : {
-              key: 'deptId',
-              label: '발령 부서',
-              type: 'deptList',
-              editable: req.type !== 'PROMOTION',
-              required: true,
-              list: deptOptions.value || [],
-              value: req.deptId
-            },
+        getPositionField(),
+        getDeptField(),
         {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
       ]
     }
   ]
-});
+);
 
 const handleHeaderButton = (event) => {
   if (event.value === 'create') {
