@@ -43,7 +43,7 @@ const columns = [
       }
     }
   },
-  {key: 'salary', label: '연봉', format: val => val == null ? '-' : val},
+  {key: 'salary', label: '연봉', format: val => val == null ? '-' : Math.round(val).toLocaleString() + "원"},
   {key: 'createdAt', label: '등록일', format: val => val.split('T')[0]},
   // { key: 'action', label: '다운로드' },
 ];
@@ -69,7 +69,7 @@ const filterOptions = computed(() => [
     key: 'order',
     type: 'select',
     label: '정렬 (등록일)',
-    icon: 'fa-filter',
+    icon: 'fa-sort',
     options: [
       {label: '오름차순', value: 'ASC'},
       {label: '내림차순', value: 'DESC'}
@@ -79,6 +79,7 @@ const filterOptions = computed(() => [
     key: 'type',
     type: 'select',
     label: '계약서 종류',
+    icon: 'fa-filter',
     options: [
       {label: '전체', value: null},
       {label: '근로계약서', value: 'EMPLOYEE_AGREEMENT'},

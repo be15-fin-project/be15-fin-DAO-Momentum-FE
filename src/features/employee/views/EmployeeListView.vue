@@ -59,13 +59,14 @@ const baseFilterOptions = computed(() => [
     key: 'sortBy',
     type: 'select',
     label: '정렬 기준',
+    icon: 'fa-filter',
     options: [{label: '사번', value: null}, {label: '입사일', value: 'JOIN_DATE'}, {label: '직위', value: 'POSITION'}]
   },
   {
     key: 'order',
     type: 'select',
     label: '정렬',
-    icon: 'fa-filter',
+    icon: 'fa-sort',
     options: [{label: '오름차순', value: 'ASC'}, {label: '내림차순', value: 'DESC'}]
   }
 ]);
