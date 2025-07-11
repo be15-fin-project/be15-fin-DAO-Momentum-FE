@@ -13,7 +13,8 @@ const tabItems = [
   { label: '회사 관리', value: 'COMPANY', icon: 'fa-building' },
   { label: '부서 관리', value: 'DEPARTMENT', icon: 'fa-sitemap' },
   { label: '직위 관리', value: 'POSITION', icon: 'fa-user-tie' },
-  { label: '권한 관리', value: 'ROLE', icon: 'fa-shield-alt' }
+  { label: '권한 관리', value: 'ROLE', icon: 'fa-shield-alt' },
+  { label: '휴일 관리', value: 'HOLIDAY', icon: 'fa-calendar' }
 ]
 const selectedTab = ref('COMPANY');
 
@@ -32,9 +33,13 @@ const changeTab = async () => {
     case 'DEPARTMENT':
       await route.push("/setting/department")
       break;
+    case 'ROLE':
+      await route.push("/setting/role");
+      break;
     case 'POSITION':
       await route.push("/setting/position");
       break;
+
   }
 }
 

@@ -34,3 +34,16 @@ export const putPosition = async (req) => {
 export const deletePosition = async (positionId) => {
     return await api.delete(`/position/${positionId}`);
 }
+
+//권한 api
+export const getRoles = async () => {
+    return await api.get(`/employees/roles`);
+}
+
+export const getEmpRoles = async (empId) => {
+    return await api.get(`/employees/${empId}/roles`);
+}
+
+export const putEmpRoles = async(req) => {
+    return await api.put('employees/roles',req)
+}
