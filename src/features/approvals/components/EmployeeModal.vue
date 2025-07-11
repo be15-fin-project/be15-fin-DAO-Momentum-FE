@@ -6,7 +6,8 @@ import { fetchDepartments, fetchDepartmentInfo } from '@/features/company/api.js
 
 /* 부모에게 받는 속성 */
 const props = defineProps({
-  alreadySelected: { type: Array, default: () => [] }
+  alreadySelected: { type: Array, default: () => [] },
+  disableFirstApproverRemoval: { type: Boolean, default: false }
 })
 
 /* 자식에게 확인, 취소 버튼 전파하기 */
@@ -31,6 +32,11 @@ const selectDepartment = async (deptId) => {
 /* 멤버 가져오기 */
 const clickEvent = (empId) => {
   const exists = selected.value.find(m => m.empId === empId)
+
+  if (props.disableFirstApproverRemoval && selected.value.length > 0 && selected.value[0].empId === empId) {
+    return;
+  }
+
   if (exists) {
     selected.value = selected.value.filter(m => m.empId !== empId)
     return
@@ -86,13 +92,17 @@ onMounted(async () => {
               <p>선택된 결재자가 없습니다.</p>
             </div>
             <ul class="selected-list">
-              <li v-for="emp in selected" :key="emp.empId" class="selected-card">
+              <li v-for="(emp, idx) in selected" :key="emp.empId" class="selected-card">
                 <i class="fas fa-user icon"></i>
                 <div class="info">
                   <div class="name">{{ emp.name }} {{ emp.position }}</div>
                   <div class="dept">{{ emp.deptName || emp.dept || '-' }}</div>
                 </div>
-                <button class="remove-btn" @click="clickEvent(emp.empId)">
+                <button
+                  class="remove-btn"
+                  @click="clickEvent(emp.empId)"
+                  v-if="!(props.disableFirstApproverRemoval && idx === 0)"
+                >
                   <i class="fas fa-times"></i>
                 </button>
               </li>

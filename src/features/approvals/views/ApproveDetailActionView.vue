@@ -38,7 +38,7 @@ const approveTypeText = (approveType) => {
     case 'BUSINESSTRIP': return '출장 신청서'
     case 'VACATION': return '휴가 신청서'
     case 'PROPOSAL': return '품의서'
-    case 'RECEIPT': return '영수증'
+    case 'RECEIPT': return '비용 처리'
     case 'CANCEL': return '취소'
   }
 }
