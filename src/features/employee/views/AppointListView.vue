@@ -53,7 +53,7 @@ const baseFilterOptions = computed(() => [
     key: 'order',
     type: 'select',
     label: '정렬',
-    icon: 'fa-filter',
+    icon: 'fa-sort',
     options: [{label: '오름차순', value: 'ASC'}, {label: '내림차순', value: 'DESC'}]
   }
 ]);
