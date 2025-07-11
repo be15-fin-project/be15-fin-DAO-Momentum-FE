@@ -6,7 +6,7 @@ import BaseTable from "@/components/common/BaseTable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import {getDepartments, getPositions} from "@/features/works/api.js";
-import {createAppoint, getAppoints} from "@/features/employee/api.js";
+import {createAppoint, getAppoints, getEmployeeDetails} from "@/features/employee/api.js";
 import {useToast} from "vue-toastification";
 
 const toast = useToast();
@@ -110,16 +110,17 @@ onMounted(async () => {
   const positions = await getPositions();
   positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({
     label: p.name,
-    value: p.positionId
+    value: p.positionId,
+    level: p.level
   }))];
-  positionOptions.value = [...positions.map(p => ({label: p.name, value: p.positionId}))];
+  positionOptions.value = [...positions.map(p => ({label: p.name, value: p.positionId, level: p.level}))];
   handleSearch();
   filterValues.value = {};
 });
 
 watch(currentPage, () => fetchSummary(filterValues.value));
 
-const positionOptions = ref({});
+const positionOptions = ref([]);
 
 const req = reactive({
   empId: null,
@@ -128,6 +129,32 @@ const req = reactive({
   deptId: null,
   appointDate: null
 });
+
+watch(
+    () => [req.type, req.empId],
+    async ([type, empId]) => {
+      if (type === "PROMOTION" && empId) {
+        // 1) 현재 사원 정보 조회
+        const resp = await getEmployeeDetails(empId);
+        const currentDept = resp.employeeDetails.deptId;
+        const currentPos = resp.employeeDetails.positionId;
+
+        // 2) 승진 순위 리스트에서 현재 직위 다음 단계 찾기
+        const currLevel = positionOptions.value.find(p => p.value === currentPos)?.level;
+        const next = positionOptions.value.find(p => p.level === currLevel - 1);
+
+        // 3) req 에 자동 세팅
+        req.positionId = next ? next.value : null;
+        req.deptId = currentDept;
+
+      } else if (type !== "PROMOTION") {
+        // 승진이 아닐 경우(소속 이동 등)에는 입력 가능하도록 초기화
+        req.deptId = null;
+        req.positionId = null;
+      }
+    },
+    {immediate: false}
+);
 
 const openCreateModal = () => {
   showModal.value = true;
@@ -156,18 +183,30 @@ const modalSections = computed(() => [
         key: 'type', label: '발령 종류', type: 'select', editable: true, required: true, options: [
           {label: '소속 이동', value: 'DEPARTMENT_TRANSFER'},
           {label: '승진', value: 'PROMOTION'}
-        ], value: req.type
+        ]
       },
       {
         key: 'positionId',
         label: '발령 직위',
         type: 'select',
-        editable: true,
+        editable: req.type !== 'PROMOTION', // ← PROMOTION 일 때 비활성화
         required: true,
         options: positionOptions.value || [],
-        value: req.positionId
+        value: req.type === 'PROMOTION'
+            ? (positionOptions.value.find(o => o.value === req.positionId)?.label || '')
+            : req.positionId
       },
-      {key: 'deptId', label: '발령 부서', type: 'tree', editable: true, required: true, options: deptOptions.value || []},
+      {
+        key: 'deptId',
+        label: '발령 부서',
+        type: 'tree',
+        editable: req.type !== 'PROMOTION',
+        required: true,
+        options: deptOptions.value || [],
+        value: req.type === 'PROMOTION'
+            ? (deptOptions.value.find(d => d.deptId === req.deptId)?.name || '')
+            : req.deptId
+      },
       {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
     ]
   }
