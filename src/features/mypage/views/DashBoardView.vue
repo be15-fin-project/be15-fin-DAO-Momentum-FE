@@ -2,7 +2,6 @@
   <div class="dashboard-layout">
     <aside class="dashboard-side">
       <ProfileCard v-bind="profile"/>
-      <AttendanceInfoCard v-bind="attendance"/>
       <VacationInfoCard v-bind="vacationInfo"/>
 
       <NoticeCard
@@ -48,7 +47,6 @@ import { getMyKpiDashboard } from '@/features/performance/api.js'
 
 // 컴포넌트
 import ProfileCard from '@/features/mypage/components/ProfileCard.vue'
-import AttendanceInfoCard from '@/features/mypage/components/AttendanceInfoCard.vue'
 import VacationInfoCard from '@/features/mypage/components/VacationInfoCard.vue'
 import DocumentCard from '@/features/mypage/components/DocumentCard.vue'
 import KpiCard from '@/features/mypage/components/KpiCard.vue'
@@ -147,10 +145,6 @@ function formatDuration(minutes) {
 // 더미 데이터
 const profile = {
   name: '이수진', position: 'UX/UI 디자이너', status: '재직중', department: '디자인팀'
-}
-
-const attendance = {
-  startTime: '2025.06.08 오전 9:05', endTime: '오후 6:30', note: '초과근무 승인 반영'
 }
 
 const vacationInfo = {
