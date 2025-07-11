@@ -2,8 +2,8 @@
   <section class="score-chart-section">
     <div class="score-bar-list">
       <div
-          v-for="(item, index) in localScores"
-          :key="item.label"
+          v-for="(item, index) in scores"
+          :key="item.propertyId || item.label"
           class="score-bar-item"
       >
         <div class="score-label">
@@ -14,15 +14,15 @@
         <div v-if="editable" class="score-editable-row">
           <input
               type="range"
-              v-model.number="item.score"
+              v-model.number="scores[index].score"
               min="0"
               max="100"
               class="score-slider"
-              :style="sliderStyle(item.score)"
+              :style="sliderStyle(scores[index].score)"
           />
           <input
               type="number"
-              v-model.number="item.score"
+              v-model.number="scores[index].score"
               min="0"
               max="100"
               class="score-input"
@@ -45,13 +45,12 @@
 </template>
 
 <script setup>
-import { ref, watch, toRef } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
-  scores: {
+  modelValue: {
     type: Array,
     required: true,
-    default: () => [],
   },
   editable: {
     type: Boolean,
@@ -59,27 +58,18 @@ const props = defineProps({
   },
 });
 
+const emit = defineEmits(['update:modelValue']);
+
+const scores = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val),
+});
+
 const parseScore = (val) => {
   const num = typeof val === 'number' ? val : parseFloat(val);
   return isNaN(num) ? 0 : Math.max(0, Math.min(100, num));
 };
 
-const localScores = ref([]);
-
-watch(
-    toRef(props, 'scores'),
-    (newScores) => {
-      localScores.value = Array.isArray(newScores)
-          ? newScores.map((item) => ({
-            label: item.label,
-            score: parseScore(item.score),
-          }))
-          : [];
-    },
-    { immediate: true }
-);
-
-// 동적 슬라이더 스타일
 const sliderStyle = (score) => {
   const percent = parseScore(score);
   return {
@@ -158,7 +148,6 @@ const sliderStyle = (score) => {
   border: 2px solid var(--purple-500);
   cursor: pointer;
 }
-
 
 .score-input {
   width: 60px;
