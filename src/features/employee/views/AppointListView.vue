@@ -106,7 +106,6 @@ onMounted(async () => {
   const raw = depts.data?.departmentInfoDTOList || [];
   departmentTree.value = raw;
   deptOptions.value = raw;
-
   const positions = await getPositions();
   positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({
     label: p.name,
@@ -164,53 +163,72 @@ const closeModal = () => {
   showModal.value = false;
 }
 
-const modalSections = computed(() => [
-  {
-    title: '발령 정보',
-    icon: 'fa-user',
-    layout: 'one-column',
-    fields: [
-      {
-        key: 'empId',
-        label: '사원',
-        type: 'memberPicker',
-        treeData: departmentTree.value || [],
-        editable: true,
-        required: true,
-        placeholder: '1'
-      },
-      {
-        key: 'type', label: '발령 종류', type: 'select', editable: true, required: true, options: [
-          {label: '소속 이동', value: 'DEPARTMENT_TRANSFER'},
-          {label: '승진', value: 'PROMOTION'}
-        ]
-      },
-      {
-        key: 'positionId',
-        label: '발령 직위',
-        type: 'select',
-        editable: req.type !== 'PROMOTION', // ← PROMOTION 일 때 비활성화
-        required: true,
-        options: positionOptions.value || [],
-        value: req.type === 'PROMOTION'
-            ? (positionOptions.value.find(o => o.value === req.positionId)?.label || '')
-            : req.positionId
-      },
-      {
-        key: 'deptId',
-        label: '발령 부서',
-        type: 'tree',
-        editable: req.type !== 'PROMOTION',
-        required: true,
-        options: deptOptions.value || [],
-        value: req.type === 'PROMOTION'
-            ? (deptOptions.value.find(d => d.deptId === req.deptId)?.name || '')
-            : req.deptId
-      },
-      {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
-    ]
+const modalSections = computed(() => {
+  function findDeptName(list, id) {
+    for (const n of list) {
+      if (n.deptId === id) return n.name;
+      if (n.childDept) {
+        const v = findDeptName(n.childDept, id);
+        if (v) return v;
+      }
+    }
   }
-]);
+
+  return [
+    {
+      title: '발령 정보',
+      icon: 'fa-user',
+      layout: 'one-column',
+      fields: [
+        {
+          key: 'empId',
+          label: '사원',
+          type: 'memberPicker',
+          treeData: departmentTree.value || [],
+          editable: true,
+          required: true,
+          placeholder: '1'
+        },
+        {
+          key: 'type', label: '발령 종류', type: 'select', editable: true, required: true, options: [
+            {label: '소속 이동', value: 'DEPARTMENT_TRANSFER'},
+            {label: '승진', value: 'PROMOTION'}
+          ]
+        },
+        {
+          key: 'positionId',
+          label: '발령 직위',
+          type: 'select',
+          editable: req.type !== 'PROMOTION', // ← PROMOTION 일 때 비활성화
+          required: true,
+          options: positionOptions.value || [],
+          value: req.type === 'PROMOTION'
+              ? (positionOptions.value.find(o => o.value === req.positionId)?.label || '')
+              : req.positionId
+        },
+        req.type === 'PROMOTION'
+            ? {
+              key:   'deptId',
+              label: '발령 부서',
+              type:  'input',                // 읽기 전용 텍스트
+              editable: false,
+              required: true,
+              value: findDeptName(deptOptions.value, req.deptId) || ''
+            }
+            : {
+              key: 'deptId',
+              label: '발령 부서',
+              type: 'deptList',
+              editable: req.type !== 'PROMOTION',
+              required: true,
+              list: deptOptions.value || [],
+              value: req.deptId
+            },
+        {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
+      ]
+    }
+  ]
+});
 
 const handleHeaderButton = (event) => {
   if (event.value === 'create') {
