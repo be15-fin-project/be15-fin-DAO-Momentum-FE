@@ -189,7 +189,7 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    await createAnnouncement({
+    const res = await createAnnouncement({
       title: form.value.title,
       content: form.value.content,
       attachments: uploadedFiles.value.map(file => ({
@@ -199,8 +199,9 @@ const handleSubmit = async () => {
       })),
     })
 
+    const createdId = res.data.data.announcementId
     alert('공지사항이 등록되었습니다.')
-    router.push('/announcement')
+    router.push(`/announcement/${createdId}`)
   } catch (err) {
     console.error('공지사항 등록 실패:', err)
     alert('공지사항 등록에 실패했습니다.')

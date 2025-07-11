@@ -232,7 +232,7 @@ const handleSubmit = async () => {
   isSubmitting.value = true
 
   try {
-    await modifyAnnouncement(route.params.announcementId, {
+    const res = await modifyAnnouncement(route.params.announcementId, {
       title: form.value.title,
       content: form.value.content,
       remainFileIdList: remainFileIdList.value,
@@ -243,8 +243,9 @@ const handleSubmit = async () => {
       })),
     })
 
+    const editId = res.data.data.announcementId
     alert('공지사항이 수정되었습니다.')
-    router.push('/announcement')
+    router.push(`/announcement/${editId}`)
   } catch (err) {
     console.error('공지사항 수정 실패:', err)
     alert('공지사항 수정에 실패했습니다.')

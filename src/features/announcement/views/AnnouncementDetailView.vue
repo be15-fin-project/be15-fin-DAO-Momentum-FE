@@ -26,13 +26,21 @@
               </div>
 
               <!-- 수정/삭제 토글 버튼 -->
-              <div v-if="canEditOrDelete" class="action-toggle-wrapper">
+              <div v-if="canEdit || canDelete" class="action-toggle-wrapper">
                 <button class="btn-action-toggle" @click="toggleActions">
                   <i class="fas fa-ellipsis-v"></i>
                 </button>
                 <div v-if="showActions" class="action-menu" ref="actionMenuRef">
-                  <button class="action-item btn-edit" @click="handleEdit">공지 수정</button>
-                  <button class="action-item btn-delete" @click="handleDelete">공지 삭제</button>
+                  <button
+                      v-if="canEdit"
+                      class="action-item btn-edit"
+                      @click="handleEdit"
+                  >공지 수정</button>
+                  <button
+                      v-if="canDelete"
+                      class="action-item btn-delete"
+                      @click="handleDelete"
+                  >공지 삭제</button>
                 </div>
               </div>
             </div>
@@ -89,11 +97,10 @@
   </main>
 </template>
 
-
 <script setup>
-import {ref, onMounted, computed, onBeforeUnmount} from 'vue';
+import { ref, onMounted, computed, onBeforeUnmount } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import {deleteAnnouncement, getAnnouncementDetail} from '@/features/announcement/api';
+import { deleteAnnouncement, getAnnouncementDetail } from '@/features/announcement/api';
 import { getFileUrl } from '@/features/common/api.js';
 import { useAuthStore } from '@/stores/auth.js';
 
@@ -103,7 +110,7 @@ const authStore = useAuthStore();
 
 const detail = ref(null);
 const showActions = ref(false);
-const actionMenuRef = ref(null); // 드롭다운 메뉴
+const actionMenuRef = ref(null);
 
 const fetchDetail = async () => {
   try {
@@ -175,16 +182,17 @@ const getFileIcon = (fileName) => {
   return 'fas fa-paperclip';
 };
 
-const canEditOrDelete = computed(() =>
+const canEdit = computed(() =>
+    detail.value && authStore.userId === detail.value.empId
+);
+
+const canDelete = computed(() =>
     detail.value &&
-    (
-        authStore.userId === detail.value.empId ||
-        authStore.userRole.includes('MASTER')
-    )
+    (authStore.userId === detail.value.empId || authStore.userRole.includes('MASTER'))
 );
 
 const toggleActions = (event) => {
-  event.stopPropagation(); // 버튼 클릭 시 외부 클릭으로 인식되지 않도록
+  event.stopPropagation();
   showActions.value = !showActions.value;
 };
 
