@@ -28,11 +28,12 @@ const changeTab = async () => {
   switch(selectedTab.value){
     case 'COMPANY':
       await route.push("/setting/company");
-      //await getCompanyInfo();
       break;
     case 'DEPARTMENT':
       await route.push("/setting/department")
-      //await getDepartments()
+      break;
+    case 'POSITION':
+      await route.push("/setting/position");
       break;
   }
 }
@@ -81,14 +82,13 @@ onMounted(async () => {
     height:100%;
     background: var(--blue-50);
     transition: padding-left 0.3s ease; /* ← 여기에 트랜지션 추가 */
-    padding-left:20px;
-    padding-right:20px;
     display: flex;
   flex-direction: column;
 }
 
 .body-content{
   height:100%;
+
 }
 
 @keyframes fadeIn {

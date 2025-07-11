@@ -155,7 +155,7 @@ onMounted(async () => {
   border-radius: 1.6rem;
   padding: 2.4rem 2rem 2rem 2rem;
   box-shadow: 0 8px 32px rgba(56, 104, 185, 0.10);
-  margin-bottom: 2.5rem;
+  margin:20px;
   transition: box-shadow 0.3s;
   animation: fadeIn 0.7s cubic-bezier(0.33,1,0.68,1);
 }
