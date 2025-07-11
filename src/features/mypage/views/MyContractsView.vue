@@ -25,7 +25,7 @@ const columns = [
       }
     }
   },
-  {key: 'salary', label: '연봉', format: val => val == null? '-' : val},
+  {key: 'salary', label: '연봉', format: val => val == null ? '-' : Math.round(val).toLocaleString() + "원"},
   {key: 'createdAt', label: '등록일', format: val => val.split('T')[0]},
 ];
 
@@ -36,7 +36,7 @@ const rowActions = [
 // 필터 정의
 const filterOptions = computed(() => [
   /*{
-    key: 'order', type: 'select', label: '정렬 (등록일)', icon: 'fa-filter', options: [
+    key: 'order', type: 'select', label: '정렬 (등록일)', icon: 'fa-sort', options: [
       {label: '오름차순', value: 'ASC'},
       {label: '내림차순', value: 'DESC'}
     ]
