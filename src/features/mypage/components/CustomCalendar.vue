@@ -203,7 +203,8 @@ const getCurrentWeek = computed(() => {
 const getEventIconClass = (typeName) => {
   return {
     WORK: 'fas fa-briefcase',
-    OVERTIME: 'fas fa-clock',
+    REMOTE_WORK: 'fas fa-home',
+    ADDITIONAL: 'fas fa-clock', // 초과 근무 (연장, 야간, 휴일 근무 포괄)
     VACATION: 'fas fa-umbrella-beach',
     BUSINESS_TRIP: 'fas fa-plane-departure',
     KPI: 'fas fa-tasks',
