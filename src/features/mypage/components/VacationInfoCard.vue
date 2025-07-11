@@ -8,7 +8,7 @@
       <span class="remaining-days">{{ remainingDays }}일</span>
     </p>
 
-    <div class="leave-subtitle">이번달 연차/외근 일정</div>
+    <div class="leave-subtitle">이번달 휴가/출장 일정</div>
     <ul class="leave-list">
       <li v-for="(item, idx) in vacations" :key="idx">
         {{ item.date }} - <span :style="item.colorStyle">{{ item.label }}</span>

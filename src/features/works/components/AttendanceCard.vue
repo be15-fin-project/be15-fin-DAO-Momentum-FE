@@ -25,17 +25,12 @@
       <div class="timeline-row">
         <div class="timeline-item">
           <div class="dot timeline-dot"></div>
-          <div class="timeline-label">출근<br/>{{ startTime || '--:--' }}</div>
-        </div>
-        <div class="line shimmer-line"></div>
-        <div class="timeline-item">
-          <div class="dot lunch-dot"></div>
-          <div class="timeline-label">점심<br/>12 : 00</div>
+          <div class="timeline-label">시작<br/>{{ startTime || '--:--' }}</div>
         </div>
         <div class="line shimmer-line"></div>
         <div class="timeline-item">
           <div class="dot leave-dot"></div>
-          <div class="timeline-label">퇴근<br/>{{ endTime || '--:--' }}</div>
+          <div class="timeline-label">종료<br/>{{ endTime || '--:--' }}</div>
         </div>
       </div>
     </div>
