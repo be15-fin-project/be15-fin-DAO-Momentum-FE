@@ -4,7 +4,6 @@
       <div class="avatar-circle">
         <i class="fas fa-user"></i>
       </div>
-      <div class="status-indicator"></div>
     </div>
 
     <h2 class="profile-name">{{ name }}</h2>

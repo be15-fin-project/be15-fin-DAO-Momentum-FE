@@ -5,10 +5,7 @@
       <VacationInfoCard v-bind="vacationInfo"/>
 
       <NoticeCard
-          :notices="[
-            { title: '운영 보고서 안내', meta: '운영팀 · 2024.12.30' },
-            { title: '6월 워크샵 사전 신청', meta: '총무팀 · 2024.06.01' }
-          ]"
+          :notices="notices"
       />
     </aside>
 
@@ -39,7 +36,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import {ref, computed, onMounted, reactive} from 'vue'
 import dayjs from 'dayjs'
 import { useRouter } from 'vue-router'
 import { useCalendarEvents } from '@/features/mypage/useCalendarEvents.js'
@@ -53,6 +50,7 @@ import KpiCard from '@/features/mypage/components/KpiCard.vue'
 import NoticeCard from '@/features/mypage/components/NoticeCard.vue'
 import CalendarAttendanceModal from '@/features/works/components/CalendarAttendanceModal.vue'
 import CustomCalendar from '@/features/mypage/components/CustomCalendar.vue'
+import {fetchEmpInfo} from "@/features/mypage/api.js";
 
 // 상태 및 로직
 const currentMonth = ref(dayjs())
@@ -142,19 +140,20 @@ function formatDuration(minutes) {
   return [`${h && `${h}시간`}`, `${m && `${m}분`}`].filter(Boolean).join(' ') || '0분'
 }
 
-// 더미 데이터
-const profile = {
-  name: '이수진', position: 'UX/UI 디자이너', status: '재직중', department: '디자인팀'
-}
+// API 연동 데이터
+const profile = reactive({
+  name: '', position: '', status: '', department: ''
+})
 
+// 더미 데이터
 const vacationInfo = {
   remainingDays: 15,
-  vacations: [
-    { date: '6월 12일 (수)', label: '연차', colorStyle: 'color:var(--warning);font-weight:500;' },
-    { date: '6월 19일 (수)', label: '외근 (고객사 방문)', colorStyle: 'color:var(--blue-400);font-weight:500;' },
-    { date: '6월 28일 (금)', label: '반차', colorStyle: 'color:var(--warning);font-weight:500;' }
-  ]
 }
+
+const notices = [
+  { title: '운영 보고서 안내', meta: '운영팀 · 2024.12.30' },
+  { title: '6월 워크샵 사전 신청', meta: '총무팀 · 2024.06.01' }
+]
 
 const handleKpiClick = (kpiId) => {
   if (kpiId) {
@@ -162,8 +161,29 @@ const handleKpiClick = (kpiId) => {
   }
 }
 
+const getProfile = async () => {
+  const computedStatus = () => {
+    switch(empDetails.status) {
+      case 'EMPLOYED':
+        return '재직중'
+      case 'ON_LEAVE':
+        return '휴직중'
+      case 'RESIGNED':
+        return '퇴직'
+    }
+  }
+
+  const resp = await fetchEmpInfo()
+  const empDetails = resp.data.data.employeeDetails
+  profile.name = empDetails.name
+  profile.position = empDetails.positionName
+  profile.status = computedStatus() || '-'
+  profile.department = empDetails.deptName || '-'
+}
+
 // 최초 실행
 onMounted(() => handleMonthChange(currentMonth.value))
+onMounted(() => getProfile())
 </script>
 
 <style scoped>
