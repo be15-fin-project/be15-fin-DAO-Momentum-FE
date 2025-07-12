@@ -1,13 +1,19 @@
 <script setup>
 import { getFileUrl } from "@/features/common/api.js";
-import { ref, onMounted } from "vue";
+import {ref, onMounted, watch} from "vue";
 import {generatePresignedUrl} from "@/features/announcement/api.js";
+import dayjs from "dayjs";
 
 /* 부모에게 받아온 데이터 */
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: true },
   approveFileDTO: { type: Array, default: () => [] }
+});
+
+/* 에러 메세지 */
+const errors = ref({
+  reason: ''
 });
 
 /* 파일과 관련된 변수들 */
@@ -95,7 +101,34 @@ function removeFile() {
   props.formData.file = null;
 }
 
-onMounted(fetchProposalFile);
+/* 시간과 관련된 validation */
+function validateReason() {
+  errors.value = {
+    reason: ''
+  };
+
+  const reason = props.formData.reason?.trim();
+
+  if (!reason) {
+    errors.value.reason = '※ 품의서 내용 작성은 필수입니다.';
+    return false;
+  }
+
+  return true;
+}
+
+watch(
+  [
+    () => props.formData.reason
+  ], () => {
+    validateReason();}
+  , { immediate: true }
+);
+
+onMounted(() => {
+  fetchProposalFile();
+  validateReason();
+});
 </script>
 
 <template>
@@ -136,6 +169,7 @@ onMounted(fetchProposalFile);
           {{ formData.content || "내용 없음" }}
         </div>
         <textarea v-else v-model="formData.content" class="form-textarea" required/>
+        <p v-if="errors.reason" class="warning-text">{{ errors.reason }}</p>
       </div>
     </div>
   </div>
@@ -222,8 +256,7 @@ onMounted(fetchProposalFile);
   color: var(--gray-800);
 }
 
-.form-textarea,
-select.form-input {
+.form-textarea {
   padding: 14px 16px;
   border: 2px solid var(--gray-200);
   border-radius: 10px;
@@ -231,6 +264,13 @@ select.form-input {
   background: var(--color-surface);
   color: var(--gray-800);
   font-family: inherit;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
 }
 
 .form-textarea {
@@ -241,5 +281,12 @@ select.form-input {
 .asterisk {
   color: var(--error);
   margin-left: 4px;
+}
+
+.warning-text {
+  margin-top: 5px;
+  color: var(--error-500);
+  font-size: 0.9rem;
+  grid-column: 1 / -1;
 }
 </style>

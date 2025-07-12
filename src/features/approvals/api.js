@@ -49,12 +49,22 @@ export function getOcrApi(formData) {
     });
 }
 
-/* 7. 사원의 상사 불러오기 */
+/* 7. 사원의 연차 불러오기 */
+export function getRemainDayOff() {
+    return api.get(`/remaining/dayoff`)
+}
+
+/* 8. 사원의 리프레시 휴가 불러오기 */
+export function getRemainRefresh() {
+    return api.get(`/remaining/refresh`)
+}
+
+/* 9. 사원의 상사 불러오기 */
 export function getEmployeeLeader() {
     return api.get(`/approval/leader`)
 }
 
-/* 8. 결재 문서 승인/반려 */
+/* 10. 결재 문서 승인/반려 */
 export function approveOrReject(approvalConfirmRequest) {
     return api.patch(`/approval/decision`, approvalConfirmRequest);
 }

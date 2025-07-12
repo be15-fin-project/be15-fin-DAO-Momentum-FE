@@ -24,7 +24,7 @@ const selectedTab = ref('ALL');
 const tabItems = [
   { label: '전체', value: 'ALL', icon: 'fa-building' },
   { label: '근태', value: 'ATTENDANCE', icon: 'fa-sitemap' },
-  { label: '영수증', value: 'RECEIPT', icon: 'fa-receipt' },
+  { label: '비용 처리', value: 'RECEIPT', icon: 'fa-receipt' },
   { label: '품의', value: 'PROPOSAL', icon: 'fa-user-tie' },
   { label: '취소', value: 'CANCEL', icon: 'fa-shield-alt' }
 ]
@@ -72,10 +72,10 @@ const baseFilterOptions = [
 ]
 
 /* 동적 필터 */
-// 영수증 필터
+// 비용 처리 필터
 const receiptTypeFilter = {
   key: 'receiptType',
-  label: '영수증 종류',
+  label: '비용 처리 종류',
   icon: 'fa-receipt',
   type: 'select',
   options: ['전체', '식비', '출장비', '비품 구입비', '기타']
@@ -124,7 +124,7 @@ const statusTypeMap = {
 // 결재 종류
 const approveTypeMap = {
   'PROPOSAL': '품의',
-  'RECEIPT': '영수증',
+  'RECEIPT': '비용 처리',
   'BUSINESSTRIP': '출장',
   'VACATION': '휴가',
   'REMOTEWORK': '재택 근무',
@@ -165,7 +165,7 @@ function convertApproveType(tab, approveTypeLabel) {
       '휴가': 'VACATION'
     },
     'RECEIPT': {
-      '영수증': 'RECEIPT'
+      '비용 처리': 'RECEIPT'
     },
     'PROPOSAL': {
       '품의': 'PROPOSAL'
@@ -181,7 +181,7 @@ function convertApproveType(tab, approveTypeLabel) {
 }
 
 
-// 영수증 변환
+// 비용 처리 변환
 function convertReceipt(receiptType) {
   const statusMap = {
     '식비': 'MEALEXPENSE',

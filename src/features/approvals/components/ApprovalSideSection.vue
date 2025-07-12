@@ -1,5 +1,5 @@
 <script setup>
-import {ref, computed, onMounted, watch} from 'vue'
+import {ref, computed, onMounted, watch, onBeforeUnmount} from 'vue'
 import EmployeeModal from "@/features/approvals/components/EmployeeModal.vue";
 import {getEmployeeLeader} from "@/features/approvals/api.js";
 
@@ -21,7 +21,7 @@ const props = defineProps({
   approveType : {type : String}
 })
 
-console.log(props.approveType);
+const activeDropdownIndex = ref(null);
 
 /* 부모에게 전달해야 하는 부분 */
 const emit = defineEmits([
@@ -138,7 +138,7 @@ watch(
   () => props.approveType,
   async (newType) => {
     if (!props.readOnly) {
-      if (newType === 'RECEIPT') { // 영수증 결재자는 따로 api가 없으므로, 하드코딩으로 지정
+      if (newType === 'RECEIPT') { // 비용 처리 결재자는 따로 api가 없으므로, 하드코딩으로 지정
         writableApprovalLines.value = [
           {
             step: 1,
@@ -173,6 +173,28 @@ watch(
   },
   { immediate: true }
 )
+
+function toggleDropdown(index) {
+  activeDropdownIndex.value = activeDropdownIndex.value === index ? null : index;
+}
+
+function selectRequiredType(index, value) {
+  writableApprovalLines.value[index].requiredType = value;
+  activeDropdownIndex.value = null;
+}
+
+function handleClickOutsideDropdown(event) {
+  activeDropdownIndex.value = null;
+}
+
+onMounted(() => {
+  document.addEventListener("click", handleClickOutsideDropdown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("click", handleClickOutsideDropdown);
+});
+
 </script>
 
 <template>
@@ -196,10 +218,22 @@ watch(
           <div class="step-header">
             <span class="step-label">{{ lineIndex + 1 }}단계 결재</span>
             <div class="step-line"></div>
-            <select v-model="line.requiredType">
-              <option value="필수">필수</option>
-              <option value="선택">선택</option>
-            </select>
+            <div class="dropdown-wrapper" @click.stop>
+              <button class="dropdown-btn" @click="toggleDropdown(lineIndex)">
+                {{ line.requiredType }}
+                <i class="fas fa-chevron-down icon"></i>
+              </button>
+              <div class="dropdown" v-if="activeDropdownIndex === lineIndex">
+                <button
+                  v-for="option in ['필수', '선택']"
+                  :key="option"
+                  @click="selectRequiredType(lineIndex, option)"
+                  :class="{ active: line.requiredType === option }"
+                >
+                  {{ option }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div v-for="(approver, approverIndex) in line.approvers" :key="approverIndex" class="approver-row">
@@ -295,6 +329,7 @@ watch(
       :alreadySelected="targetStepIndex === null
     ? writableReferenceList
     : writableApprovalLines[targetStepIndex]?.approvers || []"
+      :disableFirstApproverRemoval="targetStepIndex === 0"
       @confirm="handleApproverSelect"
       @close="isModalOpen = false"
     />
@@ -494,5 +529,53 @@ input.value {
 .status-chip.n {
   background-color: var(--label-pending);
   color: var(--text-on-label-pending);
+}
+
+.dropdown-wrapper {
+  position: relative;
+}
+
+.dropdown-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--blue-100);
+  color: var(--gray-800);
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 40px;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  min-width: 64px;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+  min-width: 100%;
+}
+
+.dropdown button {
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 13px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gray-800);
+}
+
+.dropdown button:hover,
+.dropdown button.active {
+  background-color: var(--blue-100);
+  font-weight: 600;
 }
 </style>

@@ -190,7 +190,7 @@ const normalizeFilterParams = (values) => {
   if (values.date_start) params.startDate = values.date_start;
   if (values.date_end) params.endDate = values.date_end;
   const sel = roundStatusOptions.find(o => o.label === values.status);
-  if (sel) params.status = sel.value;
+  if (sel?.value) params.status = sel.value;
   return params;
 };
 
@@ -257,6 +257,8 @@ const openCreateModal = () => {
         key: 'weightSegments',
         type: 'sliderGroup',
         initial: createFormModel.value.weightSegments,
+        modelValue: createFormModel.value.weightSegments,
+        'onUpdate:modelValue': (val) => createFormModel.value.weightSegments = val,
         labels: ['성과', '팀워크', '태도', '성장', '몰입', '결과'],
         icons: ['fa-chart-line', 'fa-people-group', 'fa-thumbs-up', 'fa-seedling', 'fa-fire', 'fa-award'],
         editable: true
@@ -270,12 +272,15 @@ const openCreateModal = () => {
         key: 'gradeRatios',
         type: 'sliderGroup',
         initial: createFormModel.value.gradeRatios,
+        modelValue: createFormModel.value.gradeRatios,
+        'onUpdate:modelValue': (val) => createFormModel.value.gradeRatios = val,
         labels: ['S등급', 'A등급', 'B등급', 'C등급', 'D등급'],
         icons: ['fa-star', 'fa-medal', 'fa-user', 'fa-user-alt', 'fa-user-slash'],
         editable: true
       }]
     }
   ];
+
 };
 
 const handleSubmit = async () => {
