@@ -3,12 +3,15 @@ import {computed, onBeforeUnmount, onMounted, ref, watch, watchEffect} from "vue
 import {getFileUrl} from "@/features/common/api.js";
 import {generatePresignedUrl} from "@/features/announcement/api.js";
 import {getOcrApi} from "@/features/approvals/api.js";
+import {useToast} from "vue-toastification";
 
 /* 파일과 관련된 변수들 */
 const imageUrl = ref(null);
 const fileName = ref(null);
 const uploadedFile = ref(null);
 const previewUrl = ref(null); // 미리보기용 url (업로드 시점에 미리 보기)
+
+const toast = useToast();
 
 /* ocr api 다 불러와지는 동안 로딩되도록 설정 */
 const isOcrLoading = ref(false);
@@ -144,7 +147,7 @@ async function handleFileUpload(event) {
   const validTypes = ['image/png', 'image/jpeg'];
 
   if (!validTypes.includes(file.type)) {
-    alert('PNG 또는 JPG 파일만 업로드할 수 있습니다.');
+    toast.error('PNG 또는 JPG 파일만 업로드할 수 있습니다.');
     return;
   }
 
@@ -194,7 +197,7 @@ async function handleFileUpload(event) {
 
   } catch (err) {
     console.error("파일 업로드 실패:", err);
-    alert("파일 업로드 중 오류가 발생했습니다.");
+    toast.error('파일 업로드 중 오류가 발생했습니다.');
   } finally {
     isOcrLoading.value = false;
   }

@@ -3,6 +3,7 @@ import { getFileUrl } from "@/features/common/api.js";
 import {ref, onMounted, watch} from "vue";
 import {generatePresignedUrl} from "@/features/announcement/api.js";
 import dayjs from "dayjs";
+import {useToast} from "vue-toastification";
 
 /* 부모에게 받아온 데이터 */
 const props = defineProps({
@@ -10,6 +11,8 @@ const props = defineProps({
   isReadOnly: { type: Boolean, default: true },
   approveFileDTO: { type: Array, default: () => [] }
 });
+
+const toast = useToast();
 
 /* 에러 메세지 */
 const errors = ref({
@@ -64,7 +67,7 @@ async function handleFileClick() {
     window.URL.revokeObjectURL(url);
   } catch (err) {
     console.error("파일 다운로드 실패:", err);
-    alert("파일 다운로드 중 오류가 발생했습니다.");
+    toast.error('파일 다운로드 중 에러가 발생했습니다.');
   }
 }
 
@@ -103,7 +106,7 @@ async function handleFileUpload(event) {
 
   } catch (err) {
     console.error("파일 업로드 실패:", err);
-    alert("파일 업로드 중 오류가 발생했습니다.");
+    toast.error('파일 업로드 중 오류가 발생했습니다.');
   }
 }
 

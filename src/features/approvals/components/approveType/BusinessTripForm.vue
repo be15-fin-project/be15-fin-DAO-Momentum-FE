@@ -2,12 +2,15 @@
 import {computed, onMounted, onBeforeUnmount, ref, watch} from 'vue';
 import {getFileUrl} from "@/features/common/api.js";
 import {generatePresignedUrl} from "@/features/announcement/api.js";
+import {useToast} from "vue-toastification";
 
 /* 파일과 관련된 변수들 */
 const file = ref(null);
 const signedUrl = ref(null);
 const fileName = ref(null);
 const uploadedFile = ref(null);
+
+const toast = useToast();
 
 /* 드롭다운 관련 변수 */
 const isDropdownOpen = ref(false);
@@ -148,7 +151,7 @@ async function handleFileClick() {
     window.URL.revokeObjectURL(url);
   } catch (err) {
     console.error("파일 다운로드 실패:", err);
-    alert("파일 다운로드 중 오류가 발생했습니다.");
+    toast.error('파일 다운로드 중 에러가 발생했습니다.');
   }
 }
 
@@ -187,7 +190,7 @@ async function handleFileUpload(event) {
 
   } catch (err) {
     console.error("파일 업로드 실패:", err);
-    alert("파일 업로드 중 오류가 발생했습니다.");
+    toast.error("파일 업로드 중 오류가 발생했습니다.");
   }
 }
 
