@@ -33,14 +33,32 @@ function getCssVar(name) {
 function renderChart() {
   if (!props.distribution || !canvasRef.value) return;
 
-  const { stableCount, warningCount, unstableCount } = props.distribution;
-  const data = [stableCount, warningCount, unstableCount];
+  // 1. StabilityType 매핑
+  const labelMap = {
+    goodCount: '양호',
+    normalCount: '보통',
+    warningCount: '주의',
+    severeCount: '심각'
+  };
 
-  const colors = [
-    getCssVar('--blue-200'),   // 안정형
-    getCssVar('--blue-300'),  // 경고형
-    getCssVar('--blue-400'),     // 불안정형
-  ];
+  const colorMap = {
+    '양호': getCssVar('--blue-200'),
+    '보통': getCssVar('--blue-300'),
+    '주의': getCssVar('--blue-400'),
+    '심각': getCssVar('--blue-500'),
+  };
+
+  const orderedKeys = ['goodCount', 'normalCount', 'warningCount', 'severeCount'];
+
+  const entries = orderedKeys.map(key => ({
+    label: labelMap[key],
+    value: props.distribution[key] ?? 0,
+    color: colorMap[labelMap[key]]
+  }));
+
+  const data = entries.map(e => e.value);
+  const labels = entries.map(e => e.label);
+  const colors = entries.map(e => e.color);
 
   if (chartInstance) chartInstance.destroy();
 
@@ -48,7 +66,7 @@ function renderChart() {
   chartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['안정형', '경고형', '불안정형'],
+      labels,
       datasets: [
         {
           data,
@@ -68,6 +86,7 @@ function renderChart() {
     },
   });
 }
+
 
 onMounted(renderChart);
 onBeforeUnmount(() => chartInstance?.destroy());

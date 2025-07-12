@@ -47,6 +47,14 @@
         :readonly="readonly"
     />
 
+    <RetentionScoreCard
+        v-else-if="field.type === 'retentionCard'"
+        :retentionScore="field.value.retentionScore"
+        :retentionGrade="field.value.retentionGrade"
+        :stabilityType="field.value.stabilityType"
+        :factorGrades="field.value.factorGrades"
+    />
+
     <ProgressTimeline
         v-if="field.type === 'progressTimeline'"
         v-model="model[field.key]"
@@ -56,7 +64,7 @@
 
     <!-- 읽기 전용 -->
     <div
-        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart', 'memberPicker'].includes(field.type)"
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart', 'memberPicker', 'retentionCard'].includes(field.type)"
         class="form-input readonly"
         v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
     />
@@ -184,6 +192,7 @@ import ScoreBarChart from "@/components/common/form/ScoreBarChart.vue";
 import TreeNode from "@/components/common/TreeNode.vue";
 import MemberPickerField from "@/components/common/form/MemberPickerField.vue";
 import DeptList from "@/components/common/form/DeptList.vue";
+import RetentionScoreCard from "@/components/common/form/RetentionScoreCard.vue";
 
 const props = defineProps({
   field: Object,
