@@ -26,7 +26,7 @@ const approveTypeText = (approveType) => {
     case 'BUSINESSTRIP': return '출장 신청서'
     case 'VACATION': return '휴가 신청서'
     case 'PROPOSAL': return '품의서'
-    case 'RECEIPT': return '영수증'
+    case 'RECEIPT': return '비용 처리'
     case 'CANCEL': return '취소'
   }
 }
@@ -40,10 +40,6 @@ function goBack() {
     router.go(-1)
   }
 }
-
-/* 쓸데 없이 넘어가는 vacationType 제거 */
-delete formDetail.value.vacationType;
-
 
 /* 결재 문서 제출하기 */
 async function submitForm() {
@@ -70,11 +66,16 @@ async function submitForm() {
 
   try {
     await submitApproval(request);
-    alert('결재 문서가 성공적으로 제출되었습니다.');
-    await router.push({name: 'ApprovalList'});
+
+    await router.push({
+      name: 'MyApprovalsList',
+      query: { tab: 'sent' }
+    });
+
   } catch (error) {
     console.error(error);
     alert('제출 중 오류가 발생했습니다.');
+
   }
 }
 </script>
