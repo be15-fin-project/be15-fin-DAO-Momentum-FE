@@ -166,7 +166,7 @@ const menuItems = [
     label: '사원 관리',
     icon: 'fa-users',
     subItems: [
-      { label: '사원 목록 조회', hrefs: ['/employees'] },
+      { label: '사원 목록 조회', hrefs: ['/employees'], activeMatch: "startsWith"},
       { label: '인사 발령 내역 조회', hrefs: ['/appoints'] },
       { label: '계약서 목록 조회', hrefs: ['/contracts'] }
     ],
