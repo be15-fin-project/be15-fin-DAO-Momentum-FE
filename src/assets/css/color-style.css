@@ -12,9 +12,11 @@
     --main-color: #395886;
 
     /* Secondary Colors */
+    --purple-10: #ede9fe; /* 아주 연한 보라색 (배경용) */
     --purple-50: #7f9cf5;
     --purple-100: #6366f1;
     --purple-500: #4338ca;
+    --purple-800: #6b21a8;
     --green-100: #16a34a;
     --green-200: #15803d;
     --green-250: #10b981;
@@ -27,6 +29,7 @@
     --gray-300: #d1d5db;
     --gray-400: #9ca3af;
     --gray-500: #6b7280;      /* 본문 보조 텍스트 */
+    --gray-550: #444;
     --gray-600: #4b5563;
     --gray-700: #374151;      /* 제목 */
     --gray-800: #1F2937;
