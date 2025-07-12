@@ -47,3 +47,18 @@ export const getEmpRoles = async (empId) => {
 export const putEmpRoles = async(req) => {
     return await api.put('employees/roles',req)
 }
+
+//휴일 관련 api
+export const getHolidays = async (req) => {
+    return await api.get('/holiday/admin', {
+        params: req
+    });
+};
+
+export const postHoliday = async (req) => {
+    return await api.post('/holiday',req);
+}
+
+export const deleteHoliday = async (holidayId) => {
+    return await api.delete(`/holiday/${holidayId}`);
+}

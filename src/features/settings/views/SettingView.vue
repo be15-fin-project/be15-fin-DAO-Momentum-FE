@@ -39,7 +39,9 @@ const changeTab = async () => {
     case 'POSITION':
       await route.push("/setting/position");
       break;
-
+    case 'HOLIDAY':
+      await route.push("/setting/holiday");
+      break;
   }
 }
 
