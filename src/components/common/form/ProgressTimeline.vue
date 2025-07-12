@@ -257,14 +257,17 @@ onMounted(() => {
 .editable-input {
   font-size: 1rem;
   font-weight: 500;
-  width: 100%;
-  padding: 4px 8px;
-  border: 1px solid var(--gray-300);
-  border-radius: var(--radius-ss);
+  padding: 4px 0;
+  border: none;
+  border-bottom: 2px solid var(--gray-300);
+  background: transparent;
+  border-radius: 0;
+  transition: border-color 0.3s ease;
 }
 
 .editable-input:focus {
   outline: none;
-  border-color: var(--purple-100);
+  border-bottom-color: var(--purple-100);
 }
+
 </style>
