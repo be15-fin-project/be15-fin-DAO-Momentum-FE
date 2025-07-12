@@ -85,7 +85,7 @@
 
     <!-- Footer -->
     <div class="sidebar-footer">
-      <router-link to="/setting" class="sidebar-item">
+      <router-link to="/setting" class="sidebar-item" v-if="userRole.includes('MASTER')">
         <i class="fas fa-cog"></i>
         <span class="sidebar-label">설정</span>
       </router-link>
