@@ -3,6 +3,7 @@ import { getFileUrl } from "@/features/common/api.js";
 import {ref, onMounted, watch} from "vue";
 import {generatePresignedUrl} from "@/features/announcement/api.js";
 import dayjs from "dayjs";
+import {useToast} from "vue-toastification";
 
 /* 부모에게 받아온 데이터 */
 const props = defineProps({
@@ -10,6 +11,8 @@ const props = defineProps({
   isReadOnly: { type: Boolean, default: true },
   approveFileDTO: { type: Array, default: () => [] }
 });
+
+const toast = useToast();
 
 /* 에러 메세지 */
 const errors = ref({
@@ -45,15 +48,27 @@ async function fetchProposalFile() {
 }
 
 /* 파일 다운하기  */
-function handleFileClick() {
+async function handleFileClick() {
   if (!signedUrl.value || !file.value) return;
 
-  const link = document.createElement("a");
-  link.href = signedUrl.value;
-  link.download = file.value.originalFileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    const response = await fetch(signedUrl.value);
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = fileName.value;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("파일 다운로드 실패:", err);
+    toast.error('파일 다운로드 중 에러가 발생했습니다.');
+  }
 }
 
 /* 파일 업로드 하기 */
@@ -91,7 +106,7 @@ async function handleFileUpload(event) {
 
   } catch (err) {
     console.error("파일 업로드 실패:", err);
-    alert("파일 업로드 중 오류가 발생했습니다.");
+    toast.error('파일 업로드 중 오류가 발생했습니다.');
   }
 }
 
@@ -137,13 +152,13 @@ onMounted(() => {
       <!-- 1. 첨부파일 -->
       <div class="form-group full-width">
         <label class="form-label">첨부파일</label>
-        <div class="readonly-box" v-if="file && signedUrl&&isReadOnly">
+        <div class="readonly-box" v-if="file && signedUrl && isReadOnly">
           <span class="file-link" @click="handleFileClick">
             <i class="fas fa-download file-icon"></i>
               {{ fileName }}
           </span>
         </div>
-        <div class="readonly-box" v-if="isReadOnly&&!file">첨부파일 없음</div>
+        <div class="readonly-box" v-if="isReadOnly && !signedUrl && !file">첨부파일 없음</div>
 
         <div v-if="!isReadOnly" class="upload-wrapper">
           <label class="upload-box">
