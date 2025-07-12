@@ -8,6 +8,7 @@ import SideModal from "@/components/common/SideModal.vue";
 import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createAppoint, getAppoints, getEmployeeDetails} from "@/features/employee/api.js";
 import {useToast} from "vue-toastification";
+import dayjs from "dayjs";
 
 const toast = useToast();
 const currentPage = ref(1);
@@ -126,8 +127,16 @@ const req = reactive({
   type: null,
   positionId: null,
   deptId: null,
-  appointDate: null
+  appointDate: dayjs().format('YYYY-MM-DD')
 });
+
+const initializeRequest = () => {
+  req.empId = null;
+  req.type = null;
+  req.positionId = null;
+  req.deptId = null;
+  req.appointDate = dayjs().format('YYYY-MM-DD');
+}
 
 watch(
     () => [req.type, req.empId],
@@ -156,6 +165,7 @@ watch(
 );
 
 const openCreateModal = () => {
+  initializeRequest()
   showModal.value = true;
 }
 
