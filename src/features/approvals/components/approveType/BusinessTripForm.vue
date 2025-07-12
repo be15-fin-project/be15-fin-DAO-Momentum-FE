@@ -114,7 +114,6 @@ async function fetchBusinessTripFile() {
   if (!props.isReadOnly || props.approveFileDTO.length === 0) return;
 
   file.value = props.approveFileDTO[0];
-  console.log(file.value.fileName)
 
   try {
     const resp = await getFileUrl({
@@ -141,7 +140,8 @@ async function handleFileClick() {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = file.value;
+    a.download = fileName.value;
+
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

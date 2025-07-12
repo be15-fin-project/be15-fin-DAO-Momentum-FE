@@ -56,7 +56,7 @@ async function handleFileClick() {
     const a = document.createElement("a");
 
     a.href = url;
-    a.download = file.value;
+    a.download = fileName.value;
 
     document.body.appendChild(a);
     a.click();
