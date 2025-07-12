@@ -26,9 +26,9 @@ const field = {
   editable: true, // 체크박스 활성화 여부
   options: [ // 선택 가능한 role 목록
     { id: 1, label: '최고 관리자' },
-    { id: 2, label: '인사관리자' },
-    { id: 3, label: '재무 관리자' },
-    { id: 4, label: '관리자' },
+    { id: 2, label: '인사 관리자' },
+    { id: 3, label: '경리 관리자' },
+    { id: 4, label: '팀장' },
   ]
 }
 
