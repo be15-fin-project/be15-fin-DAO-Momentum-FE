@@ -291,8 +291,11 @@ async function fetchReceivedApprovals() {
 function handleDetailClick(row) {
   router.push({
     name: 'ApprovalDetail',
-    params: { documentId: row.approveId }
-  })}
+    params: { documentId: row.approveId },
+    state: { source: 'inbox' },
+    query: { from: 'inbox',  tab: 'received' }
+  })
+}
 
 /* 페이지와 관련된 부분 */
 watch(currentPage, () => {

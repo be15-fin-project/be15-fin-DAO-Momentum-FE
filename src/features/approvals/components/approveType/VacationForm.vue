@@ -184,15 +184,27 @@ async function fetchVacationFile() {
 }
 
 /* 파일 다운로드 하기 (클릭시 작동) */
-function handleFileClick() {
+async function handleFileClick() {
   if (!signedUrl.value || !file.value) return;
 
-  const link = document.createElement("a");
-  link.href = signedUrl.value;
-  link.download = file.value.originalFileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    const response = await fetch(signedUrl.value);
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = file.value;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("파일 다운로드 실패:", err);
+    alert("파일 다운로드 중 오류가 발생했습니다.");
+  }
 }
 
 /* 파일 업로드 하기 */

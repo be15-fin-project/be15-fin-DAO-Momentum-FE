@@ -263,7 +263,9 @@ async function fetchSentApprovals() {
 function handleDetailClick(row) {
   router.push({
     name: 'ApprovalDetail',
-    params: { documentId: row.approveId }
+    params: { documentId: row.approveId },
+    state: { source: 'inbox' },
+    query: { from: 'inbox',  tab: 'sent' }
   })}
 
 /* 페이지를 위한 부분 */
