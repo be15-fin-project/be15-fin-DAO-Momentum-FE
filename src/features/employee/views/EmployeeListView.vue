@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, reactive, ref, watch} from "vue";
+import {computed, onMounted, reactive, ref, watch, watchEffect} from "vue";
 import Pagination from "@/components/common/Pagination.vue";
 import Filter from "@/components/common/Filter.vue";
 import BaseTable from "@/components/common/BaseTable.vue";
@@ -185,6 +185,7 @@ const resetReq = () => {
   req.positionId = null;
   req.employeeRoles = [];
   req.status = 'EMPLOYED';
+  req.joinDate = null;
   req.joinDate = dayjs().format('YYYY-MM-DD');
   req.gender = null;
 }
@@ -268,22 +269,20 @@ const handleHeaderButton = (event) => {
   }
 };
 
-watch(
-    () => req.joinDate,
-    (newDate) => {
-      if (!newDate) return;
+watchEffect(() => {
+  const joinDate = req.joinDate;
+  if (!joinDate) return;
 
-      const join = dayjs(newDate);
-      const now = dayjs();
+  const join = dayjs(joinDate);
+  const now = dayjs();
 
-      const joinYear = join.year();
-      const joinMonth = join.month() + 1; // dayjs는 0-indexed
-      const targetYear = now.year();
+  const joinYear = join.year();
+  const joinMonth = join.month() + 1;
+  const targetYear = now.year();
 
-      req.remainingDayoffHours = computeDayoffHours(joinYear, joinMonth, targetYear);
-      req.remainingRefreshDays = computeRefreshDays(joinYear, targetYear);
-    }
-);
+  req.remainingDayoffHours = computeDayoffHours(joinYear, joinMonth, targetYear);
+  req.remainingRefreshDays = computeRefreshDays(joinYear, targetYear);
+});
 
 function computeDayoffDays(joinYear, joinMonth, targetYear) {
   const yearsWorked = targetYear - joinYear;
