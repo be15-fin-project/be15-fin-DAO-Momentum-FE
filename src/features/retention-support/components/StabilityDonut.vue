@@ -12,8 +12,16 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import Chart from 'chart.js/auto';
 
 const props = defineProps({
-  distribution: Object,
-});
+      distribution: {
+        type: Object,
+        default: () => ({
+          stableCount: 0,
+          warningCount: 0,
+          unstableCount: 0,
+          totalCount: 0
+        })
+      }
+    });
 
 const canvasRef = ref(null);
 let chartInstance = null;
@@ -25,28 +33,29 @@ function getCssVar(name) {
 function renderChart() {
   if (!props.distribution || !canvasRef.value) return;
 
-  const { progress20, progress40, progress60, progress80, progress100 } = props.distribution;
-  const data = [progress20, progress40, progress60, progress80, progress100];
+  const { stableCount, warningCount, unstableCount } = props.distribution;
+  const data = [stableCount, warningCount, unstableCount];
 
   const colors = [
-    getCssVar('--blue-100'),
-    getCssVar('--blue-200'),
-    getCssVar('--blue-400'),
-    getCssVar('--blue-500'),
-    getCssVar('--main-color'),
+    getCssVar('--blue-200'),   // 안정형
+    getCssVar('--blue-300'),  // 경고형
+    getCssVar('--blue-400'),     // 불안정형
   ];
 
   if (chartInstance) chartInstance.destroy();
+
   const ctx = canvasRef.value.getContext('2d');
   chartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['20%', '40%', '60%', '80%', '100%'],
-      datasets: [{
-        data,
-        backgroundColor: colors,
-        borderWidth: 0,
-      }],
+      labels: ['안정형', '경고형', '불안정형'],
+      datasets: [
+        {
+          data,
+          backgroundColor: colors,
+          borderWidth: 0,
+        },
+      ],
     },
     options: {
       responsive: true,

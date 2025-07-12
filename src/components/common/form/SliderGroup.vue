@@ -19,7 +19,19 @@
             <i :class="['fas', icons[idx] || 'fa-circle', 'icon-performance']" />
             <span>{{ labels[idx] || `구간 ${idx + 1}` }}</span>
           </div>
-          <span class="weight-badge">{{ val }}%</span>
+
+          <template v-if="editable && !disabled">
+            <input
+                type="number"
+                class="weight-badge"
+                v-model.number="segmentValues[idx]"
+                @change="handleSegmentChange"
+            />
+          </template>
+          <template v-else>
+            <span class="weight-badge">{{ val }}%</span>
+          </template>
+
         </div>
       </div>
     </div>
@@ -32,9 +44,9 @@ import noUiSlider from 'nouislider';
 import 'nouislider/dist/nouislider.css';
 
 const props = defineProps({
-  initial:   { type: Array,  required: true },
-  labels:    { type: Array,  default: () => [] },
-  icons:     { type: Array,  default: () => [] },
+  initial:   { type: Array, required: true },
+  labels:    { type: Array, default: () => [] },
+  icons:     { type: Array, default: () => [] },
   editable:  { type: Boolean, default: true },
   disabled:  { type: Boolean, default: false }
 });
@@ -45,7 +57,7 @@ const slider = ref(null);
 let sliderInstance = null;
 const segmentValues = ref([]);
 
-// 세그먼트 계산 및 핸들 위치 변환 함수 (기존 유지)
+// 구간 비율 계산 → 전체 합 100%를 기준으로 구간별 비율 계산
 function calculateSegments(values) {
   const rounded = values.map((v) => Math.round(v));
   const segments = [];
@@ -55,6 +67,7 @@ function calculateSegments(values) {
   segments.push(100 - rounded[rounded.length - 1]);
   return segments;
 }
+
 function getHandlePositions(segments) {
   const positions = [];
   let sum = 0;
@@ -64,6 +77,7 @@ function getHandlePositions(segments) {
   }
   return positions;
 }
+
 function buildConnectArray(handleCount) {
   return Array(handleCount + 1).fill(true);
 }
@@ -77,15 +91,15 @@ function createSlider() {
 
   const positions = getHandlePositions(props.initial);
   noUiSlider.create(slider.value, {
-    start:   positions,
+    start: positions,
     connect: buildConnectArray(positions.length),
-    range:   { min: 0, max: 100 },
-    step:    1,
+    range: { min: 0, max: 100 },
+    step: 1,
     behaviour: 'drag'
   });
+
   sliderInstance = slider.value.noUiSlider;
 
-  // 슬라이더 움직임 제한: disabled 또는 !editable 시 pointer-events CSS로 제어
   sliderInstance.on('update', (vals) => {
     const nums = vals.map((v) => parseInt(v, 10));
     const newSegments = calculateSegments(nums);
@@ -96,32 +110,48 @@ function createSlider() {
   segmentValues.value = props.initial;
 }
 
+// input 값 수정 시 → 슬라이더 위치 업데이트
+function handleSegmentChange() {
+  const values = segmentValues.value.slice();
+  let total = values.reduce((a, b) => a + b, 0);
+
+  // 총합이 100이 아닐 경우, 마지막 구간에 보정
+  if (total !== 100) {
+    const diff = 100 - total;
+    const lastIdx = values.length - 1;
+    values[lastIdx] = Math.max(0, values[lastIdx] + diff);
+    total = values.reduce((a, b) => a + b, 0);
+    segmentValues.value = [...values];
+  }
+
+  const newPositions = getHandlePositions(values);
+  if (sliderInstance) {
+    sliderInstance.set(newPositions);
+  }
+
+  emit('update', [...segmentValues.value]);
+}
+
 onMounted(() => {
   segmentValues.value = props.initial;
   nextTick(createSlider);
 });
 
-watch(
-    () => props.initial,
-    (nv) => {
-      segmentValues.value = nv;
-      nextTick(createSlider);
-    }
-);
+watch(() => props.initial, (nv) => {
+  segmentValues.value = nv;
+  nextTick(createSlider);
+});
 
-watch(
-    () => props.editable,
-    () => {
-      // DOM 재렌더링이 끝난 다음에 슬라이더 생성
-      nextTick(createSlider);
-    }
-);
+watch(() => props.editable, () => {
+  nextTick(createSlider);
+});
 </script>
 
 <style scoped>
 :deep(.noUi-connect) {
   background-color: var(--blue-200);
 }
+
 .slider-container {
   margin: 20px 0;
 }
@@ -129,6 +159,7 @@ watch(
   pointer-events: none;
   opacity: 0.6;
 }
+
 .progress-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(120px, 1fr));
@@ -156,13 +187,21 @@ watch(
   font-size: 1rem;
   color: var(--blue-400);
 }
+
 .weight-badge {
-  padding: 4px 12px;
+  width: 60px;
+  padding: 4px 8px;
   border-radius: 9999px;
   font-weight: 700;
   font-size: 0.875rem;
+  text-align: center;
   color: var(--gray-700);
   background: var(--color-surface);
   border: 1px solid var(--gray-300);
+}
+.weight-badge:focus {
+  outline: none;
+  border-color: var(--blue-300);
+  box-shadow: 0 0 0 1px var(--blue-200);
 }
 </style>
