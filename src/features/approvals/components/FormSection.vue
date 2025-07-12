@@ -31,10 +31,12 @@ const {
   isReadOnly: { type: Boolean, default: true },
 });
 
-/* 대기 상태인 경우 */
+/* 대기 상태이면서 내가 결재자인 문서인 경우 */
 const canAction = computed(() => {
-  return approveDTO.statusType === 'PENDING'
+  return approveDTO.statusType === 'PENDING' && approveDTO.receivedType === 'APPROVAL';
 })
+
+console.log(approveDTO);
 
 /* form에 따라서 매핑 하기 */
 const formMap = {

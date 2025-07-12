@@ -69,3 +69,7 @@ export function approveOrReject(approvalConfirmRequest) {
     return api.patch(`/approval/decision`, approvalConfirmRequest);
 }
 
+/* 11. 참조 문서 열람 */
+export function checkApproval(documentId) {
+    return api.patch(`/approval/documents/${documentId}/reference`)
+}
