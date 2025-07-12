@@ -6,8 +6,9 @@ import BaseTable from "@/components/common/BaseTable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import {getDepartments, getPositions} from "@/features/works/api.js";
-import {createAppoint, getAppoints} from "@/features/employee/api.js";
+import {createAppoint, getAppoints, getEmployeeDetails} from "@/features/employee/api.js";
 import {useToast} from "vue-toastification";
+import dayjs from "dayjs";
 
 const toast = useToast();
 const currentPage = ref(1);
@@ -53,7 +54,7 @@ const baseFilterOptions = computed(() => [
     key: 'order',
     type: 'select',
     label: '정렬',
-    icon: 'fa-filter',
+    icon: 'fa-sort',
     options: [{label: '오름차순', value: 'ASC'}, {label: '내림차순', value: 'DESC'}]
   }
 ]);
@@ -106,30 +107,65 @@ onMounted(async () => {
   const raw = depts.data?.departmentInfoDTOList || [];
   departmentTree.value = raw;
   deptOptions.value = raw;
-
   const positions = await getPositions();
   positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({
     label: p.name,
-    value: p.positionId
+    value: p.positionId,
+    level: p.level
   }))];
-  positionOptions.value = [...positions.map(p => ({label: p.name, value: p.positionId}))];
+  positionOptions.value = [...positions.map(p => ({label: p.name, value: p.positionId, level: p.level}))];
   handleSearch();
   filterValues.value = {};
 });
 
 watch(currentPage, () => fetchSummary(filterValues.value));
 
-const positionOptions = ref({});
+const positionOptions = ref([]);
 
 const req = reactive({
   empId: null,
   type: null,
   positionId: null,
   deptId: null,
-  appointDate: null
+  appointDate: dayjs().format('YYYY-MM-DD')
 });
 
+const initializeRequest = () => {
+  req.empId = null;
+  req.type = null;
+  req.positionId = null;
+  req.deptId = null;
+  req.appointDate = dayjs().format('YYYY-MM-DD');
+}
+
+watch(
+    () => [req.type, req.empId],
+    async ([type, empId]) => {
+      if (type === "PROMOTION" && empId) {
+        // 1) 현재 사원 정보 조회
+        const resp = await getEmployeeDetails(empId);
+        const currentDept = resp.employeeDetails.deptId;
+        const currentPos = resp.employeeDetails.positionId;
+
+        // 2) 승진 순위 리스트에서 현재 직위 다음 단계 찾기
+        const currLevel = positionOptions.value.find(p => p.value === currentPos)?.level;
+        const next = positionOptions.value.find(p => p.level === currLevel - 1);
+
+        // 3) req 에 자동 세팅
+        req.positionId = next ? next.value : null;
+        req.deptId = currentDept;
+
+      } else if (type !== "PROMOTION") {
+        // 승진이 아닐 경우(소속 이동 등)에는 입력 가능하도록 초기화
+        req.deptId = null;
+        req.positionId = null;
+      }
+    },
+    {immediate: false}
+);
+
 const openCreateModal = () => {
+  initializeRequest()
   showModal.value = true;
 }
 
@@ -137,41 +173,85 @@ const closeModal = () => {
   showModal.value = false;
 }
 
-const modalSections = computed(() => [
-  {
-    title: '발령 정보',
-    icon: 'fa-user',
-    layout: 'one-column',
-    fields: [
-      {
-        key: 'empId',
-        label: '사원',
-        type: 'memberPicker',
-        treeData: departmentTree.value || [],
-        editable: true,
-        required: true,
-        placeholder: '1'
-      },
-      {
-        key: 'type', label: '발령 종류', type: 'select', editable: true, required: true, options: [
-          {label: '소속 이동', value: 'DEPARTMENT_TRANSFER'},
-          {label: '승진', value: 'PROMOTION'}
-        ], value: req.type
-      },
-      {
-        key: 'positionId',
-        label: '발령 직위',
-        type: 'select',
-        editable: true,
-        required: true,
-        options: positionOptions.value || [],
-        value: req.positionId
-      },
-      {key: 'deptId', label: '발령 부서', type: 'tree', editable: true, required: true, options: deptOptions.value || []},
-      {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
-    ]
+function findDeptName(list, id) {
+  for (const n of list) {
+    if (n.deptId === id) return n.name;
+    if (n.childDept) {
+      const v = findDeptName(n.childDept, id);
+      if (v) return v;
+    }
   }
-]);
+}
+
+function getPositionField() {
+  const positionField = {
+    key: 'positionId',
+    label: '발령 직위',
+    type: 'select',
+    editable: !isPromotion.value,
+    required: true,
+    options: positionOptions.value || [],
+  };
+  if (isPromotion.value) {
+    positionField.value = positionOptions.value.find(o => o.value === req.positionId)?.label || ''
+  } else {
+    positionField.value = req.positionId
+  }
+
+  return positionField
+}
+
+function getDeptField() {
+  if (isPromotion.value) {
+    return {
+      key: 'deptId',
+      label: '발령 부서',
+      type: 'input',
+      editable: false,
+      required: true,
+      value: findDeptName(deptOptions.value, req.deptId)
+    };
+  }
+  return {
+    key: 'deptId',
+    label: '발령 부서',
+    type: 'deptList',
+    editable: true,
+    required: true,
+    list: deptOptions.value,
+    value: req.deptId
+  };
+}
+
+const isPromotion = computed(() => req.type === 'PROMOTION')
+const modalSections = computed(() => [
+    {
+      title: '발령 정보',
+      icon: 'fa-user',
+      layout: 'one-column',
+      fields: [
+        {
+          key: 'empId',
+          label: '사원',
+          type: 'memberPicker',
+          treeData: departmentTree.value || [],
+          editable: true,
+          required: true,
+          placeholder: '1'
+        },
+        {
+          key: 'type', label: '발령 종류', type: 'select', editable: true, required: true, options: [
+            {label: '소속 이동', value: 'DEPARTMENT_TRANSFER'},
+            {label: '승진', value: 'PROMOTION'}
+          ]
+        },
+        getPositionField(),
+        getDeptField(),
+        {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
+      ]
+    }
+  ]
+);
 
 const handleHeaderButton = (event) => {
   if (event.value === 'create') {

@@ -1,8 +1,9 @@
 <script setup>
-import {onMounted, ref, watchEffect} from "vue";
+import {computed, onBeforeUnmount, onMounted, ref, watch, watchEffect} from "vue";
 import {getFileUrl} from "@/features/common/api.js";
 import {generatePresignedUrl} from "@/features/announcement/api.js";
 import {getOcrApi} from "@/features/approvals/api.js";
+import {useToast} from "vue-toastification";
 
 /* 파일과 관련된 변수들 */
 const imageUrl = ref(null);
@@ -10,18 +11,34 @@ const fileName = ref(null);
 const uploadedFile = ref(null);
 const previewUrl = ref(null); // 미리보기용 url (업로드 시점에 미리 보기)
 
+const toast = useToast();
+
 /* ocr api 다 불러와지는 동안 로딩되도록 설정 */
 const isOcrLoading = ref(false);
 
 /* 금액 포맷을 위한 변수 (','를 넣기 위함) */
-const formattedAmount = ref('');
+const formattedAmount = computed({
+  get() {
+    if (props.formData.amount == null || isNaN(props.formData.amount)) return '';
+    return Number(props.formData.amount).toLocaleString();
+  },
+  set(val) {
+    const number = Number(val.replaceAll(',', ''));
+    props.formData.amount = isNaN(number) ? 0 : number;
+  }
+});
 
+/* 드롭다운 관련 변수 */
+const isReceiptTypeDropdownOpen  = ref(false);
+
+/* 부모에게 전달 받은 값 */
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: false },
   approveFileDTO: { type: Array, default: () => [] }
 });
 
+/* 영수증 종류 */
 const receiptTypeOptions = [
   { label: '식비', value: 'MEALEXPENSE' },
   { label: '교통비', value: 'TRAVELEXPENSE' },
@@ -29,7 +46,70 @@ const receiptTypeOptions = [
   { label: '기타', value: 'MISCELLANEOUS' }
 ];
 
-/* 영수증 이미지를 가져오는 api */
+/* 영수증 관련 에러 메세지 */
+const errors = ref({
+  receiptType: '',
+  storeName: '',
+  address: '',
+  usedAt: '',
+  amount: '',
+  attachments: ''
+});
+
+/* 비용 처리 유효성 검사 */
+function validateReceiptForm() {
+  errors.value = {
+    receiptType: '',
+    storeName: '',
+    address: '',
+    usedAt: '',
+    amount: '',
+    attachments: ''
+  };
+
+  if (!props.formData.receiptType) {
+    errors.value.receiptType = '※ 비용 처리 유형을 선택하세요.';
+  }
+  if (!props.formData.storeName?.trim()) {
+    errors.value.storeName = '※ 상호명을 입력하세요.';
+  }
+  if (!props.formData.address?.trim()) {
+    errors.value.address = '※ 주소를 입력하세요.';
+  }
+  if (!props.formData.usedAt) {
+    errors.value.usedAt = '※ 사용일을 선택하세요.';
+  }
+  if (
+    props.formData.amount === '' ||
+    props.formData.amount == null ||
+    isNaN(props.formData.amount) ||
+    props.formData.amount < 0
+  ) {
+    errors.value.amount = '※ 금액은 0 이상의 숫자여야 합니다.';
+  }
+  if (!Array.isArray(props.formData.attachments) || props.formData.attachments.length === 0) {
+    errors.value.attachments = '※ 영수증 파일을 업로드하세요.';
+  }
+
+  return Object.values(errors.value).every((e) => !e);
+}
+
+watch(
+  () => [
+    props.formData.receiptType,
+    props.formData.storeName,
+    props.formData.address,
+    props.formData.usedAt,
+    props.formData.amount,
+    props.formData.attachments
+  ],
+  () => {
+    validateReceiptForm();
+  },
+  { immediate: true }
+);
+
+/* 비용 처리 이미지를 가져오는 api */
 async function fetchReceiptImage() {
   if (props.isReadOnly && props.approveFileDTO.length > 0) {
     const file = props.approveFileDTO[0];
@@ -67,7 +147,7 @@ async function handleFileUpload(event) {
   const validTypes = ['image/png', 'image/jpeg'];
 
   if (!validTypes.includes(file.type)) {
-    alert('PNG 또는 JPG 파일만 업로드할 수 있습니다.');
+    toast.error('PNG 또는 JPG 파일만 업로드할 수 있습니다.');
     return;
   }
 
@@ -117,7 +197,7 @@ async function handleFileUpload(event) {
 
   } catch (err) {
     console.error("파일 업로드 실패:", err);
-    alert("파일 업로드 중 오류가 발생했습니다.");
+    toast.error('파일 업로드 중 오류가 발생했습니다.');
   } finally {
     isOcrLoading.value = false;
   }
@@ -131,7 +211,33 @@ function removeFile() {
   props.formData.file = null;
 }
 
-onMounted(fetchReceiptImage);
+/* 다른 영역을 클릭 시 드롭 다운 없애기 */
+function handleClickOutside() {
+  isReceiptTypeDropdownOpen .value = false;
+}
+
+/* 토글과 관련된 부분 */
+function toggleReceiptTypeDropdown() {
+  isReceiptTypeDropdownOpen.value = !isReceiptTypeDropdownOpen.value;
+}
+
+function closeReceiptTypeDropdown() {
+  isReceiptTypeDropdownOpen.value = false;
+}
+
+function selectReceiptType(value) {
+  props.formData.receiptType = value;
+  isReceiptTypeDropdownOpen.value = false;
+}
+
+onMounted(() => {
+  fetchReceiptImage()
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
@@ -161,22 +267,35 @@ onMounted(fetchReceiptImage);
             <i class="fas fa-times remove-icon" @click="removeFile"></i>
           </div>
         </div>
+        <p v-if="errors.attachments && !isReadOnly" class="warning-text">{{ errors.attachments }}</p>
       </div>
 
       <!-- 2. 영수증 내역 -->
       <div class="form-grid">
-        <!-- 2-1. 영수증 유형 -->
+        <!-- 2-1. 영수증  유형 -->
         <div class="form-group full-width">
-          <label class="form-label required">영수증 유형</label>
+          <label class="form-label required">비용 처리 유형</label>
           <div v-if="isReadOnly" class="readonly-box">
             {{ receiptTypeOptions.find(opt => opt.value === formData.receiptType)?.label || '선택되지 않음' }}
           </div>
-          <select v-else v-model="formData.receiptType" class="form-input" required>
-            <option disabled value="">선택하세요</option>
-            <option v-for="option in receiptTypeOptions" :key="option.value" :value="option.value">
-              {{ option.label }}
-            </option>
-          </select>
+          <div v-else class="dropdown-wrapper receipt-dropdown-wrapper" @click.stop>
+            <button class="dropdown-btn" @click="toggleReceiptTypeDropdown">
+              {{ receiptTypeOptions.find(option => option.value === formData.receiptType)?.label || '비용 처리 종류 선택' }}
+              <i class="fas fa-chevron-down"></i>
+            </button>
+            <div class="dropdown" v-if="isReceiptTypeDropdownOpen">
+              <button
+                v-for="option in receiptTypeOptions"
+                :key="option.value"
+                :class="{ active: formData.receiptType === option.value }"
+                @click="selectReceiptType(option.value)"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+          </div>
+          <p v-if="errors.receiptType" class="warning-text">{{ errors.receiptType }}</p>
+
         </div>
 
         <!-- 2-2. 상호명 -->
@@ -184,6 +303,7 @@ onMounted(fetchReceiptImage);
           <label class="form-label required">상호명</label>
           <div v-if="isReadOnly" class="readonly-box">{{ formData.storeName || '입력 없음' }}</div>
           <input v-else v-model="formData.storeName" type="text" class="form-input" required />
+          <p v-if="errors.storeName" class="warning-text">{{ errors.storeName }}</p>
         </div>
 
         <!-- 2-3. 주소 -->
@@ -191,6 +311,7 @@ onMounted(fetchReceiptImage);
           <label class="form-label required">주소</label>
           <div v-if="isReadOnly" class="readonly-box">{{ formData.address || '입력 없음' }}</div>
           <input v-else v-model="formData.address" type="text" class="form-input" required />
+          <p v-if="errors.address" class="warning-text">{{ errors.address }}</p>
         </div>
 
         <!-- 2-4. 사용일 -->
@@ -198,6 +319,7 @@ onMounted(fetchReceiptImage);
           <label class="form-label required">사용일</label>
           <div v-if="isReadOnly" class="readonly-box">{{ formData.usedAt || '입력 없음' }}</div>
           <input v-else v-model="formData.usedAt" type="date" class="form-input" required />
+          <p v-if="errors.usedAt" class="warning-text">{{ errors.usedAt }}</p>
         </div>
 
         <!-- 2-5. 금액 -->
@@ -206,7 +328,8 @@ onMounted(fetchReceiptImage);
           <div v-if="isReadOnly" class="readonly-box">
             {{ formData.amount ? formData.amount.toLocaleString() + ' 원' : '입력 없음' }}
           </div>
-          <input v-else v-model="formData.amount" type="number" min="0" class="form-input" required />
+          <input v-else v-model="formattedAmount" type="text" class="form-input" required />
+          <p v-if="errors.amount" class="warning-text">{{ errors.amount }}</p>
         </div>
       </div>
     </div>
@@ -367,5 +490,65 @@ select.form-input:focus {
   to {
     transform: rotate(360deg);
   }
+}
+
+.warning-text {
+  margin-top: 5px;
+  color: var(--error-500);
+  font-size: 0.9rem;
+  grid-column: 1 / -1;
+}
+
+.asterisk {
+  color: var(--error);
+  margin-left: 4px;
+}
+
+.dropdown-wrapper {
+  position: relative;
+}
+
+.dropdown-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--color-surface);
+  color: var(--gray-800);
+  cursor: pointer;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.dropdown button {
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  border: none;
+  background: none;
+  color: var(--gray-800);
+  cursor: pointer;
+}
+
+.dropdown button:hover,
+.dropdown button.active {
+  background-color: var(--blue-100);
+  font-weight: 600;
 }
 </style>

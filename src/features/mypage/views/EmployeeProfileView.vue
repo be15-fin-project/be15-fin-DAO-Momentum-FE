@@ -138,7 +138,7 @@ onMounted(async () => {
             <div class="quick-info">
               <InfoItem :label="'사번'" :value="employeeDetails.empNo" :icon="'fas fa-fingerprint'"/>
               <InfoItem :label="'입사일'" :value="employeeDetails.joinDate" :icon="'fas fa-calendar-alt'"/>
-              <InfoItem :label="'입사일'" :value="employeeDetails.positionName" :icon="'fas fa-briefcase'"/>
+              <InfoItem :label="'직위'" :value="employeeDetails.positionName" :icon="'fas fa-briefcase'"/>
             </div>
           </div>
         </div>

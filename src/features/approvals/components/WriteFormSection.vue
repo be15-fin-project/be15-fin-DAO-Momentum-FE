@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref, watch} from 'vue'
+import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue'
 import OvertimeForm from '@/features/approvals/components/approveType/OvertimeForm.vue'
 import WorkCorrectionForm from '@/features/approvals/components/approveType/WorkCorrectionForm.vue'
 import RemoteWorkForm from '@/features/approvals/components/approveType/RemoteWorkForm.vue'
@@ -10,6 +10,7 @@ import ReceiptForm from '@/features/approvals/components/approveType/ReceiptForm
 
 const selectedFormComponent = ref(WorkCorrectionForm);
 const formData = ref({});
+const isDropdownOpen = ref(false)
 
 const props = defineProps({
   title: String,
@@ -17,6 +18,16 @@ const props = defineProps({
   formData: Object,
   uploadedFiles: Array
 })
+
+const formLabelMap = {
+  WORKCORRECTION: '출퇴근 정정 신청서',
+  OVERTIME: '초과 근무 신청서',
+  REMOTEWORK: '재택 근무 신청서',
+  BUSINESSTRIP: '출장 신청서',
+  VACATION: '휴가 신청서',
+  PROPOSAL: '품의서',
+  RECEIPT: '비용 처리'
+}
 
 const emit = defineEmits([
   'update:title',
@@ -45,6 +56,26 @@ const formMap = {
   RECEIPT: ReceiptForm
 }
 
+function toggleDropdown() {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
+
+function selectFormType(type) {
+  emit('update:approveType', type)
+  selectedFormComponent.value = formMap[type] || null
+  isDropdownOpen.value = false
+}
+
+function handleClickOutside() {
+  isDropdownOpen.value = false
+}
+
+function handleDocumentType(event) {
+  const type = event.target.value;
+  selectedFormComponent.value = formMap[type] || null;
+  emit('update:approveType', type);
+}
+
 watch(
   () => props.approveType,
   (newType) => {
@@ -53,11 +84,25 @@ watch(
   { immediate: true }
 )
 
-function handleDocumentType(event) {
-  const type = event.target.value;
-  selectedFormComponent.value = formMap[type] || null;
-  emit('update:approveType', type);
-}
+/* 폼 변경 시 기존 데이터 초기화 */
+watch(
+  () => props.approveType,
+  (newType) => {
+    selectedFormComponent.value = formMap[newType] || null;
+
+    emit('update:title', ''); // 제목 초기화
+    emit('update:formData', {}); // form 데이터 초기화
+  },
+  { immediate: true }
+)
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleClickOutside)
+})
 </script>
 
 <template>
@@ -84,15 +129,25 @@ function handleDocumentType(event) {
           <i class="fas fa-layer-group"></i>결재 종류
         </h3>
         <div class="form-group">
-          <select class="form-select" @change="handleDocumentType">
-            <option value="WORKCORRECTION">출퇴근 정정 신청서</option>
-            <option value="OVERTIME">초과 근무 신청서</option>
-            <option value="REMOTEWORK">재택 근무 신청서</option>
-            <option value="BUSINESSTRIP">출장 신청서</option>
-            <option value="VACATION">휴가 신청서</option>
-            <option value="PROPOSAL">품의서</option>
-            <option value="RECEIPT">영수증</option>
-          </select>
+          <!-- 커스텀 드롭다운 -->
+          <div class="dropdown-wrapper" @click.stop>
+            <button class="dropdown-btn" @click="toggleDropdown">
+              {{ formLabelMap[props.approveType] || '결재 종류를 선택하세요.' }}
+              <i class="fas fa-chevron-down icon"></i>
+            </button>
+
+            <div class="dropdown" v-if="isDropdownOpen">
+              <button
+                v-for="(label, value) in formLabelMap"
+                :key="value"
+                @click="selectFormType(value)"
+                :class="{ active: props.approveType === value }"
+              >
+                {{ label }}
+              </button>
+            </div>
+          </div>
+
         </div>
       </section>
 
@@ -177,4 +232,52 @@ function handleDocumentType(event) {
   color: var(--blue-100);
 }
 
+.dropdown-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.dropdown-btn {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--color-surface);
+  color: var(--gray-800);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 10;
+  width: 100%;
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  margin-top: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.dropdown button {
+  width: 100%;
+  text-align: left;
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  background: none;
+  border: none;
+  color: var(--gray-800);
+  cursor: pointer;
+}
+
+.dropdown button:hover,
+.dropdown button.active {
+  background-color: var(--blue-100);
+  font-weight: 600;
+}
 </style>

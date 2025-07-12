@@ -4,10 +4,16 @@ import { useRoute, useRouter } from 'vue-router'
 import ApprovalSideSection from '@/features/approvals/components/ApprovalSideSection.vue'
 import WriteFormSection from "@/features/approvals/components/WriteFormSection.vue";
 import {submitApproval} from "@/features/approvals/api.js";
+import {useToast} from "vue-toastification";
 
 const router = useRouter();
 const route = useRoute();
+const toast = useToast();
 
+/* 결재 문서 작성에 시간이 걸려서 로딩 중을 표시하기 위해 사용하는 변수 */
+const isSubmitting = ref(false);
+
+/* form의 기본 결재 종류는 출퇴근 정정으로 설정 */
 const form = ref({
   approveType: 'WORKCORRECTION',
 });
@@ -26,7 +32,7 @@ const approveTypeText = (approveType) => {
     case 'BUSINESSTRIP': return '출장 신청서'
     case 'VACATION': return '휴가 신청서'
     case 'PROPOSAL': return '품의서'
-    case 'RECEIPT': return '영수증'
+    case 'RECEIPT': return '비용 처리'
     case 'CANCEL': return '취소'
   }
 }
@@ -41,12 +47,20 @@ function goBack() {
   }
 }
 
-/* 쓸데 없이 넘어가는 vacationType 제거 */
-delete formDetail.value.vacationType;
-
-
 /* 결재 문서 제출하기 */
 async function submitForm() {
+  if (!form.value.approveTitle) {
+    toast.error('제목을 입력해주세요.');
+    return;
+  }
+
+  if (!formDetail.value || Object.keys(formDetail.value).length === 0) {
+    toast.error('상세 내용을 작성해주세요.');
+    return;
+  }
+
+  isSubmitting.value = true;
+
   const request = {
     parentApproveId: null,
     approveTitle: form.value.approveTitle,
@@ -70,11 +84,19 @@ async function submitForm() {
 
   try {
     await submitApproval(request);
-    alert('결재 문서가 성공적으로 제출되었습니다.');
-    await router.push({name: 'ApprovalList'});
+
+    toast.success('결재 문서 제출이 완료됐습니다.');
+
+    await router.push({
+      name: 'MyApprovalsList',
+      query: { tab: 'sent' }
+    });
+
   } catch (error) {
     console.error(error);
-    alert('제출 중 오류가 발생했습니다.');
+    toast.error('결재 문서 제출 중 오류가 발생했습니다.');
+  } finally {
+    isSubmitting.value = false;
   }
 }
 </script>
@@ -98,6 +120,11 @@ async function submitForm() {
   </div>
 
   <div class="container">
+    <div v-if="isSubmitting" class="overlay">
+      <div class="spinner"></div>
+      <p>결재 문서를 제출 중입니다...</p>
+    </div>
+
     <div class="approval-page">
       <div class="page-body">
         <WriteFormSection
@@ -215,5 +242,35 @@ async function submitForm() {
   display: flex;
   justify-content: right;
   margin-top: 32px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #ccc;
+  border-top-color: var(--blue-400);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

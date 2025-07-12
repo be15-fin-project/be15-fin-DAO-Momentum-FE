@@ -1,13 +1,22 @@
 <script setup>
 import { getFileUrl } from "@/features/common/api.js";
-import { ref, onMounted } from "vue";
+import {ref, onMounted, watch} from "vue";
 import {generatePresignedUrl} from "@/features/announcement/api.js";
+import dayjs from "dayjs";
+import {useToast} from "vue-toastification";
 
 /* 부모에게 받아온 데이터 */
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: true },
   approveFileDTO: { type: Array, default: () => [] }
+});
+
+const toast = useToast();
+
+/* 에러 메세지 */
+const errors = ref({
+  reason: ''
 });
 
 /* 파일과 관련된 변수들 */
@@ -39,15 +48,27 @@ async function fetchProposalFile() {
 }
 
 /* 파일 다운하기  */
-function handleFileClick() {
+async function handleFileClick() {
   if (!signedUrl.value || !file.value) return;
 
-  const link = document.createElement("a");
-  link.href = signedUrl.value;
-  link.download = file.value.originalFileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    const response = await fetch(signedUrl.value);
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = fileName.value;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("파일 다운로드 실패:", err);
+    toast.error('파일 다운로드 중 에러가 발생했습니다.');
+  }
 }
 
 /* 파일 업로드 하기 */
@@ -85,7 +106,7 @@ async function handleFileUpload(event) {
 
   } catch (err) {
     console.error("파일 업로드 실패:", err);
-    alert("파일 업로드 중 오류가 발생했습니다.");
+    toast.error('파일 업로드 중 오류가 발생했습니다.');
   }
 }
 
@@ -95,7 +116,34 @@ function removeFile() {
   props.formData.file = null;
 }
 
-onMounted(fetchProposalFile);
+/* 시간과 관련된 validation */
+function validateReason() {
+  errors.value = {
+    reason: ''
+  };
+
+  const reason = props.formData.reason?.trim();
+
+  if (!reason) {
+    errors.value.reason = '※ 품의서 내용 작성은 필수입니다.';
+    return false;
+  }
+
+  return true;
+}
+
+watch(
+  [
+    () => props.formData.reason
+  ], () => {
+    validateReason();}
+  , { immediate: true }
+);
+
+onMounted(() => {
+  fetchProposalFile();
+  validateReason();
+});
 </script>
 
 <template>
@@ -104,13 +152,13 @@ onMounted(fetchProposalFile);
       <!-- 1. 첨부파일 -->
       <div class="form-group full-width">
         <label class="form-label">첨부파일</label>
-        <div class="readonly-box" v-if="file && signedUrl&&isReadOnly">
+        <div class="readonly-box" v-if="file && signedUrl && isReadOnly">
           <span class="file-link" @click="handleFileClick">
             <i class="fas fa-download file-icon"></i>
               {{ fileName }}
           </span>
         </div>
-        <div class="readonly-box" v-if="isReadOnly&&!file">첨부파일 없음</div>
+        <div class="readonly-box" v-if="isReadOnly && !signedUrl && !file">첨부파일 없음</div>
 
         <div v-if="!isReadOnly" class="upload-wrapper">
           <label class="upload-box">
@@ -136,6 +184,7 @@ onMounted(fetchProposalFile);
           {{ formData.content || "내용 없음" }}
         </div>
         <textarea v-else v-model="formData.content" class="form-textarea" required/>
+        <p v-if="errors.reason" class="warning-text">{{ errors.reason }}</p>
       </div>
     </div>
   </div>
@@ -222,8 +271,7 @@ onMounted(fetchProposalFile);
   color: var(--gray-800);
 }
 
-.form-textarea,
-select.form-input {
+.form-textarea {
   padding: 14px 16px;
   border: 2px solid var(--gray-200);
   border-radius: 10px;
@@ -231,6 +279,13 @@ select.form-input {
   background: var(--color-surface);
   color: var(--gray-800);
   font-family: inherit;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
 }
 
 .form-textarea {
@@ -241,5 +296,12 @@ select.form-input {
 .asterisk {
   color: var(--error);
   margin-left: 4px;
+}
+
+.warning-text {
+  margin-top: 5px;
+  color: var(--error-500);
+  font-size: 0.9rem;
+  grid-column: 1 / -1;
 }
 </style>
