@@ -102,11 +102,18 @@ async function handleApprove(isApprove, reason) {
 
 /* 문서함으로 돌아가기 */
 function goBack() {
-  const from = route.query.from || window.history.state?.from
-  if (from === 'list') {
-    router.push({ name: 'ApprovalList' })
+  const from = route.query.from;
+  const tab = route.query.tab;
+
+  if (from === 'approvals') {
+    router.push('/approvals')
+  } else if (from === 'inbox') {
+    router.push({
+      path: '/approval/inbox',
+      query: tab ? { tab } : {}
+    })
   } else {
-    router.go(-1)
+    router.back();
   }
 }
 

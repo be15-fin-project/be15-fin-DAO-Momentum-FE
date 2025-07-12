@@ -3,12 +3,15 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { getFileUrl } from "@/features/common/api.js";
 import { generatePresignedUrl } from "@/features/announcement/api.js";
 import { getRemainDayOff, getRemainRefresh } from "@/features/approvals/api.js";
+import {useToast} from "vue-toastification";
 
 /* 파일과 관련된 변수들 */
 const file = ref(null);
 const signedUrl = ref(null);
 const fileName = ref(null);
 const uploadedFile = ref(null);
+
+const toast = useToast();
 
 /* 부모에게 전달 받은 데이터 */
 const props = defineProps({
@@ -184,15 +187,27 @@ async function fetchVacationFile() {
 }
 
 /* 파일 다운로드 하기 (클릭시 작동) */
-function handleFileClick() {
+async function handleFileClick() {
   if (!signedUrl.value || !file.value) return;
 
-  const link = document.createElement("a");
-  link.href = signedUrl.value;
-  link.download = file.value.originalFileName;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    const response = await fetch(signedUrl.value);
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = fileName.value;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("파일 다운로드 실패:", err);
+    toast.error('파일 다운로드 중 에러가 발생했습니다.');
+  }
 }
 
 /* 파일 업로드 하기 */
@@ -230,7 +245,7 @@ async function handleFileUpload(event) {
 
   } catch (err) {
     console.error("파일 업로드 실패:", err);
-    alert("파일 업로드 중 오류가 발생했습니다.");
+    toast.error('파일 업로드 중 에러가 발생했습니다.');
   }
 }
 
