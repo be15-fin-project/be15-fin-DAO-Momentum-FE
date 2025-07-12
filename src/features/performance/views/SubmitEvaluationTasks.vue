@@ -89,13 +89,6 @@ const filterOptions = computed(() => [
     options: formTree.value
   },
   {
-    key: 'submitted',
-    label: '제출 여부',
-    icon: 'fa-check-circle',
-    type: 'select',
-    options: ['전체', '제출', '미제출']
-  },
-  {
     key: 'date',
     label: '기간',
     icon: 'fa-calendar-day',
@@ -142,10 +135,6 @@ function transformFormTree(rawTree) {
 
 function normalizeFilterParams(values) {
   const normalized = { ...values }
-
-  if (normalized.submitted === '제출') normalized.submitted = true
-  else if (normalized.submitted === '미제출') normalized.submitted = false
-  else delete normalized.submitted
 
   const selectedId = values.formId
   const typeMatch = formTree.value.find(type => type.deptId === selectedId)

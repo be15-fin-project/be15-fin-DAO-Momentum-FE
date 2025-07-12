@@ -190,7 +190,7 @@ const normalizeFilterParams = (values) => {
   if (values.date_start) params.startDate = values.date_start;
   if (values.date_end) params.endDate = values.date_end;
   const sel = roundStatusOptions.find(o => o.label === values.status);
-  if (sel) params.status = sel.value;
+  if (sel?.value) params.status = sel.value;
   return params;
 };
 
