@@ -67,7 +67,7 @@ async function handleFileClick() {
     window.URL.revokeObjectURL(url);
   } catch (err) {
     console.error("파일 다운로드 실패:", err);
-    toast.error('파일 다운로드 중 에러가 발생했습니다.');
+    toast.error('파일 다운로드 중 오류가 발생했습니다.');
   }
 }
 
@@ -179,12 +179,12 @@ onMounted(() => {
 
       <!-- 2. 품의 내역 -->
       <div class="form-group full-width">
-        <label class="form-label required">품의 내역<span class="asterisk"> *</span></label>
+        <label class="form-label required">품의 내역<span v-if="!isReadOnly" class="asterisk"> *</span></label>
         <div v-if="isReadOnly" class="readonly-box">
           {{ formData.content || "내용 없음" }}
         </div>
         <textarea v-else v-model="formData.content" class="form-textarea" required/>
-        <p v-if="errors.reason" class="warning-text">{{ errors.reason }}</p>
+        <p v-if="errors.reason && !isReadOnly" class="warning-text">{{ errors.reason }}</p>
       </div>
     </div>
   </div>

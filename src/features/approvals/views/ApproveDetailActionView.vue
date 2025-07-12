@@ -3,7 +3,7 @@ import {ref, onMounted, computed, watch, watchEffect} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import FormSection from '@/features/approvals/components/FormSection.vue'
 import ApprovalSideSection from '@/features/approvals/components/ApprovalSideSection.vue'
-import { approveOrReject, getApprovalDetail } from "@/features/approvals/api.js"
+import {approveOrReject, checkApproval, getApprovalDetail} from "@/features/approvals/api.js"
 import { useAuthStore } from "@/stores/auth.js"
 
 const router = useRouter();
@@ -30,6 +30,7 @@ const statusText = (statusType) => {
   }
 }
 
+/* 결재 문서 종류 */
 const approveTypeText = (approveType) => {
   switch (approveType) {
     case 'WORKCORRECTION': return '출퇴근 정정 신청서'
@@ -47,11 +48,20 @@ const approveTypeText = (approveType) => {
 async function fetchApproval() {
   try {
     fetchError.value = false;
+
     const documentId = route.params.documentId;
     const res = await getApprovalDetail(documentId);
+
     approval.value = res.data.data;
     status.value = statusText(approval.value.approveDTO.statusType);
     approveType.value = approveTypeText(approval.value.approveDTO.approveType);
+
+    /* 참조 기능 */
+    if (approval.value.approveDTO.receivedType === 'REFERENCE') {
+        await checkApproval(documentId);
+        const newRes = await getApprovalDetail(documentId);
+        approval.value = newRes.data.data;
+    }
   } catch (e) {
     console.error("상세 조회 실패:", e)
     fetchError.value = true;
@@ -77,7 +87,6 @@ watchEffect(() => {
 
   myApproveLineListId.value = null;
 });
-
 
 /* 승인/반려를 처리하는 api */
 async function handleApprove(isApprove, reason) {
@@ -116,6 +125,18 @@ function goBack() {
     router.back();
   }
 }
+
+/* 참조 문서 api (문서를 클릭하는 순간 참조) */
+onMounted(async () => {
+  if (approval.value.approveDTO.receivedType === 'REFERENCE') {
+    try {
+      await checkApproval(route.params.documentId);
+      console.log('참조 열람 처리 완료');
+    } catch (e) {
+      console.log('참조 실패', e);
+    }
+  }
+});
 
 onMounted(fetchApproval)
 </script>
@@ -173,7 +194,7 @@ onMounted(fetchApproval)
 
   <div v-if="fetchError" class="error-message">
     <i class="fas fa-exclamation-triangle"></i>
-    삭제되었거나 존재하지 않는 문서입니다.
+    존재하지 않거나 열람 권한이 없는 문서 입니다.
   </div>
 </template>
 
