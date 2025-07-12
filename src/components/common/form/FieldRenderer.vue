@@ -55,6 +55,11 @@
         :factorGrades="field.value.factorGrades"
     />
 
+    <FormNotice
+        v-else-if="field.type === 'notice'"
+        :content="field.value"
+    />
+
     <ProgressTimeline
         v-if="field.type === 'progressTimeline'"
         v-model="model[field.key]"
@@ -64,7 +69,7 @@
 
     <!-- 읽기 전용 -->
     <div
-        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart', 'memberPicker', 'retentionCard'].includes(field.type)"
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart', 'memberPicker', 'notice', 'retentionCard'].includes(field.type)"
         class="form-input readonly"
         v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
     />
@@ -193,6 +198,7 @@ import TreeNode from "@/components/common/TreeNode.vue";
 import MemberPickerField from "@/components/common/form/MemberPickerField.vue";
 import DeptList from "@/components/common/form/DeptList.vue";
 import RetentionScoreCard from "@/components/common/form/RetentionScoreCard.vue";
+import FormNotice from "@/components/common/form/FormNotice.vue";
 
 const props = defineProps({
   field: Object,

@@ -43,9 +43,9 @@ function renderChart() {
 
   const colorMap = {
     '양호': getCssVar('--blue-200'),
-    '보통': getCssVar('--blue-300'),
-    '주의': getCssVar('--blue-400'),
-    '심각': getCssVar('--blue-500'),
+    '보통': getCssVar('--blue-400'),
+    '주의': getCssVar('--blue-500'),
+    '심각': getCssVar('--main-color'),
   };
 
   const orderedKeys = ['goodCount', 'normalCount', 'warningCount', 'severeCount'];

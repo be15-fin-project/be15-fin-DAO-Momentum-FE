@@ -220,6 +220,19 @@ async function openSubmitModal(row) {
     const formDesc = allForms.find(f => f.formId === row.formId)?.name || row.formName
     const propertyMap = new Map(properties.map(p => [p.name, p.propertyId]))
 
+    const noticeInfo = {
+      title: '안내 사항',
+      layout: 'one-column',
+      fields: [
+        {
+          type: 'notice',
+          value: `본 평가는 구성원의 업무 역량과 조직 기여도를 종합적으로 이해하고, <br>향후 인사 제도 운영 및 조직 관리 방안 수립 시 참고 자료로 활용됩니다.<br>
+응답 내용은 절대적으로 비공개로 처리되며,<br>개별 평가 결과로 인해 인사상 불이익이 발생하지 않습니다.<br>
+보다 신뢰도 높은 분석을 위해, <br>사실에 근거한 객관적이고 성실한 평가를 부탁드립니다.`
+        }
+      ]
+    }
+
     const baseInfo = {
       title: '평가 정보', icon: 'fa-info-circle', layout: 'two-column',
       fields: [
@@ -252,7 +265,7 @@ async function openSubmitModal(row) {
       ]
     }
 
-    formSections.value = [baseInfo, ...factors, reason]
+    formSections.value = [noticeInfo, baseInfo, ...factors, reason]
     submitForm.value = {
       roundNo: row.roundNo,
       formName: formDesc,
