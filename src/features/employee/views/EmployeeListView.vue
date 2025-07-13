@@ -167,7 +167,7 @@ const req = reactive({
   address: '',
   deptId: null,
   positionId: null,
-  employeeRoles: [],
+  // employeeRoles: [],
   status: 'EMPLOYED',
   joinDate: null,
   remainingDayoffHours: 0,
@@ -183,7 +183,7 @@ const resetReq = () => {
   req.address = '';
   req.deptId = null;
   req.positionId = null;
-  req.employeeRoles = [];
+  // req.employeeRoles = [];
   req.status = 'EMPLOYED';
   req.joinDate = null;
   req.joinDate = dayjs().format('YYYY-MM-DD');
