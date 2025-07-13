@@ -109,7 +109,7 @@ const props = defineProps({
 });
 
 const form = defineModel('form');
-const emit = defineEmits(['close', 'reject', 'submit', 'update:visible', 'file-change']);
+const emit = defineEmits(['close', 'reject', 'submit', 'cancel', 'edit', 'update:visible', 'file-change']);
 
 function onClose() {
   emit('update:visible', false);

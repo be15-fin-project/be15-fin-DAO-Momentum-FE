@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { watch, ref, onMounted } from 'vue'
 import OrgTree from '@/features/retention-support/components/OrgTree.vue'
 import MemberList from '@/features/retention-support/components/MemberList.vue'
 import { fetchDepartmentInfo } from '@/features/company/api.js'
@@ -7,34 +7,45 @@ import { fetchDepartmentInfo } from '@/features/company/api.js'
 const props = defineProps({
   modelValue: [String, Number, null],
   field: Object,
-  readonly: Boolean,
-  selectedEmpId: {
-    type: [String, Number, null],
-    default: null
-  }
-
+  readonly: Boolean
 })
 
 const emit = defineEmits(['update:modelValue'])
 
 const selectedDeptId = ref(null)
 const members = ref([])
-const selectedMember = ref(null)
 
 const handleDeptSelect = async (deptId) => {
-  selectedDeptId.value = deptId
+  console.log('[handleDeptSelect 호출]', deptId); // 여기 안 뜨면 문제
+  selectedDeptId.value = deptId;
   try {
-    const res = await fetchDepartmentInfo(deptId)
-    members.value = res.data.data.departmentMemberDTOList || []
+    const res = await fetchDepartmentInfo(deptId);
+    console.log('[부서 정보 응답]', res.data);
+    members.value = res.data.data.departmentMemberDTOList || [];
   } catch (e) {
-    console.error('부서 정보 조회 실패:', e)
-    members.value = []
+    console.error('부서 정보 조회 실패:', e);
+    members.value = [];
   }
-}
+};
+
 
 const handleMemberSelect = (empId) => {
   emit('update:modelValue', empId)
 }
+
+console.log('[초기 mount] field:', props.field); // field에 initialDeptId, treeData 잘 넘어왔는지
+watch(() => props.modelValue, async (empId) => {
+  const deptId = props.field.initialDeptId;
+
+  if (deptId) {
+    await handleDeptSelect(deptId);
+  }
+
+  if (empId) {
+    emit('update:modelValue', empId);
+  }
+}, { immediate: true });
+
 
 </script>
 
@@ -43,7 +54,11 @@ const handleMemberSelect = (empId) => {
     <label class="form-label" :class="{ required: field.required }">
     </label>
     <div class="picker-grid">
-      <OrgTree :dtoList="field.treeData" @selectDept="handleDeptSelect" />
+      <OrgTree
+          :dtoList="field.treeData"
+          :initialDeptId="field.initialDeptId"
+          @selectDept="handleDeptSelect"
+      />
       <div class="member-list-container">
         <MemberList
             :members="members"

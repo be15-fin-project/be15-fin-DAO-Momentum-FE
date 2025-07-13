@@ -73,6 +73,11 @@ export async function getRetentionForecastDetail(retentionId) {
     return res.data.data;
 }
 
+// 근속 전망 상세에서의 면담 요청
+export async function getManagerIdByRetentionId(retentionId) {
+    const res = await api.get(`/retention-contacts/${retentionId}/request`)
+    return res.data.data;
+}
 // ==================================================
 // 면담 기록 내역 조회 API
 // ==================================================

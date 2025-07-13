@@ -1,14 +1,15 @@
 <script setup>
+import { ref, onMounted, watch } from 'vue';
 import Tree from "vue3-treeview";
 import '@/assets/css/index.css'
 import '@/assets/css/orgChartTransition.css'
-import {ref, watch} from "vue";
 
 const props = defineProps({
   dtoList: {
     type: Array,
     default: () => []
-  }
+  },
+  initialDeptId: [Number, String, null]
 })
 const emit = defineEmits(['selectDept'])
 
@@ -56,6 +57,8 @@ function getBreadcrumb() {
   const breadcrumb = [];
 
   let current = nodes.value[selectedDeptId.value];
+  if (!current) return [];
+
   while (current) {
     breadcrumb.unshift(current.text);
     current = nodes.value[current.parent];
@@ -65,16 +68,38 @@ function getBreadcrumb() {
 }
 
 const selectDepartment = (eventPayload) => {
-  emit('selectDept',eventPayload.id);
-  selectedDeptId.value=eventPayload.id
+  Object.values(nodes.value).forEach(node => {
+    if (node.state) node.state.selected = false;
+  });
+
+  const id = String(eventPayload.id);
+  if (nodes.value[id]) {
+    nodes.value[id].state.selected = true;
+  }
+
+  selectedDeptId.value = id;
   breadcrumb.value = getBreadcrumb();
-}
+
+  emit('selectDept', eventPayload.id);
+};
 
 watch(() => props.dtoList, (newData) => {
   if (newData && newData.length) {
     TreeToMap(newData);
   }
 }, { immediate: true }); // 최초 호출도 포함
+
+onMounted(() => {
+  if (props.initialDeptId) {
+    const id = String(props.initialDeptId);
+    if (nodes.value[id]) {
+      nodes.value[id].state.selected = true;
+      selectedDeptId.value = id;
+      breadcrumb.value = getBreadcrumb();
+    }
+    emit('selectDept', props.initialDeptId);
+  }
+});
 
 </script>
 
