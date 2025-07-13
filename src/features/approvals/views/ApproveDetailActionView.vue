@@ -1,14 +1,20 @@
 <script setup>
-import {ref, onMounted, computed, watch, watchEffect} from 'vue'
+import { ref, onMounted, computed , watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import FormSection from '@/features/approvals/components/FormSection.vue'
 import ApprovalSideSection from '@/features/approvals/components/ApprovalSideSection.vue'
-import {approveOrReject, checkApproval, getApprovalDetail} from "@/features/approvals/api.js"
+import { approveOrReject, checkApproval, deleteApproval, getApprovalDetail } from "@/features/approvals/api.js"
 import { useAuthStore } from "@/stores/auth.js"
+import { useToast } from "vue-toastification";
+import CommonModal from "@/components/common/CommonModal.vue";
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const toast = useToast();
+
+/* 모달을 위한 변수 */
+const showDeleteConfirmModal = ref(false);
 
 /* 없는 문서인 경우를 구분하기 위한 변수 */
 const fetchError = ref(false);
@@ -68,6 +74,48 @@ async function fetchApproval() {
   }
 }
 
+// function handleEdit() {
+//   const documentId = route.params.documentId;
+//   router.push({ name: 'ApprovalEdit', params: { documentId } });
+// }
+
+
+/* 결재 문서 회수하기 */
+async function handleDelete() {
+  try {
+    await deleteApproval(route.params.documentId);
+    goBack();
+  } catch (e) {
+    console.error('삭제 실패:', e);
+
+    const errorCode = e?.response?.data?.errorCode;
+
+    switch (errorCode) {
+      case '30026':
+        toast.error('결재가 시작되어 회수할 수 없습니다.');
+        break;
+      default:
+        toast.error('삭제 중 오류가 발생했습니다.');
+    }
+  }
+}
+
+// async function handleCancel() {
+//   if (!confirm('결재를 취소하시겠습니까?')) return;
+//
+//   try {
+//     loading.value = true;
+//     await cancelApproval(route.params.documentId); // ← API 연결 필요
+//     alert('결재가 취소되었습니다.');
+//     await fetchApproval(); // ← 상태 갱신
+//   } catch (e) {
+//     console.error('취소 실패:', e);
+//     alert('취소에 실패했습니다.');
+//   } finally {
+//     loading.value = false;
+//   }
+// }
+
 /* 내 결재선 찾기 */
 watchEffect(() => {
   if (!approval.value) return;
@@ -126,23 +174,12 @@ function goBack() {
   }
 }
 
-/* 참조 문서 api (문서를 클릭하는 순간 참조) */
-onMounted(async () => {
-  if (approval.value.approveDTO.receivedType === 'REFERENCE') {
-    try {
-      await checkApproval(route.params.documentId);
-      console.log('참조 열람 처리 완료');
-    } catch (e) {
-      console.log('참조 실패', e);
-    }
-  }
-});
-
 onMounted(fetchApproval)
 </script>
 
 <template>
 
+  <!-- 1. 결재 문서 헤더 (제목, 상태, 문서함으로 돌아가는 버튼) -->
   <div v-if="approval" class="approval-header">
     <div class="header-left">
       <div class="icon-wrapper">
@@ -170,6 +207,7 @@ onMounted(fetchApproval)
     </div>
   </div>
 
+  <!-- 2. 결재 내역 나오는 부분  -->
   <div v-if="approval" class="container">
     <div class="approval-page">
       <div class="page-body">
@@ -182,6 +220,7 @@ onMounted(fetchApproval)
           :isReadOnly="true"
           @approve="(reason) => handleApprove(true, reason)"
           @reject="(reason) => handleApprove(false, reason)"
+          @request-delete="showDeleteConfirmModal = true"
         />
         <ApprovalSideSection
           :approveLineGroupDTO="approval.approveLineGroupDTO"
@@ -192,10 +231,23 @@ onMounted(fetchApproval)
     </div>
   </div>
 
+  <!-- 3. 에러 표시 (문서가 없거나 열람 권한이 없는 경우)  -->
   <div v-if="fetchError" class="error-message">
     <i class="fas fa-exclamation-triangle"></i>
     존재하지 않거나 열람 권한이 없는 문서 입니다.
   </div>
+
+  <!-- 4. 삭제 모달  -->
+  <CommonModal
+    :visible="showDeleteConfirmModal"
+    confirm-visible
+    confirm-text="삭제"
+    cancel-text="취소"
+    @confirm="() => { showDeleteConfirmModal = false; handleDelete(); }"
+    @cancel="() => { showDeleteConfirmModal = false }"
+  >
+    <p>정말 회수하시겠습니까?</p>
+  </CommonModal>
 </template>
 
 <style scoped>
