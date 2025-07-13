@@ -113,7 +113,6 @@ async function fetchMyWorks() {
     const passedWorkId = route.query.workId;
     const found = works.find(w => String(w.workId) === String(passedWorkId));
 
-    console.log(found.workId)
     if (found) {
       selectedWorkId.value = found.workId;
       updateBeforeTimes(found);
