@@ -86,7 +86,33 @@
             {{ typeof option === 'object' ? option.label : option }}
           </button>
         </template>
+        <template v-if="filter.type === 'yearmonth'">
+          <div class="yearmonth-picker">
+            <select
+                v-model="localValues[filter.key + '_year']"
+                class="filter-input"
+                @change="emitChange"
+            >
+              <option v-for="option in yearOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
 
+            <select
+                v-model="localValues[filter.key + '_month']"
+                class="filter-input"
+                @change="emitChange"
+            >
+              <option
+                  v-for="option in monthOptions"
+                  :key="option.value"
+                  :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+        </template>
 
       </div>
     </div>
@@ -126,6 +152,23 @@ watch(
     { immediate: true } // mount 시에도 바로 초기값 반영
 );
 const activeDropdown = ref(null);
+
+const currentYear = new Date().getFullYear();
+const yearOptions = [
+  { label: '전체', value: '' },
+  ...Array.from({ length: 10 }, (_, i) => {
+    const year = currentYear - i;
+    return { label: `${year}`, value: year };
+  })
+];
+const monthOptions = [
+  { label: '전체', value: '' },
+  ...Array.from({ length: 12 }, (_, i) => {
+    const month = String(i + 1).padStart(2, '0');
+    return { label: month, value: month };
+  })
+];
+
 
 function toggleDropdown(index) {
   activeDropdown.value = activeDropdown.value === index ? null : index;
@@ -372,5 +415,12 @@ onUnmounted(() => {
     align-items: stretch;
   }
 }
+
+.yearmonth-picker {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
 
 </style>

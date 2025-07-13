@@ -3,6 +3,7 @@ import CompanyForm from "@/features/settings/views/CompanyForm.vue";
 import DepartmentForm from "@/features/settings/views/DepartmentForm.vue";
 import PositionForm from "@/features/settings/views/PositionForm.vue";
 import RoleForm from "@/features/settings/views/RoleForm.vue";
+import HoolidayForm from "@/features/settings/views/HoolidayForm.vue";
 
 export const settingsRoutes = [
     {
@@ -24,6 +25,9 @@ export const settingsRoutes = [
             },{
                 path:'role',
                 component:RoleForm
+            },{
+                path:'holiday',
+                component:HoolidayForm
             }
         ]
     },
