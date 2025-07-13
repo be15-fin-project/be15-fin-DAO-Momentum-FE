@@ -156,15 +156,22 @@ const normalizeFilterParams = (values) => {
   switch (normalized.status) {
     case 'ACCEPTED':
       normalized.statusId = 2;
+      normalized.isDeleted = 'N';
       break;
     case 'REJECTED':
       normalized.statusId = 3;
+      normalized.isDeleted = 'N';
       break;
     case 'PENDING':
       normalized.statusId = 1;
       break;
+    case 'CANCEL':
+      normalized.statusId = 2;
+      normalized.isDeleted = 'Y';
+      break;
     default:
       normalized.statusId = null;
+      normalized.isDeleted = 'N';
   }
   delete normalized.status;
 
@@ -351,7 +358,8 @@ const initFilters = () => {
     { key: 'status', label: '전체', value: null },
     { key: 'status', label: '대기', value: 'PENDING' },
     { key: 'status', label: '승인', value: 'ACCEPTED' },
-    { key: 'status', label: '반려', value: 'REJECTED' }
+    { key: 'status', label: '반려', value: 'REJECTED' },
+    { key: 'status', label: '취소', value: 'CANCEL' }
   ];
 
 };

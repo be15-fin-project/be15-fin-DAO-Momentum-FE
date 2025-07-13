@@ -91,11 +91,25 @@ const tableColumns = [
 ];
 
 /* ========== Computed ========== */
-const mappedTableData = computed(() => tableData.value.map(row => {
-  const baseRow = { ...row, evaluatedAt: row.evaluatedAt?.split('T')[0] ?? '' };
-  row.factorScores?.forEach(f => baseRow[f.propertyName] = f.score);
-  return baseRow;
-}));
+const mappedTableData = computed(() => {
+  return tableData.value.map(row => {
+    const baseRow = {
+      roundNo: row.item?.roundNo ?? '',
+      evaluatedAt: row.item?.evaluatedAt?.split('T')[0] ?? '',
+      overallGrade: row.item?.overallGrade ?? '',
+      objectionSubmitted: row.item?.objectionSubmitted ?? false,
+      resultId: row.item?.resultId ?? null
+    };
+
+    // 각 평가 항목(요인)에 대해 propertyName을 key로 score를 넣어줌
+    row.factorScores?.forEach(f => {
+      baseRow[f.propertyName] = f.score;
+    });
+
+    return baseRow;
+  });
+});
+
 
 /* ========== Util ========== */
 const normalizeFilterParams = (values) => {
