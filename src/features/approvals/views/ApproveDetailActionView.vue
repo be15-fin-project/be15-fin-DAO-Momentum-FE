@@ -100,22 +100,6 @@ async function handleDelete() {
   }
 }
 
-// async function handleCancel() {
-//   if (!confirm('결재를 취소하시겠습니까?')) return;
-//
-//   try {
-//     loading.value = true;
-//     await cancelApproval(route.params.documentId); // ← API 연결 필요
-//     alert('결재가 취소되었습니다.');
-//     await fetchApproval(); // ← 상태 갱신
-//   } catch (e) {
-//     console.error('취소 실패:', e);
-//     alert('취소에 실패했습니다.');
-//   } finally {
-//     loading.value = false;
-//   }
-// }
-
 /* 내 결재선 찾기 */
 watchEffect(() => {
   if (!approval.value) return;
@@ -209,12 +193,14 @@ onMounted(fetchApproval)
 
   <!-- 2. 결재 내역 나오는 부분  -->
   <div v-if="approval" class="container">
+
     <div class="approval-page">
       <div class="page-body">
         <FormSection
           :approveDTO="approval.approveDTO"
           :parentApproveDTO="approval.parentApproveDTO"
           :approveLineGroupDTO="approval.approveLineGroupDTO"
+          :approveRefDTO="approval.approveRefDTO"
           :approveFileDTO="approval.approveFileDTO"
           :formDetail="approval.formDetail"
           :isReadOnly="true"

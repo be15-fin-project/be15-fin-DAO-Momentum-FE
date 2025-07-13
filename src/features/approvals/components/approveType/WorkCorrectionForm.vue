@@ -1,6 +1,9 @@
 <script setup>
 import { getMyWorks } from "@/features/works/api.js";
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
+import { useRoute } from 'vue-router';
+
+const route = useRoute();
 
 /* 일 목록 가져오는 변수 */
 const workList = ref([]);
@@ -22,10 +25,10 @@ const startTime = ref('');
 const endTime = ref('');
 const fixedDate = ref(''); // YYYY-MM-DD 형태
 
-/* 오늘부터 1주일 전까지만 조회하게 설정 */
+/* 오늘부터 2주일 전까지만 조회하게 설정 */
 const today = new Date();
 const oneWeekAgo = new Date();
-oneWeekAgo.setDate(today.getDate() - 7);
+oneWeekAgo.setDate(today.getDate() - 14);
 
 /* 부모에게서 받아온 값*/
 const props = defineProps({
@@ -103,13 +106,22 @@ async function fetchMyWorks() {
     };
 
     const res = await getMyWorks(payload);
-    const works = res || [];
+    const works = res?.works || [];
 
-    workList.value = res.works;
+    workList.value = works;
 
-    if (works.length > 0) {
-      updateBeforeTimes(works[0])
+    const passedWorkId = route.query.workId;
+    const found = works.find(w => String(w.workId) === String(passedWorkId));
+
+    console.log(found.workId)
+    if (found) {
+      selectedWorkId.value = found.workId;
+      updateBeforeTimes(found);
+      fixedDate.value = found.startAt.split('T')[0];
+    } else if (works.length > 0) {
+      selectedWorkId.value = works[0].workId;
     }
+
   } catch (e) {
     console.error('근무 정보를 불러오는데 오류가 발생했습니다.', e)
   }
@@ -164,7 +176,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
         </div>
-        <p class="info-text">※ 7일 이내 출퇴근 기록만 수정할 수 있습니다. </p>
+        <p class="info-text">※ 14일 이내 출퇴근 기록만 수정할 수 있습니다. </p>
       </div>
       <div v-else class="form-row">
         <div class="form-group">
@@ -188,7 +200,7 @@ onBeforeUnmount(() => {
         <div class="form-group">
           <label class="form-label required">수정 출근 일시<span v-if="!isReadOnly"  class="asterisk"> *</span></label>
           <div v-if="isReadOnly" class="readonly-box">
-            {{ formData.afterStartAt || '입력 없음' }}
+            {{ formData.afterStartAt.replace('T', ' ') || '입력 없음' }}
           </div>
           <div v-else class="time-picker-wrapper">
             <input
@@ -204,14 +216,14 @@ onBeforeUnmount(() => {
               required
             />
           </div>
-          <p v-if="errors.time" class="warning-text">{{ errors.time }}</p>
+          <p v-if="!isReadOnly && errors.time" class="warning-text">{{ errors.time }}</p>
         </div>
 
         <!-- 수정 퇴근 -->
         <div class="form-group">
           <label class="form-label required">수정 퇴근 일시<span v-if="!isReadOnly"  class="asterisk"> *</span></label>
-          <div v-if="isReadOnly" class="reado nly-box">
-            {{ formData.afterEndAt || '입력 없음' }}
+          <div v-if="isReadOnly" class="readonly-box">
+            {{ formData.afterEndAt.replace('T', ' ') || '입력 없음' }}
           </div>
           <div v-else class="time-picker-wrapper">
             <input
