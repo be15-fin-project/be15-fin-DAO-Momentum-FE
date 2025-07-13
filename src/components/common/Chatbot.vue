@@ -51,7 +51,8 @@ const selectType = (type) => {
 const roleMap = {
   MASTER: '마스터 관리자',
   HR_MANAGER: '인사 관리자',
-  MANAGER: '팀장'
+  MANAGER: '팀장',
+  BOOKKEEPING: '경리 관리자'
 };
 
 const sendUserMessage = async () => {
