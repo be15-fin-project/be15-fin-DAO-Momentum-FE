@@ -78,7 +78,6 @@ const requiredFields = [
 ]
 
 const optionalFields = [
-  {key: 'empNo', icon: 'fa-id-badge', label: '사번', placeholder: '사번'},
   {key: 'department', icon: 'fa-building', label: '부서', placeholder: '시스템에 등록된 부서명'},
   {key: 'status', icon: 'fa-building', label: '재직 상태', placeholder: '재직, 휴직, 퇴사 중 하나'},
   {key: 'hireDate', icon: 'fa-calendar', label: '입사일', placeholder: 'YYYY-MM-DD'},
@@ -87,7 +86,6 @@ const optionalFields = [
 ]
 
 const csvDefaults = [
-  {icon: 'fa-info-circle', color: 'blue', text: '사번: 시스템 계산값'},
   {icon: 'fa-info-circle', color: 'blue', text: '부서: 없음'},
   {icon: 'fa-info-circle', color: 'blue', text: '재직 상태: 재직'},
   {icon: 'fa-info-circle', color: 'blue', text: '입사일: CSV 등록일'},
@@ -132,6 +130,7 @@ async function uploadCSV() {
     await createEmployees(formData)
     toast.success('CSV 파일이 성공적으로 업로드되었습니다!')
     removeFile()
+    router.push('/employees')
   } catch (err) {
     toast.error('업로드 중 오류가 발생했습니다.')
   } finally {
