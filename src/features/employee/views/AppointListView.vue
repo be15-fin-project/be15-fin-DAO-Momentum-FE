@@ -26,9 +26,9 @@ const showModal = ref(false);
 const columns = [
   {key: 'empNo', label: '사번'},
   {key: 'empName', label: '사원명'},
-  {key: 'beforeDeptName', label: '기존 부서'},
+  {key: 'beforeDeptName', label: '기존 부서', format: val => val || '-'},
   {key: 'beforePositionName', label: '기존 직위'},
-  {key: 'afterDeptName', label: '발령 부서'},
+  {key: 'afterDeptName', label: '발령 부서', format: val => val || '-'},
   {key: 'afterPositionName', label: '발령 직위'},
   {
     key: 'type', label: '발령 종류', format: val => {
@@ -275,7 +275,7 @@ const handleRegisterSubmit = async (req) => {
 <template>
   <main>
     <HeaderWithTabs :headerItems="[
-        { label: '발령 내역 조회', to: '/appoints', active: true },
+        { label: '인사 발령 내역 조회', to: '/appoints', active: true },
     ]"
                     :submitButtons="[{ label: '등록', icon: 'fa-user-plus', event: 'click', value: 'create', variant: 'blue'}]"
                     :showTabs="false"
