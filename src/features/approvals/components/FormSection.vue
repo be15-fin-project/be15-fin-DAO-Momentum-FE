@@ -36,7 +36,10 @@ const canAction = computed(() => {
   return approveDTO.statusType === 'PENDING' && approveDTO.receivedType === 'APPROVAL';
 })
 
-console.log(approveDTO);
+/* 사원이 직접 작성한 메일인지 확인 */
+const isSent = computed(() => {
+  return approveDTO.receivedType === 'WRITER';
+})
 
 /* form에 따라서 매핑 하기 */
 const formMap = {
@@ -54,24 +57,25 @@ const selectedFormComponent = computed(() => {
   return formMap[approveDTO.approveType] || null;
 });
 
-const emit = defineEmits(['approve', 'reject']);
+const emit = defineEmits(['approve', 'reject', 'request-delete']);
 
-/* 반려 하기 */
+/* 결재 문서 반려 하기 */
 function handleReject() {
   if (!reason.value || reason.value.trim() === '') {
     rejectError.value = '반려 사유는 반드시 입력해야 합니다.';
     return;
   }
-  console.log('emit reject:', reason.value);
 
   rejectError.value = '';
   emit('reject', reason.value);
 }
+
 </script>
 
 <template>
   <div class="form-wrapper">
     <div class="form-container">
+      <!-- 1. 결재 문서 제목 -->
       <section class="form-section">
         <h3 class="section-title">
           <i class="fas fa-pen-nib"></i>제목
@@ -88,6 +92,7 @@ function handleReject() {
         </div><br>
       </section>
 
+      <!-- 2. 작성자 -->
       <div class="form-group-row">
         <div class="form-group half-width">
           <h3 class="section-title">
@@ -108,11 +113,13 @@ function handleReject() {
         </div>
       </div>
 
+      <!-- 3. 결재 내역 -->
       <section class="form-section">
         <h3 class="section-title">
           <i class="fas fa-file-alt"></i>결재 내역
         </h3>
         <div class="form-group">
+          <!-- 각각의 결재 내역에 맞게 여결 -->
           <component
             :is="selectedFormComponent"
             v-if="selectedFormComponent"
@@ -125,8 +132,10 @@ function handleReject() {
         </div>
       </section>
 
+      <!-- 4. 결재 승인 or 반려 사유 -->
       <ApproveReasonList :items="approveLineGroupDTO?.[0]?.approveLineListDTOs || []" />
 
+      <!-- 5. 승인, 반려 하기 -->
       <div
         v-if="canAction && isReadOnly"
         class="approve-action-wrapper"
@@ -155,6 +164,37 @@ function handleReject() {
             data-v-fb076351 data-v-f51fb21f
           >
             반려
+          </button>
+        </div>
+      </div>
+
+      <!-- 6. 수정, 회수, 취소 버튼 (수정과 회수는 대기 문서인 경우, 취소는 승인/반려 문서인 경우) -->
+      <div v-else-if="isSent" class="approve-action-wrapper">
+        <div class="form-buttons">
+          <button
+            v-if="approveDTO.statusType === 'PENDING' "
+            type="button"
+            class="btn-action btn-edit"
+            data-v-fb076351 data-v-f51fb21f
+          >
+            수정
+          </button>
+          <button
+            v-if="approveDTO.statusType === 'PENDING'"
+            type="button"
+            class="btn-action btn-reject"
+            @click="$emit('request-delete')"
+            data-v-fb076351 data-v-f51fb21f
+          >
+            회수
+          </button>
+          <button
+            v-if="approveDTO.statusType === 'ACCEPTED' || approveDTO.statusType === 'REJECTED'"
+            type="button"
+            class="btn-action btn-cancel"
+            data-v-fb076351 data-v-f51fb21f
+          >
+            결재 취소
           </button>
         </div>
       </div>
@@ -301,4 +341,6 @@ function handleReject() {
   margin-top: 4px;
   align-self: flex-start;
 }
+
+
 </style>

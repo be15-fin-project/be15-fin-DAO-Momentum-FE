@@ -307,7 +307,6 @@ onMounted(async () => {
   try {
     const deptRes = await getDepartments();
     departmentTree.value =  deptRes.data?.departmentInfoDTOList || [];
-    console.log(departmentTree.value);
   } catch (err) {
     console.error('부서 불러오기 실패:', err);
   }

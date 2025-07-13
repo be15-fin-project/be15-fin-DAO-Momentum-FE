@@ -149,6 +149,7 @@ async function submitForm() {
           data-v-fb076351 data-v-f51fb21f
           @click="submitForm"
         >
+          <i data-v-fb076351="" class="fas fa-paper-plane"></i>
           제출
         </button>
       </div>

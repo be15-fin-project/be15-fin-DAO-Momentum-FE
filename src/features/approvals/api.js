@@ -73,3 +73,8 @@ export function approveOrReject(approvalConfirmRequest) {
 export function checkApproval(documentId) {
     return api.patch(`/approval/documents/${documentId}/reference`)
 }
+
+/* 12. 결재 문서 회수 */
+export function deleteApproval(documentId) {
+    return api.delete(`/approval/documents/${documentId}`)
+}
