@@ -40,7 +40,10 @@
         icon="fa-chart-line"
         :sections="formSections"
         :showSubmit="false"
+        :showEdit="true"
+        editText="면담 요청"
         @close="isOpen = false"
+        @edit="handleOpenContactModal"
     />
   </main>
 </template>
@@ -58,9 +61,12 @@ import {
   getRetentionForecasts,
   getRetentionForecastDetail,
   downloadRetentionPredictionExcel,
+  getManagerIdByRetentionId,
 } from '@/features/retention-support/api.js';
 import { useToast } from 'vue-toastification';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const toast = useToast();
 
 const filterOptions = ref([]);
@@ -73,6 +79,7 @@ const tableData = ref([]);
 const isOpen = ref(false);
 const detailSections = ref([]);
 const formSections = ref([]);
+const selectedRetentionId = ref(null);
 
 onMounted(async () => {
   const [deptRes, posRes] = await Promise.all([
@@ -190,6 +197,7 @@ const tableColumns = [
 ];
 
 const openDetail = async (row) => {
+  selectedRetentionId.value = row.retentionId;
   try {
     const detail = await getRetentionForecastDetail(row.retentionId);
 
@@ -269,6 +277,43 @@ const openDetail = async (row) => {
     toast.error('상세 정보를 불러오는 데 실패했습니다.');
   }
 };
+
+const handleOpenContactModal = async () => {
+  try {
+    const res = await getManagerIdByRetentionId(selectedRetentionId.value);
+    const { targetId, managerId, targetDeptId, managerDeptId } = res;
+
+    if (!targetId || !managerId) {
+      toast.error('면담 요청 정보를 불러올 수 없습니다.');
+      return;
+    }
+
+    handleSubmitModal({ targetId, managerId, targetDeptId, managerDeptId });
+    isOpen.value = false; // 기존 상세 모달 닫기
+  } catch (e) {
+    toast.error('면담 요청 중 오류가 발생했습니다.');
+  }
+};
+
+// 근속 전망 페이지 내부에 추가
+const handleSubmitModal = ({
+                             targetId = null,
+                             managerId = null,
+                             targetDeptId = null,
+                             managerDeptId = null
+                           } = {}) => {
+  if (!targetId || !managerId) {
+    toast.error('면담 요청 대상자 또는 상급자 정보가 누락되었습니다.');
+    return;
+  }
+
+  router.push({
+    path: '/retention/contact-list',
+    query: { targetId, managerId, targetDeptId, managerDeptId }
+  });
+};
+
+
 
 const handleDownload = async () => {
   try {

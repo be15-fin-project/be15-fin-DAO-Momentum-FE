@@ -337,13 +337,30 @@ const handleFeedbackSubmit = async () => {
 
 
 /* ===== 등록 모달 열기 ===== */
-const handleSubmitModal = () => {
+const handleSubmitModal = async ({
+   targetId = null,
+   managerId = null,
+   targetDeptId = null,
+   managerDeptId = null
+} = {}) => {
+  if (!departmentTree.value?.length) {
+    try {
+      const deptRes = await getDepartments();
+      departmentTree.value = deptRes.data?.departmentInfoDTOList || [];
+    } catch (e) {
+      toast.error('부서 정보를 불러올 수 없습니다.');
+      return;
+    }
+  }
+
   isSubmitModalOpen.value = true;
+
   formData.value = {
-    targetId: null,
-    managerId: null,
+    targetId,
+    managerId,
     reason: ''
   };
+
   submitFormSections.value = [
     {
       title: '면담 대상자',
@@ -355,7 +372,9 @@ const handleSubmitModal = () => {
           label: '대상자 선택',
           type: 'memberPicker',
           treeData: departmentTree.value,
-          required: true
+          required: true,
+          value: targetId,
+          initialDeptId: targetDeptId
         }
       ]
     },
@@ -369,7 +388,9 @@ const handleSubmitModal = () => {
           label: '상급자 선택',
           type: 'memberPicker',
           treeData: departmentTree.value,
-          required: true
+          required: true,
+          value: managerId,
+          initialDeptId: managerDeptId
         }
       ]
     },
@@ -429,4 +450,18 @@ const headerTabs = computed(() => [
   {label: '면담 요청 내역', to: '/retention/my-contacts', active: route.path === '/retention/my-contacts'},
   {label: '면담 내역', to: '/retention/contact-list', active: route.path === '/retention/contact-list'}
 ]);
+
+onMounted(() => {
+  const targetId = route.query.targetId;
+  const managerId = route.query.managerId;
+  if (targetId && managerId) {
+    handleSubmitModal({
+      targetId: Number(route.query.targetId),
+      managerId: Number(route.query.managerId),
+      targetDeptId: Number(route.query.targetDeptId),
+      managerDeptId: Number(route.query.managerDeptId),
+    });
+  }
+});
+
 </script>
