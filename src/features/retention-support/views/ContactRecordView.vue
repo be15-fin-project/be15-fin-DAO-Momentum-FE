@@ -452,16 +452,17 @@ const headerTabs = computed(() => [
 ]);
 
 onMounted(() => {
-  const targetId = route.query.targetId;
-  const managerId = route.query.managerId;
+  const { targetId, managerId, targetDeptId, managerDeptId } = history.state || {};
+
   if (targetId && managerId) {
     handleSubmitModal({
-      targetId: Number(route.query.targetId),
-      managerId: Number(route.query.managerId),
-      targetDeptId: Number(route.query.targetDeptId),
-      managerDeptId: Number(route.query.managerDeptId),
+      targetId,
+      managerId,
+      targetDeptId,
+      managerDeptId,
     });
   }
 });
+
 
 </script>

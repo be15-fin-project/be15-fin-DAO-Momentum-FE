@@ -308,8 +308,13 @@ const handleSubmitModal = ({
   }
 
   router.push({
-    path: '/retention/contact-list',
-    query: { targetId, managerId, targetDeptId, managerDeptId }
+    name: 'ContactRecordView',
+    state: {
+      targetId,
+      managerId,
+      targetDeptId,
+      managerDeptId
+    }
   });
 };
 
