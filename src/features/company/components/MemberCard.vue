@@ -24,6 +24,7 @@ function clickCard(){
       :key="member.empId"
       :class="['member-item', { manager: member.deptHead }, {clickable:clickable}]"
       @click="clickCard"
+      tabindex="0"
   >
     <div v-if="member.deptHead" class="manager-badge">팀장</div>
     <div class="member-header">
@@ -56,6 +57,11 @@ function clickCard(){
   transition: all 0.3s ease;
   position: relative;
   box-shadow: 0 8px 12px rgba(56, 104, 185, 0.10);
+}
+
+.member-item:focus {
+  background-color: var(--blue-50);
+  outline: none;
 }
 
 .member-item:hover {
