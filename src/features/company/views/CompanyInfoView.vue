@@ -3,7 +3,7 @@ import {ref, onMounted} from 'vue'
 import '@/assets/css/index.css'
 import {fetchCompanyInfo} from "@/features/company/api.js";
 
-const company = ref(null)
+const company = ref({})
 
 const getCompanyInfo = async () => {
   try{
@@ -21,7 +21,6 @@ onMounted(async () => {
 
 <template>
   <main class="main">
-    <div class="main-content" v-if="company">
       <div class="container">
         <div class="header-section">
           <div class="header-content">
@@ -105,21 +104,16 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-    </div>
   </main>
 </template>
 
 <style scoped>
 
-.main-content {
-  width: 100%;
-  margin: 0 auto;
-}
-
 .container {
   max-width: none;
   width: 100%;
-  padding: 0 1rem;
+  padding-left: 40px;
+  padding-right:40px;
 }
 
 /* 헤더 영역 */
