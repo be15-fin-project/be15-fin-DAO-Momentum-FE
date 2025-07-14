@@ -17,7 +17,7 @@ defineProps({
 
 <!-- components/DepartmentInfoCard.vue -->
 <template>
-    <div class="card fade-in">
+    <div class="card fade-in slide-in">
       <header class="card-header">
         <div class="card-header-left">
           <i class="fas fa-info-circle card-icon"></i>
@@ -224,6 +224,21 @@ defineProps({
 .btn.delete:hover {
   background-color: #fee2e2;
   color: #dc2626;
+}
+
+.slide-in {
+  animation: slideInFromBottom 0.8s ease-in-out;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(-20px); /* 왼쪽에서 시작 */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0); /* 원래 위치로 */
+  }
 }
 
 
