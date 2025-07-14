@@ -17,10 +17,10 @@ defineProps({
 
 <!-- components/DepartmentInfoCard.vue -->
 <template>
-    <div class="card fade-in">
+    <div class="card fade-in slide-in">
       <header class="card-header">
         <div class="card-header-left">
-          <i class="fas fa-info-circle card-icon"></i>
+          <i class="fas fa-info-circle icon-bg-blue"></i>
           <h2 class="card-title">부서 정보</h2>
         </div>
         <div v-if="editable">
@@ -44,21 +44,21 @@ defineProps({
           <div class="dept-details">
             <div class="dept-detail-item">
               <div class="dept-detail-label">
-                <i class="fas fa-building icon-purple"></i>
+                <i class="fas fa-building icon-bg-blue"></i>
                 <span>부서명</span>
               </div>
               <span class="dept-detail-value">{{ department.name }}</span>
             </div>
             <div class="dept-detail-item">
               <div class="dept-detail-label">
-                <i class="fas fa-phone icon-blue"></i>
+                <i class="fas fa-phone icon-bg-blue"></i>
                 <span>연락처</span>
               </div>
               <span class="dept-detail-value">{{ department.contact }}</span>
             </div>
             <div class="dept-detail-item">
               <div class="dept-detail-label">
-                <i class="fas fa-calendar-plus icon-green"></i>
+                <i class="fas fa-calendar-plus icon-bg-blue"></i>
                 <span>생성일</span>
               </div>
               <span class="dept-detail-value">{{ department.createdAt }}</span>
@@ -99,11 +99,6 @@ defineProps({
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--font-main);
-}
-
-.card-icon {
-  color: var(--blue-400);
-  font-size: 1.125rem;
 }
 
 /* 대신 내용만 이동하도록 아래 추가 */
@@ -148,9 +143,9 @@ defineProps({
   justify-content: space-between;
 }
 .icon-bg-blue {
-  background: #e9f2fe;
-  color: #3868b9;
+  color: var(--blue-450);
 }
+
 
 .stat-card-icon {
   width: 3.1rem;
@@ -224,6 +219,21 @@ defineProps({
 .btn.delete:hover {
   background-color: #fee2e2;
   color: #dc2626;
+}
+
+.slide-in {
+  animation: slideInFromBottom 0.8s ease-in-out;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(-20px); /* 왼쪽에서 시작 */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0); /* 원래 위치로 */
+  }
 }
 
 

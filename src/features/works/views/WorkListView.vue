@@ -72,7 +72,7 @@ const columns = computed(() => {
 });
 
 const tabOptions = [
-  { key: 'isNormalWork', label: '전체', value: '' },
+  { key: 'isNormalWork', label: '전체', value: null },
   { key: 'isNormalWork', label: '정상', value: 'Y' },
   { key: 'isNormalWork', label: '이상', value: 'N' },
 ];
@@ -165,6 +165,7 @@ const additionalWorkMap = {
 };
 
 onMounted(async () => {
+  filterValues.value = { isNormalWork: null };
   const depts = await getDepartments();
   departmentTree.value = depts.data?.departmentInfoDTOList || [];
 
@@ -191,7 +192,6 @@ onMounted(async () => {
   }))];
 
   handleSearch();
-  filterValues.value = {};
 });
 
 watch(currentPage, () => fetchSummary(filterValues.value));

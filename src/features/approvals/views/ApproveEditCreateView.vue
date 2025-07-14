@@ -3,19 +3,25 @@ import {ref, onMounted, computed, watch, watchEffect} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ApprovalSideSection from '@/features/approvals/components/ApprovalSideSection.vue'
 import WriteFormSection from "@/features/approvals/components/WriteFormSection.vue";
-import {submitApproval} from "@/features/approvals/api.js";
+import { submitApproval, updateApproval} from "@/features/approvals/api.js";
 import {useToast} from "vue-toastification";
 
 const router = useRouter();
 const route = useRoute();
 const toast = useToast();
 
+
+/* 생성 모드인지 수정 모드인지 생성 */
+const isEditMode = computed(() => !!route.params.documentId);
+const documentId = computed(() => Number(route.params.documentId));
+
 /* 결재 문서 작성에 시간이 걸려서 로딩 중을 표시하기 위해 사용하는 변수 */
 const isSubmitting = ref(false);
 
-/* form의 기본 결재 종류는 출퇴근 정정으로 설정 */
+/* form의 종류 */
 const form = ref({
-  approveType: 'WORKCORRECTION',
+  approveTitle: '',
+  approveType: '',
 });
 
 const formDetail = ref({});
@@ -76,16 +82,22 @@ async function submitForm() {
         empId: approver.empId
       }))
     })),
-    approveRefList: selectedRefList.value.map(ref => ({
+    refRequests: selectedRefList.value.map(ref => ({
       empId: ref.empId,
       isConfirmed: 'N'
     }))
   };
 
   try {
-    await submitApproval(request);
-
-    toast.success('결재 문서 제출이 완료됐습니다.');
+    if (isEditMode.value) {
+      console.log('documentId:', documentId, typeof documentId);
+      console.log('documentId.value:', documentId.value, typeof documentId.value);
+      await updateApproval(request, documentId.value);
+      toast.success('결재 문서가 수정됐습니다.');
+    } else {
+      await submitApproval(request);
+      toast.success('결재 문서 제출이 완료됐습니다.');
+    }
 
     await router.push({
       name: 'MyApprovalsList',
@@ -99,6 +111,53 @@ async function submitForm() {
     isSubmitting.value = false;
   }
 }
+
+/* 수정 모드인 경우에는 기존에 있는 내용이 들어와야 함*/
+onMounted(() => {
+  if (isEditMode.value) {
+    const savedState = sessionStorage.getItem('approvalEditState');
+    if (savedState) {
+      const {
+        approveDTO,
+        approveLineGroupDTO,
+        approveRefDTO,
+        approveFileDTO,
+        formDetail: formDetailFromState
+      } = JSON.parse(savedState);
+
+
+      form.value.approveTitle = approveDTO.approveTitle;
+      form.value.approveType = approveDTO.approveType;
+
+      formDetail.value = formDetailFromState;
+
+      if (approveDTO.approveType === 'RECEIPT') {
+        uploadedFiles.value = formDetailFromState.attachments || [];
+      } else {
+        uploadedFiles.value = approveFileDTO || [];
+      }
+
+      selectedApprovalLine.value = (approveLineGroupDTO || []).map(group => ({
+        requiredType: group.approveLineDTO?.isRequiredAll === 'REQUIRED' ? '필수' : '선택',
+        approvers: (group.approveLineListDTOs || []).map(line => ({
+          empId: line.empId,
+          name: line.employeeDisplayName,
+          teamName: line.departmentName
+        }))
+      }));
+
+      selectedRefList.value = (approveRefDTO || []).map(ref => ({
+        empId: Number(ref.empId),
+        name: ref.employeeDisplayName,
+        teamName: ref.departmentName
+      }));
+    }
+  } else {
+    // 작성 모드일 때만 기본값 설정
+    form.value.approveType = 'WORKCORRECTION';
+  }
+});
+
 </script>
 
 <template>
@@ -120,11 +179,6 @@ async function submitForm() {
   </div>
 
   <div class="container">
-    <div v-if="isSubmitting" class="overlay">
-      <div class="spinner"></div>
-      <p>결재 문서를 제출 중입니다...</p>
-    </div>
-
     <div class="approval-page">
       <div class="page-body">
         <WriteFormSection
@@ -139,6 +193,7 @@ async function submitForm() {
           v-model:modelValueReferenceList="selectedRefList"
           :approve-type="form.approveType"
           :read-only="false"
+          :is-read-only="form.approveType === 'CANCEL'"
         />
       </div>
 
@@ -156,6 +211,10 @@ async function submitForm() {
     </div>
   </div>
 
+  <div v-if="isSubmitting" class="overlay">
+    <div class="spinner"></div>
+    <p>결재 문서를 제출 중입니다...</p>
+  </div>
 </template>
 
 <style scoped>
@@ -249,8 +308,8 @@ async function submitForm() {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background-color: rgba(255, 255, 255, 0.7);
   display: flex;
   flex-direction: column;

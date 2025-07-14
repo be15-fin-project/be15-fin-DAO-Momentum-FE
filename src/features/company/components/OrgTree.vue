@@ -129,7 +129,7 @@ watch(() => props.dtoList, (newData) => {
 }
 
 .card-icon {
-  color: var(--blue-400);
+  color: var(--blue-450);
   font-size: 1.125rem;
 }
 

@@ -5,9 +5,10 @@ import DepartmentInfoCard from "@/features/company/components/DepartmentInfoCard
 import {fetchDepartmentInfo, fetchDepartments} from "@/features/company/api.js";
 import SideModal from "@/components/common/SideModal.vue";
 import {useToast} from "vue-toastification";
-import {deleteDepartment, postDepartment, putDepartment} from "@/features/settings/api.js";
+import {deleteDepartment, deleteHoliday, postDepartment, putDepartment} from "@/features/settings/api.js";
 import MemberList from "@/features/company/components/MemberList.vue";
 import CommonModal from "@/components/common/CommonModal.vue";
+import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
 
 const toast = useToast()
 
@@ -21,7 +22,6 @@ const department = ref({
 const members = ref([]);
 const deptCreateModalVisible = ref(false);
 const deptUpdateModalVisible = ref(false);
-const deptDeleteModalVisible = ref(false);
 const createReq = reactive({
   name: '',
   parentDeptId: '',
@@ -100,13 +100,6 @@ const handleUpdateModal = () => {
     deptUpdateModalVisible.value = true;
 }
 
-const handleDeleteModal = () => {
- if(selectedDeptId.value===null)
-   toast.error('부서를 선택해주세요')
-  else
-  deptDeleteModalVisible.value = true;
-}
-
 //부서 등록 처리
 const handleRegisterSubmit = async (form) => {
   try{
@@ -144,14 +137,31 @@ const handleAfterUpdate = async () => {
 
 //부서 삭제 처리
 const handleDelete = async () => {
+  if(selectedDeptId.value===null){
+    toast.error('부서를 선택해주세요')
+    return;
+  }
   try{
+    const result = await new Promise((resolve) => {
+      toast(
+          {
+            component: DeleteConfirmToast,
+            props: {resolve},
+          },
+          {
+            timeout: false,
+            closeOnClick: false,
+            showCloseButtonOnHover: false,
+          }
+      );
+    });
+    if (!result) return;
     await deleteDepartment(selectedDeptId.value);
-    toast.success('부서를 삭제했습니다.')
+    toast.success('부서를 삭제했습니다.');
     await handleAfterDelete();
   }catch(e){
-    toast.error('부서 삭제에 실패했습니다.');
+    toast.error('부서 삭제에 실패했습니다.')
   }
-  deptDeleteModalVisible.value=false;
 }
 
 const handleAfterDelete = async () => {
@@ -213,7 +223,7 @@ onMounted(async () => {
                           :members="members"
                           :editable="true"
                           @edit="handleUpdateModal"
-                          @delete="handleDeleteModal"/>
+                          @delete="handleDelete"/>
 
       <MemberList :members="members"/>
     </div>
@@ -259,7 +269,6 @@ onMounted(async () => {
 <style scoped>
 .dept-card{
   height:100%;
-  margin:20px;
 }
 
 .main-grid {

@@ -74,11 +74,22 @@ async function fetchApproval() {
   }
 }
 
-// function handleEdit() {
-//   const documentId = route.params.documentId;
-//   router.push({ name: 'ApprovalEdit', params: { documentId } });
-// }
+/* 수정 클릭하기 */
+function handleEdit() {
+  sessionStorage.setItem('approvalEditState', JSON.stringify({
+    approveDTO: approval.value.approveDTO,
+    parentApproveDTO: approval.value.parentApproveDTO,
+    approveLineGroupDTO: approval.value.approveLineGroupDTO,
+    approveRefDTO: approval.value.approveRefDTO,
+    approveFileDTO: approval.value.approveFileDTO,
+    formDetail: approval.value.formDetail
+  }));
 
+  router.push({
+    name: 'ApprovalEdit',
+    params: { documentId: route.params.documentId }
+  });
+}
 
 /* 결재 문서 회수하기 */
 async function handleDelete() {
@@ -92,29 +103,13 @@ async function handleDelete() {
 
     switch (errorCode) {
       case '30026':
-        toast.error('결재가 시작되어 회수할 수 없습니다.');
+        toast.error('결재가 시작되어 수정, 회수할 수 없습니다.');
         break;
       default:
         toast.error('삭제 중 오류가 발생했습니다.');
     }
   }
 }
-
-// async function handleCancel() {
-//   if (!confirm('결재를 취소하시겠습니까?')) return;
-//
-//   try {
-//     loading.value = true;
-//     await cancelApproval(route.params.documentId); // ← API 연결 필요
-//     alert('결재가 취소되었습니다.');
-//     await fetchApproval(); // ← 상태 갱신
-//   } catch (e) {
-//     console.error('취소 실패:', e);
-//     alert('취소에 실패했습니다.');
-//   } finally {
-//     loading.value = false;
-//   }
-// }
 
 /* 내 결재선 찾기 */
 watchEffect(() => {
@@ -209,18 +204,21 @@ onMounted(fetchApproval)
 
   <!-- 2. 결재 내역 나오는 부분  -->
   <div v-if="approval" class="container">
+
     <div class="approval-page">
       <div class="page-body">
         <FormSection
           :approveDTO="approval.approveDTO"
           :parentApproveDTO="approval.parentApproveDTO"
           :approveLineGroupDTO="approval.approveLineGroupDTO"
+          :approveRefDTO="approval.approveRefDTO"
           :approveFileDTO="approval.approveFileDTO"
           :formDetail="approval.formDetail"
           :isReadOnly="true"
           @approve="(reason) => handleApprove(true, reason)"
           @reject="(reason) => handleApprove(false, reason)"
           @request-delete="showDeleteConfirmModal = true"
+          @edit="handleEdit()"
         />
         <ApprovalSideSection
           :approveLineGroupDTO="approval.approveLineGroupDTO"

@@ -1,5 +1,4 @@
 <template>
-  <main class="main">
     <div id="sidebar-container"></div>
 
     <!-- Main Content -->
@@ -29,7 +28,6 @@
         </div>
       </div>
     </div>
-  </main>
 </template>
 
 <script setup>
@@ -90,8 +88,8 @@ onMounted(async () => {
 
 .main-content {
   width:100%;
-  padding-left:20px;
-  padding-right:20px;
+  padding-left:40px;
+  padding-right:40px;
 }
 
 /* 헤더 영역 */

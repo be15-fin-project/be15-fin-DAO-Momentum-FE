@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, reactive, ref} from 'vue'
+import {onMounted, reactive, ref, watch} from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import SectionHeader from '@/features/mypage/components/profile/SectionHeader.vue'
 
@@ -57,47 +57,6 @@ const formData = reactive({
 
 const idsToDelete = new Set()
 
-// 초기 데이터 파싱 및 recordId 저장
-onMounted(() => {
-  props.records.forEach((item) => {
-    switch (item.type) {
-      case 'EDUCATION':
-        formData.EDUCATION.push({
-          recordId: item.recordId, // bigint
-          학교명: item.organization,
-          학과명: item.name,
-          입학일: item.startDate,
-          졸업일: item.endDate
-        })
-        break
-      case 'CERTIFICATE':
-        formData.CERTIFICATE.push({
-          recordId: item.recordId,
-          자격증명: item.name,
-          발급기관: item.organization,
-          취득일: item.startDate
-        })
-        break
-      case 'AWARD':
-        formData.AWARD.push({
-          recordId: item.recordId,
-          수상명: item.name,
-          수상기관: item.organization,
-          수상일: item.startDate
-        })
-        break
-      case 'CAREER':
-        formData.CAREER.push({
-          recordId: item.recordId,
-          직장명: item.organization,
-          시작일: item.startDate,
-          종료일: item.endDate
-        })
-        break
-    }
-  })
-})
-
 const addItem = (sectionKey) => {
   const fields = sections.find(s => s.key === sectionKey).fields
   const newItem = Object.fromEntries(fields.map(f => [f, '']))
@@ -122,6 +81,57 @@ const handleCancel = () => {
   emit('cancel')
   isEditing.value = false
 }
+
+watch(
+    () => props.records,
+    (newRecords) => {
+      formData.EDUCATION = []
+      formData.CERTIFICATE = []
+      formData.AWARD = []
+      formData.CAREER = []
+
+      idsToDelete.clear()
+
+      newRecords.forEach((item) => {
+        switch (item.type) {
+          case 'EDUCATION':
+            formData.EDUCATION.push({
+              recordId: item.recordId,
+              학교명: item.organization,
+              학과명: item.name,
+              입학일: item.startDate,
+              졸업일: item.endDate
+            })
+            break
+          case 'CERTIFICATE':
+            formData.CERTIFICATE.push({
+              recordId: item.recordId,
+              자격증명: item.name,
+              발급기관: item.organization,
+              취득일: item.startDate
+            })
+            break
+          case 'AWARD':
+            formData.AWARD.push({
+              recordId: item.recordId,
+              수상명: item.name,
+              수상기관: item.organization,
+              수상일: item.startDate
+            })
+            break
+          case 'CAREER':
+            formData.CAREER.push({
+              recordId: item.recordId,
+              직장명: item.organization,
+              시작일: item.startDate,
+              종료일: item.endDate
+            })
+            break
+        }
+      })
+    },
+    { immediate: true, deep: true }
+)
 </script>
 
 <template>

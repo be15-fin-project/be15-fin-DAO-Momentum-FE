@@ -6,7 +6,7 @@
         <div class="sidebar-logo">
           <i class="fas fa-building"></i>
         </div>
-        <h2 class="sidebar-title">Momentum</h2>
+        <h2 class="sidebar-title"> {{companyName}} </h2>
       </div>
       <span class="top-icons">
         <button class="side-btn" @click="handleCreateAttendance" :disabled="isLoading">
@@ -127,6 +127,7 @@ import { logoutUser } from '@/features/common/api.js'
 import { startWork, endWork } from '@/features/works/api.js'
 import { getEvaluationRoundStatus } from '@/features/performance/api.js'
 import { useAttendance } from '@/features/works/composable/useAttendance.js'
+import {fetchCompanyInfo} from "@/features/company/api.js";
 
 /* ======================== 기본 상태 ======================== */
 const authStore = useAuthStore()
@@ -138,6 +139,7 @@ const collapsed = ref(false)
 const openSubmenu = ref(null)
 const showAlertPanel = ref(false)
 const roundStatus = ref({ inProgress: false, roundId: null })
+const companyName = ref('')
 
 /* ======================== 출퇴근 상태 ======================== */
 const {
@@ -341,13 +343,17 @@ function toggleAlertPanel() {
 const submitAttendance = async () => {
   isLoading.value = true
   try {
-    if (!isAttended.value) await startWork()
-    else await endWork()
+    if (!isAttended.value) {
+      await startWork()
+    }
+    if (isAttended.value) {
+      await endWork()
+    }
     await fetchTodayAttendance()
     toast.success('출퇴근 등록 완료')
     closeAttendanceModal()
   } catch (e) {
-    toast.error('근태 처리 실패')
+    toast.error('출퇴근 처리 실패')
   } finally {
     isLoading.value = false
   }
@@ -384,6 +390,8 @@ onMounted(async () => {
     await fetchTodayAttendance()
     const result = await getEvaluationRoundStatus()
     roundStatus.value = result || { inProgress: false, roundId: null }
+    const companyInfo = await fetchCompanyInfo();
+    companyName.value = companyInfo.data.companyInfoDTO.name;
   } catch (e) {
     console.error('초기 로딩 실패', e)
   }
@@ -399,7 +407,7 @@ onUnmounted(() => {
 .sidebar {
   width: 23rem;
   min-width: 4.8rem;
-  height: 100vh;
+  height: 100%;
   padding: 1.5rem;
   background: var(--side-background);
   color: var(--color-surface);

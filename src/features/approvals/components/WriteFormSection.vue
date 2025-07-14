@@ -7,10 +7,13 @@ import BusinessTripForm from '@/features/approvals/components/approveType/Busine
 import VacationForm from '@/features/approvals/components/approveType/VacationForm.vue'
 import ProposalForm from '@/features/approvals/components/approveType/ProposalForm.vue'
 import ReceiptForm from '@/features/approvals/components/approveType/ReceiptForm.vue'
+import {useRoute} from "vue-router";
 
+const route = useRoute();
 const selectedFormComponent = ref(WorkCorrectionForm);
 const formData = ref({});
 const isDropdownOpen = ref(false)
+const isEditMode = computed(() => !!route.params.documentId)
 
 const props = defineProps({
   title: String,
@@ -90,8 +93,10 @@ watch(
   (newType) => {
     selectedFormComponent.value = formMap[newType] || null;
 
-    emit('update:title', ''); // 제목 초기화
-    emit('update:formData', {}); // form 데이터 초기화
+    if (!isEditMode.value) {
+      emit('update:title', '');
+      emit('update:formData', {});
+    }
   },
   { immediate: true }
 )

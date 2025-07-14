@@ -5,17 +5,30 @@
       결재문서
     </div>
     <div class="doc-buttons">
-      <button class="doc-btn">
-        <span class="material-icons">hourglass_empty</span> 대기문서
+      <button class="doc-btn" @click="goInbox('sent')">
+        <span class="material-icons">send</span> 보낸 문서
       </button>
-      <button class="doc-btn">
-        <span class="material-icons">check_circle</span> 처리문서
+      <button class="doc-btn" @click="goInbox('received ')">
+        <span class="material-icons">inbox</span> 받은 문서
       </button>
     </div>
   </div>
 </template>
 
-<script setup></script>
+<script setup>
+import {useRouter} from "vue-router";
+
+const router = useRouter();
+
+function goInbox(tab) {
+  router.push({
+    path: '/approval/inbox',
+    query: tab ? { tab } : {}
+  })
+}
+
+
+</script>
 
 <style scoped>
 .doc-buttons {
