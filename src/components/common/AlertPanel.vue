@@ -57,11 +57,13 @@
 <script setup>
 import {computed, ref} from 'vue'
 import {useNotificationStore} from "@/stores/notification.js";
+import {useRouter} from "vue-router";
 
 defineProps({ visible: Boolean })
 defineEmits(['close'])
 
 const store = useNotificationStore()
+const router = useRouter()
 const selectedTab = ref('new')
 const unreadCount = computed(() => store.unreadCount)
 const readCount = computed(() => store.readCount)
@@ -114,7 +116,7 @@ async function goTo(url, id) {
   } catch (e) {
     console.error(`[알림 ${id} 읽음 처리 실패]`, e)
   } finally {
-    if (url) window.location.href = url
+    if (url) router.push(url)
   }
 }
 </script>
