@@ -133,7 +133,10 @@ async function fetchReceiptImage() {
 }
 
 watchEffect(() => {
-  const file = props.approveFileDTO[0];
+  const file = props.isReadOnly
+    ? (props.approveFileDTO?.[0] || props.formData?.attachments?.[0])
+    : null;
+
   if (props.isReadOnly && file && file.s3Key) {
     fetchReceiptImage();
   }

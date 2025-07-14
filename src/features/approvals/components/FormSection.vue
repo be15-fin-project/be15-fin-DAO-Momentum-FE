@@ -76,7 +76,7 @@ const selectedFormComponent = computed(() => {
   return formMap[approveDTO.approveType] || null;
 });
 
-const emit = defineEmits(['approve', 'reject', 'request-delete']);
+const emit = defineEmits(['approve', 'reject', 'request-delete', 'edit']);
 
 /* 결재 문서 반려 하기 */
 function handleReject() {
@@ -134,7 +134,7 @@ async function submitCancelApproval() {
   try {
     await submitApproval(request);
     toast.success('취소 결재가 제출되었습니다.');
-    router.push({ name: 'MyApprovalsList', query: { tab: 'sent' } });
+    await router.push({name: 'MyApprovalsList', query: {tab: 'sent'}});
   } catch (e) {
     toast.error('취소 결재 제출에 실패했습니다.');
   }
@@ -250,6 +250,7 @@ onMounted(() => {
             v-if="approveDTO.statusType === 'PENDING' "
             type="button"
             class="btn-action btn-edit"
+            @click="$emit('edit')"
             data-v-fb076351 data-v-f51fb21f
           >
             수정
