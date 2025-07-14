@@ -39,13 +39,13 @@ const onCheckboxChange = (event, roleId) => {
 </script>
 
 <template>
-  <div class="card">
+  <div class="card slide-in">
     <header class="card-header">
       <h2 class="card-title">사원 권한</h2>
     </header>
 
     <div v-if="modelValue===null" class="empty-state">
-      <i class="fas fa-user-friends"></i>
+      <i class="fas fa-user-friends icon-bg-blue"></i>
       <p>선택된 권한이 없습니다</p>
     </div>
 
@@ -112,13 +112,16 @@ const onCheckboxChange = (event, roleId) => {
 
 .empty-state i {
   font-size: 3rem;
-  color: var(--gray-500);
   margin-bottom: 16px;
 }
 
 .empty-state p {
   color: var(--font-sub);
   font-size: 1rem;
+}
+
+.icon-bg-blue {
+  color: var(--blue-450);
 }
 
 .permission-group {
@@ -218,6 +221,21 @@ const onCheckboxChange = (event, roleId) => {
   transition: background 0.2s, color 0.2s;
   background: var(--blue-300);
   color: var(--color-surface);
+}
+
+.slide-in {
+  animation: slideInFromBottom 0.8s ease-in-out;
+}
+
+@keyframes slideInFromBottom {
+  from {
+    opacity: 0;
+    transform: translateY(-20px); /* 왼쪽에서 시작 */
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0); /* 원래 위치로 */
+  }
 }
 
 </style>
