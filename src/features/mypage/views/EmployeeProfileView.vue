@@ -116,14 +116,12 @@ onMounted(async () => {
 
 <template>
   <section>
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Left left-profile -->
-      <div class="main-header">
-        <div class="header-content">
-          <h1 class="header-title">직원 프로필</h1>
-        </div>
+    <div class="header-content">
+      <div>
+        <h1 class="header-title">내 정보 조회</h1>
       </div>
+    </div>
+    <div class="main-content">
       <div class="container">
         <!-- Profile Section -->
         <div class="left-profile">
@@ -189,8 +187,7 @@ onMounted(async () => {
 
 <style scoped>
 .main-content{
-  padding-right: 16px;
-  padding-left: 16px;
+  padding:40px;
 }
 
 .container {
@@ -211,21 +208,17 @@ onMounted(async () => {
   flex-direction: column;
 }
 
-.main-header {
-  padding: 24px;
-  border-bottom: 1px solid #e5e7eb;
-}
-
 .header-content {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
+  padding-left:40px;
 }
 
 .header-title {
+  font-size: 2.1rem;
   font-weight: 700;
-  color: #1f2937;
+  color: #334155;
+  margin: 0 0 0.2rem 0;
 }
 
 .left-profile-content {
