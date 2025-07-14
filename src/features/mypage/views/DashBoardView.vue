@@ -89,11 +89,11 @@ const handleEventClick = (event) => {
   }
 }
 
-// 교정 요청 페이지 이동
+// 출퇴근 정정 요청 페이지 이동
 const goToCorrectionPage = () => {
   const workId = selectedAttendance.value?.workId
   if (workId) {
-    router.push({ name: 'WorkCorrectionRequest', query: { workId } })
+    router.push({ name: 'ApprovalWrite', query: { workId } })
   }
 }
 
