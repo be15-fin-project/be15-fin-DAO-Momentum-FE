@@ -22,7 +22,6 @@ const department = ref({
 const members = ref([]);
 const deptCreateModalVisible = ref(false);
 const deptUpdateModalVisible = ref(false);
-const deptDeleteModalVisible = ref(false);
 const createReq = reactive({
   name: '',
   parentDeptId: '',
@@ -99,13 +98,6 @@ const handleUpdateModal = () => {
     toast.error('부서를 선택해주세요')
   else
     deptUpdateModalVisible.value = true;
-}
-
-const handleDeleteModal = () => {
- if(selectedDeptId.value===null)
-   toast.error('부서를 선택해주세요')
-  else
-  deptDeleteModalVisible.value = true;
 }
 
 //부서 등록 처리
