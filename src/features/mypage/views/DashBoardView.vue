@@ -54,6 +54,7 @@ import NoticeCard from '@/features/mypage/components/NoticeCard.vue'
 import CalendarAttendanceModal from '@/features/works/components/CalendarAttendanceModal.vue'
 import CustomCalendar from '@/features/mypage/components/CustomCalendar.vue'
 
+// 상태 및 로직
 const currentMonth = ref(dayjs())
 const events = ref([])
 const kpis = ref([])
@@ -64,8 +65,11 @@ const router = useRouter()
 const toast = useToast()
 
 const isWork = computed(() => selectedAttendance.value?.typeName === 'WORK')
+
+// Calendar 공통 이벤트 로직 불러오기
 const { fetchCalendarEvents } = useCalendarEvents()
 
+// 이벤트 클릭 핸들링
 const handleEventClick = (event) => {
   selectedAttendance.value = event
 
@@ -89,6 +93,7 @@ const handleEventClick = (event) => {
   }
 }
 
+// 출퇴근 정정 요청 페이지 이동
 const goToCorrectionPage = () => {
   const workId = selectedAttendance.value?.workId
   const today = dayjs().startOf('day')
@@ -105,6 +110,7 @@ const goToCorrectionPage = () => {
   }
 }
 
+// 달 변경 핸들링
 const handleMonthChange = async (month) => {
   currentMonth.value = month
   events.value = await fetchCalendarEvents(month)
@@ -132,17 +138,20 @@ function getProgressVariant(progress) {
   return ''
 }
 
+// 시간 포맷팅
 function formatTime(datetime) {
   if (!datetime) return '-'
   return dayjs(datetime).format('YYYY.MM.DD HH:mm')
 }
 
+// 시간 길이 포맷팅
 function formatDuration(minutes) {
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
   return [`${h && `${h}시간`}`, `${m && `${m}분`}`].filter(Boolean).join(' ') || '0분'
 }
 
+// API 연동 데이터
 const profile = reactive({
   name: '', position: '', status: '', department: ''
 })
@@ -197,6 +206,7 @@ const fetchNotices = async () => {
   }
 }
 
+// 최초 실행
 onMounted(() => {
   handleMonthChange(currentMonth.value)
   getProfile()
