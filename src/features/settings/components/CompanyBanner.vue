@@ -44,6 +44,8 @@ defineProps({
   padding: 24px;
   margin-bottom: 24px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  margin-left:24px;
+  margin-right:24px;
 }
 
 .company-banner-content {
