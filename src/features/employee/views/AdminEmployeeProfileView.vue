@@ -197,6 +197,7 @@ function handleClick(event) {
                       :showTabs="false"
                       @click="handleClick"
       />
+      <div class="main-content">
       <div class="container">
         <!-- Profile Section -->
         <div class="left-profile">
@@ -246,6 +247,7 @@ function handleClick(event) {
           </div>
         </div>
       </div>
+      </div>
     <SideModal
         :visible="modalVisible"
         @close="modalVisible=false"
@@ -260,8 +262,8 @@ function handleClick(event) {
 
 <style scoped>
 .main-content{
-  padding-right: 16px;
-  padding-left: 16px;
+  padding-right: 40px;
+  padding-left: 40px;
 }
 
 .container {
@@ -290,8 +292,7 @@ function handleClick(event) {
 .header-content {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
+  padding-left:40px;
 }
 
 .header-title {

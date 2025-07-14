@@ -1,7 +1,7 @@
 
 /* 로그인 레이아웃 */
 .login-container {
-    min-height: 100vh;
+    min-height: 100%;
     display: flex;
     flex-direction: row;
     background: var(--gray-100);

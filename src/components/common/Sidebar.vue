@@ -407,7 +407,7 @@ onUnmounted(() => {
 .sidebar {
   width: 23rem;
   min-width: 4.8rem;
-  height: 100vh;
+  height: 100%;
   padding: 1.5rem;
   background: var(--side-background);
   color: var(--color-surface);

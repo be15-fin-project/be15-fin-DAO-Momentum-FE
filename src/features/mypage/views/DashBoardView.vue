@@ -2,7 +2,7 @@
   <div class="dashboard-layout">
     <aside class="dashboard-side">
       <ProfileCard v-bind="profile"/>
-      <VacationInfoCard v-bind="vacationInfo"/>
+      <VacationInfoCard/>
 
       <NoticeCard
           :notices="notices"
@@ -51,6 +51,7 @@ import NoticeCard from '@/features/mypage/components/NoticeCard.vue'
 import CalendarAttendanceModal from '@/features/works/components/CalendarAttendanceModal.vue'
 import CustomCalendar from '@/features/mypage/components/CustomCalendar.vue'
 import {fetchEmpInfo} from "@/features/mypage/api.js";
+import {useToast} from "vue-toastification";
 
 // 상태 및 로직
 const currentMonth = ref(dayjs())
@@ -61,6 +62,7 @@ const showCalendarModal = ref(false)
 const selectedAttendance = ref(null)
 const isWork = computed(() => selectedAttendance.value?.typeName === 'WORK')
 const router = useRouter()
+const toast = useToast()
 
 // Calendar 공통 이벤트 로직 불러오기
 const { fetchCalendarEvents, kpiEvents } = useCalendarEvents()
@@ -92,6 +94,16 @@ const handleEventClick = (event) => {
 // 출퇴근 정정 요청 페이지 이동
 const goToCorrectionPage = () => {
   const workId = selectedAttendance.value?.workId
+
+  const today = dayjs().startOf('day')
+  const workDay = dayjs(selectedAttendance.value.startDate)
+  const diff = today.diff(workDay, 'day')
+
+  if (diff > 14) {
+    toast.error("14일 이내의 출퇴근 기록만 수정할 수 있습니다.")
+    return
+  }
+
   if (workId) {
     router.push({ name: 'ApprovalWrite', query: { workId } })
   }
@@ -146,10 +158,6 @@ const profile = reactive({
 })
 
 // 더미 데이터
-const vacationInfo = {
-  remainingDays: 15,
-}
-
 const notices = [
   { title: '운영 보고서 안내', meta: '운영팀 · 2024.12.30' },
   { title: '6월 워크샵 사전 신청', meta: '총무팀 · 2024.06.01' }

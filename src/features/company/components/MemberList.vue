@@ -29,12 +29,12 @@ const clickEvent = (empId) => {
   <section class="members-section">
     <div class="card slide-in">
       <header class="card-header">
-        <i class="fas fa-users card-icon"></i>
+        <i class="fas fa-users icon-bg-blue"></i>
         <h2 class="card-title">구성원</h2>
       </header>
       <div class="members-content">
         <div v-if="members.length === 0" class="empty-state">
-          <i class="fas fa-user-friends"></i>
+          <i class="fas fa-user-friends icon-bg-blue"></i>
           <p>구성원이 없습니다</p>
         </div>
         <div v-else>
@@ -53,6 +53,10 @@ const clickEvent = (empId) => {
   box-shadow: var(--shadow);
   border: 1px solid var(--border-subtle);
   height: 100%;
+}
+
+.icon-bg-blue {
+  color: var(--blue-450);
 }
 
 .card-header {
@@ -94,7 +98,6 @@ const clickEvent = (empId) => {
 
 .empty-state i {
   font-size: 3rem;
-  color: var(--gray-500);
   margin-bottom: 16px;
 }
 
