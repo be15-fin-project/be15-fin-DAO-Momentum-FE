@@ -75,6 +75,7 @@ const handleUpdateRoles = async() => {
     await putEmpRoles(req);
     toast.success('권한 수정에 성공했습니다.')
     selectedEmpId.value = null;
+    formModel.value=null;
   }catch(e){
     toast.error('권한 수정에 실패했습니다.')
   }

@@ -103,10 +103,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { deleteAnnouncement, getAnnouncementDetail } from '@/features/announcement/api';
 import { getFileUrl } from '@/features/common/api.js';
 import { useAuthStore } from '@/stores/auth.js';
+import {useToast} from "vue-toastification";
 
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const toast = useToast();
 
 const detail = ref(null);
 const showActions = ref(false);
@@ -155,7 +157,7 @@ const handleDownload = async (file) => {
     URL.revokeObjectURL(blobUrl);
   } catch (err) {
     console.error('파일 다운로드 실패:', err);
-    alert('파일 다운로드 중 오류가 발생했습니다.');
+    toast.error('파일 다운로드 중 오류가 발생했습니다.');
   }
 };
 
@@ -163,11 +165,11 @@ const handleDelete = async () => {
   if (confirm('정말 삭제하시겠습니까?')) {
     try {
       await deleteAnnouncement(route.params.announcementId);
-      alert('공지사항이 삭제되었습니다.');
+      toast.success('공지사항이 삭제되었습니다.');
       router.push('/announcement');
     } catch (err) {
       console.error('공지 삭제 실패:', err);
-      alert('공지사항 삭제 중 오류가 발생했습니다.');
+      toast.error('공지사항 삭제 중 오류가 발생했습니다.');
     }
   }
 };

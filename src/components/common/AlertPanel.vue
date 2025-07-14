@@ -85,9 +85,17 @@ function markAllRead() {
 function getTitle(type) {
   switch (type) {
     case 'APPROVAL_REQUEST':
-      return '결재 요청'
+      return '결재 요청';
+    case 'APPROVAL_COMPLETED':
+      return '결재 완료';
+    case 'APPROVAL_REJECTED':
+      return '결재 반려';
+    case 'EVALUATION_START':
+      return '평가 시작';
+    case 'EVALUATION_END':
+      return '평가 종료';
     default:
-      return '알림'
+      return '알림';
   }
 }
 
