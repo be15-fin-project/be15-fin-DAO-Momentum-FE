@@ -122,19 +122,21 @@ function validateReason() {
     reason: ''
   };
 
-  const reason = props.formData.reason?.trim();
+  const content = props.formData.content?.trim();
 
-  if (!reason) {
+  if (!content) {
     errors.value.reason = '※ 품의서 내용 작성은 필수입니다.';
     return false;
   }
+
+  errors.value.reason = '';
 
   return true;
 }
 
 watch(
   [
-    () => props.formData.reason
+    () => props.formData.content
   ], () => {
     validateReason();}
   , { immediate: true }
