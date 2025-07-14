@@ -6,6 +6,28 @@
     text-decoration: none;
 }
 
+html, body, #app, .main {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+#app {
+    zoom: 0.8;
+    overflow: auto;
+}
+
+@supports not (zoom: 1) {
+    #app {
+        transform: scale(0.8);
+        transform-origin: top left;
+        width: 125%;
+        height: 100vh;
+        overflow: auto;
+    }
+}
+
 .main {
     display: flex;
     align-items: flex-start;
