@@ -74,11 +74,22 @@ async function fetchApproval() {
   }
 }
 
-// function handleEdit() {
-//   const documentId = route.params.documentId;
-//   router.push({ name: 'ApprovalEdit', params: { documentId } });
-// }
+/* 수정 클릭하기 */
+function handleEdit() {
+  sessionStorage.setItem('approvalEditState', JSON.stringify({
+    approveDTO: approval.value.approveDTO,
+    parentApproveDTO: approval.value.parentApproveDTO,
+    approveLineGroupDTO: approval.value.approveLineGroupDTO,
+    approveRefDTO: approval.value.approveRefDTO,
+    approveFileDTO: approval.value.approveFileDTO,
+    formDetail: approval.value.formDetail
+  }));
 
+  router.push({
+    name: 'ApprovalEdit',
+    params: { documentId: route.params.documentId }
+  });
+}
 
 /* 결재 문서 회수하기 */
 async function handleDelete() {
@@ -92,7 +103,7 @@ async function handleDelete() {
 
     switch (errorCode) {
       case '30026':
-        toast.error('결재가 시작되어 회수할 수 없습니다.');
+        toast.error('결재가 시작되어 수정, 회수할 수 없습니다.');
         break;
       default:
         toast.error('삭제 중 오류가 발생했습니다.');
@@ -207,6 +218,7 @@ onMounted(fetchApproval)
           @approve="(reason) => handleApprove(true, reason)"
           @reject="(reason) => handleApprove(false, reason)"
           @request-delete="showDeleteConfirmModal = true"
+          @edit="handleEdit()"
         />
         <ApprovalSideSection
           :approveLineGroupDTO="approval.approveLineGroupDTO"

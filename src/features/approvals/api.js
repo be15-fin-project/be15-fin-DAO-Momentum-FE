@@ -78,3 +78,8 @@ export function checkApproval(documentId) {
 export function deleteApproval(documentId) {
     return api.delete(`/approval/documents/${documentId}`)
 }
+
+/* 13. 결재 문서 수정 */
+export function updateApproval(request, documentId) {
+    return api.put(`/approval/documents/${documentId}`, request)
+}
