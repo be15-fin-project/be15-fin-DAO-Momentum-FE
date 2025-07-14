@@ -179,11 +179,6 @@ onMounted(() => {
   </div>
 
   <div class="container">
-    <div v-if="isSubmitting" class="overlay">
-      <div class="spinner"></div>
-      <p>결재 문서를 제출 중입니다...</p>
-    </div>
-
     <div class="approval-page">
       <div class="page-body">
         <WriteFormSection
@@ -216,6 +211,10 @@ onMounted(() => {
     </div>
   </div>
 
+  <div v-if="isSubmitting" class="overlay">
+    <div class="spinner"></div>
+    <p>결재 문서를 제출 중입니다...</p>
+  </div>
 </template>
 
 <style scoped>
@@ -309,8 +308,8 @@ onMounted(() => {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   background-color: rgba(255, 255, 255, 0.7);
   display: flex;
   flex-direction: column;
