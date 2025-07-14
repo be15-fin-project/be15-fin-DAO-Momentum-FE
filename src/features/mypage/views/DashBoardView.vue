@@ -36,11 +36,14 @@
 </template>
 
 <script setup>
-import {ref, computed, onMounted, reactive} from 'vue'
+import { ref, computed, onMounted, reactive } from 'vue'
 import dayjs from 'dayjs'
 import { useRouter } from 'vue-router'
 import { useCalendarEvents } from '@/features/mypage/useCalendarEvents.js'
 import { getMyKpiDashboard } from '@/features/performance/api.js'
+import { fetchEmpInfo } from '@/features/mypage/api.js'
+import { getAnnouncementList } from '@/features/announcement/api.js'
+import { useToast } from 'vue-toastification'
 
 // 컴포넌트
 import ProfileCard from '@/features/mypage/components/ProfileCard.vue'
@@ -50,24 +53,19 @@ import KpiCard from '@/features/mypage/components/KpiCard.vue'
 import NoticeCard from '@/features/mypage/components/NoticeCard.vue'
 import CalendarAttendanceModal from '@/features/works/components/CalendarAttendanceModal.vue'
 import CustomCalendar from '@/features/mypage/components/CustomCalendar.vue'
-import {fetchEmpInfo} from "@/features/mypage/api.js";
-import {useToast} from "vue-toastification";
 
-// 상태 및 로직
 const currentMonth = ref(dayjs())
 const events = ref([])
 const kpis = ref([])
-
+const notices = ref([])
 const showCalendarModal = ref(false)
 const selectedAttendance = ref(null)
-const isWork = computed(() => selectedAttendance.value?.typeName === 'WORK')
 const router = useRouter()
 const toast = useToast()
 
-// Calendar 공통 이벤트 로직 불러오기
-const { fetchCalendarEvents, kpiEvents } = useCalendarEvents()
+const isWork = computed(() => selectedAttendance.value?.typeName === 'WORK')
+const { fetchCalendarEvents } = useCalendarEvents()
 
-// 이벤트 클릭 핸들링
 const handleEventClick = (event) => {
   selectedAttendance.value = event
 
@@ -91,10 +89,8 @@ const handleEventClick = (event) => {
   }
 }
 
-// 출퇴근 정정 요청 페이지 이동
 const goToCorrectionPage = () => {
   const workId = selectedAttendance.value?.workId
-
   const today = dayjs().startOf('day')
   const workDay = dayjs(selectedAttendance.value.startDate)
   const diff = today.diff(workDay, 'day')
@@ -109,7 +105,6 @@ const goToCorrectionPage = () => {
   }
 }
 
-// 달 변경 핸들링
 const handleMonthChange = async (month) => {
   currentMonth.value = month
   events.value = await fetchCalendarEvents(month)
@@ -118,7 +113,6 @@ const handleMonthChange = async (month) => {
   const endDate = month.endOf('month').format('YYYY-MM-DD')
   const rawKpis = await getMyKpiDashboard({ startDate, endDate, limit: 3 })
 
-  // KPI 데이터를 카드에서 사용 가능한 형식으로 가공
   kpis.value = rawKpis.map((item) => ({
     kpiId: item.kpiId,
     title: item.goal,
@@ -129,39 +123,29 @@ const handleMonthChange = async (month) => {
     statusType: item.statusType,
     deadline: item.deadline
   }))
-
 }
 
 function getProgressVariant(progress) {
   if (progress === 0) return 'danger'
   if (progress >= 100) return 'success'
   if (progress >= 50) return 'accent'
-  return '' // 기본 파란색
+  return ''
 }
 
-// 시간 포맷팅
 function formatTime(datetime) {
   if (!datetime) return '-'
   return dayjs(datetime).format('YYYY.MM.DD HH:mm')
 }
 
-// 시간 길이 포맷팅
 function formatDuration(minutes) {
   const h = Math.floor(minutes / 60)
   const m = minutes % 60
   return [`${h && `${h}시간`}`, `${m && `${m}분`}`].filter(Boolean).join(' ') || '0분'
 }
 
-// API 연동 데이터
 const profile = reactive({
   name: '', position: '', status: '', department: ''
 })
-
-// 더미 데이터
-const notices = [
-  { title: '운영 보고서 안내', meta: '운영팀 · 2024.12.30' },
-  { title: '6월 워크샵 사전 신청', meta: '총무팀 · 2024.06.01' }
-]
 
 const handleKpiClick = (kpiId) => {
   if (kpiId) {
@@ -170,32 +154,57 @@ const handleKpiClick = (kpiId) => {
 }
 
 const getProfile = async () => {
-  const computedStatus = () => {
-    switch(empDetails.status) {
-      case 'EMPLOYED':
-        return '재직중'
-      case 'ON_LEAVE':
-        return '휴직중'
-      case 'RESIGNED':
-        return '퇴직'
-    }
-  }
+  try {
+    const resp = await fetchEmpInfo()
+    const empDetails = resp.data.data.employeeDetails
 
-  const resp = await fetchEmpInfo()
-  const empDetails = resp.data.data.employeeDetails
-  profile.name = empDetails.name
-  profile.position = empDetails.positionName
-  profile.status = computedStatus() || '-'
-  profile.department = empDetails.deptName || '-'
+    const computedStatus = () => {
+      switch (empDetails.status) {
+        case 'EMPLOYED': return '재직중'
+        case 'ON_LEAVE': return '휴직중'
+        case 'RESIGNED': return '퇴직'
+        default: return '-'
+      }
+    }
+
+    profile.name = empDetails.name
+    profile.position = empDetails.positionName
+    profile.status = computedStatus()
+    profile.department = empDetails.deptName || '-'
+  } catch (e) {
+    toast.error("프로필 정보를 불러오는 데 실패했습니다.")
+  }
 }
 
-// 최초 실행
-onMounted(() => handleMonthChange(currentMonth.value))
-onMounted(() => getProfile())
+// 공지사항 불러오기
+const fetchNotices = async () => {
+  try {
+    const res = await getAnnouncementList({
+      page: 1,
+      size: 5,
+      sortDirection: 'DESC'
+    })
+
+    const result = res?.data?.data?.announcements || []
+
+    notices.value = result.map(item => ({
+      id: item.announcementId,
+      title: item.title,
+      meta: `${item.name || '작성자'} · ${item.createdAt?.substring(0, 10) || ''}`
+    }))
+  } catch (e) {
+    toast.error("공지사항을 불러오는 데 실패했습니다.")
+  }
+}
+
+onMounted(() => {
+  handleMonthChange(currentMonth.value)
+  getProfile()
+  fetchNotices()
+})
 </script>
 
 <style scoped>
-/* ===== 레이아웃 ===== */
 .dashboard-layout {
   display: flex;
   gap: 40px;
