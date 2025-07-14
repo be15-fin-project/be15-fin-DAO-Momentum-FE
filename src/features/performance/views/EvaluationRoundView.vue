@@ -445,7 +445,7 @@ const handleEditSubmit = async () => {
   };
 
   try {
-    await updateEvaluationRound(payload);
+    await updateEvaluationRound(selectedRoundId.value, payload);
     toast.success('수정이 완료되었습니다.');
     detailMode.value = 'view';
     await handleSearch(filterValues.value);
