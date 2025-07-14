@@ -228,7 +228,8 @@ async function openSubmitModal(row) {
           type: 'notice',
           value: `본 평가는 구성원의 업무 역량과 조직 기여도를 종합적으로 이해하고, <br>향후 인사 제도 운영 및 조직 관리 방안 수립 시 참고 자료로 활용됩니다.<br>
 응답 내용은 절대적으로 비공개로 처리되며,<br>개별 평가 결과로 인해 인사상 불이익이 발생하지 않습니다.<br>
-보다 신뢰도 높은 분석을 위해, <br>사실에 근거한 객관적이고 성실한 평가를 부탁드립니다.`
+보다 신뢰도 높은 분석을 위해, <br>사실에 근거한 객관적이고 성실한 평가를 부탁드립니다.`,
+          editable: false
         }
       ]
     }
@@ -336,19 +337,48 @@ async function handleSubmit() {
   }
 }
 
+import { nextTick } from 'vue'
+
 function handleKeydown(e) {
   const key = e.key
   if (!/^[1-7]$/.test(key)) return
 
   const score = parseInt(key)
-  const responseSections = formSections.value.filter(s => s.title !== '평가 정보' && s.title !== '평가 사유')
-  const allFields = responseSections.flatMap(s => s.fields)
 
-  if (focusIndex.value < allFields.length) {
-    allFields[focusIndex.value].value = score
+  const responseSections = formSections.value.filter(
+      s => s.title !== '평가 정보' && s.title !== '평가 사유'
+  )
+
+  const likertFields = responseSections.flatMap(s =>
+      s.fields.filter(f => f.type === 'likert')
+  )
+
+  if (focusIndex.value < likertFields.length) {
+    const field = likertFields[focusIndex.value]
+    field.value = score
     focusIndex.value += 1
+
+    // DOM 요소로 스크롤 이동
+    nextTick(() => {
+      const refComponent = fieldRefs.value[field.key]
+      let el = null
+
+      if (refComponent?.$el) {
+        // Vue 컴포넌트인 경우
+        el = refComponent.$el
+      } else if (refComponent instanceof HTMLElement) {
+        // 일반 DOM
+        el = refComponent
+      }
+
+      if (el && typeof el.scrollIntoView === 'function') {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    })
   }
 }
+
+
 
 // Lifecycle
 onMounted(async () => {
