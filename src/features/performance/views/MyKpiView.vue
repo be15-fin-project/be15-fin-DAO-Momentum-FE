@@ -176,12 +176,12 @@ function resetCreateForm() {
   createForm.value.goalValue = '100';
   createForm.value.kpiProgress = 0;
   createForm.value.deadline = dayjs().add(1, 'month').format('YYYY-MM-DD'),
-  createForm.value.timeline = {
-    progress25: '25% 진척 기준',
-    progress50: '50% 진척 기준',
-    progress75: '75% 진척 기준',
-    progress100: '100% 진척 기준'
-  };
+      createForm.value.timeline = {
+        progress25: '25% 진척 기준',
+        progress50: '50% 진척 기준',
+        progress75: '75% 진척 기준',
+        progress100: '100% 진척 기준'
+      };
 }
 
 
@@ -291,7 +291,15 @@ const tableColumns = [
 const donutChartData = ref({ labels: [], data: [], colors: [] });
 const lineChartData = ref({ labels: [], datasets: [] });
 
-// KPI 통계 및 시계열 데이터 렌더링
+function getReferenceYearMonth(values) {
+  if (values.date_start) {
+    const date = dayjs(values.date_start);
+    return { year: date.year(), month: date.month() + 1 }; // dayjs는 month가 0부터 시작함
+  }
+  const now = dayjs();
+  return { year: now.year(), month: now.month() + 1 };
+}
+
 async function renderCharts() {
   try {
     const rootStyle = getComputedStyle(document.documentElement);
@@ -299,7 +307,14 @@ async function renderCharts() {
     const blue400 = rootStyle.getPropertyValue('--blue-400').trim();
     const blue500 = rootStyle.getPropertyValue('--blue-500').trim();
 
-    const stats = await getMyKpiStatistics(normalizeFilterParams(filterValues.value));
+    // 기준 연도/월 계산
+    const { year, month } = getReferenceYearMonth(filterValues.value);
+
+    const stats = await getMyKpiStatistics({
+      ...normalizeFilterParams(filterValues.value),
+      year,
+      month
+    });
 
     donutChartData.value = {
       labels: ['진행중', '완료'],
@@ -399,11 +414,26 @@ async function handleSearch(values) {
       size: 10
     };
     const res = await getMyKpiList(params);
+    tableData.value = (res.content ?? []).map(item => {
+      const now = new Date();
+      const deadline = new Date(item.deadline + 'T23:59:59');
+      const progress = item.kpiProgress;
 
-    tableData.value = (res.content ?? []).map(item => ({
-      ...item,
-      statusName: item.kpiProgress === 100 ? '달성' : '미달성'
-    }));
+      let statusName = '진행중';
+
+      if (progress === 100) {
+        statusName = '달성';
+      } else if (deadline >= now) {
+        statusName = progress === 0 ? '준비 중' : '수행 중';
+      } else {
+        statusName = '기한 초과';
+      }
+
+      return {
+        ...item,
+        statusName,
+      };
+    });
 
     const current = res.pagination?.currentPage || 1;
     const total = res.pagination?.totalPage > 0 ? res.pagination.totalPage : 1;
