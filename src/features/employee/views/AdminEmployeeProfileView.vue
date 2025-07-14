@@ -96,7 +96,7 @@ const handleRegisterSubmit = async(req) => {
     toast.success('개인정보를 수정했습니다!')
     modalVisible.value = false;
     await getEmpInfo();
-  }catch(e){
+  } catch(e) {
     toast.error('문제가 발생했습니다.')
   }
 }
@@ -147,7 +147,7 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
         }
 
         if (record.recordId) {
-          // updateItems.push(record);
+
         } else {
           // 신규는 recordId 제거
           delete record.recordId;
@@ -155,8 +155,6 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
         }
       }
     }
-
-    console.log('updateEmpRecords 호출:', empId, { insertItems, idsToDelete });
     await updateEmpRecords({ insertItems, idsToDelete }, empId);
 
     toast.success('이력 정보를 수정했습니다!');
@@ -166,6 +164,10 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
   }
 };
 
+const handleHistoryCancel = async () => {
+  await getEmpInfo()
+  toast.info('수정이 취소되었습니다.')
+}
 
 watch(
     () => employeeDetails.value,
@@ -243,7 +245,7 @@ function handleClick(event) {
 
           <!-- History Info Tab -->
           <div class="tab-content" id="history-tab" v-else>
-            <HistoryInfoEditable :records="employeeRecords" @submit="handleHistorySubmit"/>
+            <HistoryInfoEditable :records="employeeRecords" @submit="handleHistorySubmit" @cancel="handleHistoryCancel"/>
           </div>
         </div>
       </div>
