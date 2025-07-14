@@ -30,6 +30,7 @@
     />
 
     <SideModal
+        ref="modalRef"
         v-model:visible="isModalOpen"
         title="평가 제출"
         icon="fa-clipboard-list"
@@ -48,7 +49,7 @@
 
 <script setup>
 // Imports
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useToast } from 'vue-toastification'
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue'
 import Filter from '@/components/common/Filter.vue'
@@ -78,8 +79,9 @@ const selectedTask = ref(null)
 const formSections = ref([])
 const submitForm = ref({})
 const focusIndex = ref(0)
+const modalRef = ref(null)
 
-// Computed / Watchers
+// Computed
 const filterOptions = computed(() => [
   {
     key: 'formId',
@@ -118,7 +120,7 @@ watch(isModalOpen, open => {
   }
 })
 
-// UI 상수 메서드
+// Methods
 function transformFormTree(rawTree) {
   return rawTree.map(type => ({
     typeId: type.typeId,
@@ -165,7 +167,6 @@ function normalizeFilterParams(values) {
   return normalized
 }
 
-// Methods
 async function fetchTasks() {
   try {
     const params = { page: currentPage.value, size: pageSize, roundId: roundId.value }
@@ -218,7 +219,6 @@ async function openSubmitModal(row) {
 
     const allForms = formTree.value.flatMap(type => type.childDept || [])
     const formDesc = allForms.find(f => f.formId === row.formId)?.name || row.formName
-    const propertyMap = new Map(properties.map(p => [p.name, p.propertyId]))
 
     const noticeInfo = {
       title: '안내 사항',
@@ -228,7 +228,8 @@ async function openSubmitModal(row) {
           type: 'notice',
           value: `본 평가는 구성원의 업무 역량과 조직 기여도를 종합적으로 이해하고, <br>향후 인사 제도 운영 및 조직 관리 방안 수립 시 참고 자료로 활용됩니다.<br>
 응답 내용은 절대적으로 비공개로 처리되며,<br>개별 평가 결과로 인해 인사상 불이익이 발생하지 않습니다.<br>
-보다 신뢰도 높은 분석을 위해, <br>사실에 근거한 객관적이고 성실한 평가를 부탁드립니다.`
+보다 신뢰도 높은 분석을 위해, <br>사실에 근거한 객관적이고 성실한 평가를 부탁드립니다.`,
+          editable: false
         }
       ]
     }
@@ -247,7 +248,7 @@ async function openSubmitModal(row) {
       icon: 'fa-question-circle',
       layout: 'one-column',
       fields: factor.prompts.map((p, idx) => ({
-        key: `q_${factor.propertyName}_${idx}`,
+        key: `q_${row.formId}_${factor.propertyName}_${idx}`,
         label: p.content,
         type: 'likert',
         min: 1,
@@ -341,13 +342,36 @@ function handleKeydown(e) {
   if (!/^[1-7]$/.test(key)) return
 
   const score = parseInt(key)
-  const responseSections = formSections.value.filter(s => s.title !== '평가 정보' && s.title !== '평가 사유')
-  const allFields = responseSections.flatMap(s => s.fields)
+  const responseSections = formSections.value.filter(
+      s => s.title !== '평가 정보' && s.title !== '평가 사유'
+  )
 
-  if (focusIndex.value < allFields.length) {
-    allFields[focusIndex.value].value = score
+  const likertFields = responseSections.flatMap(s =>
+      s.fields.filter(f => f.type === 'likert')
+  )
+
+  if (focusIndex.value < likertFields.length) {
+    const field = likertFields[focusIndex.value]
+    field.value = score
+
+    const isLast = focusIndex.value === likertFields.length - 1
     focusIndex.value += 1
+
+    nextTick(() => {
+      if (!isLast) {
+        // 다음 Likert 항목으로 스크롤
+        const refComponent = modalRef.value?.fieldRefs?.[field.key]
+        let el = refComponent?.$el ?? refComponent
+        el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+      } else {
+        // 마지막 항목 → 사유 입력칸으로 이동
+        const reasonInput = modalRef.value?.fieldRefs?.['reasonInput']
+        const el = reasonInput?.$el ?? reasonInput
+        el?.focus?.()
+      }
+    })
   }
+
 }
 
 // Lifecycle

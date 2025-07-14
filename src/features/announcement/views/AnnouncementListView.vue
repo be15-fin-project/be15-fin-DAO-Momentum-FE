@@ -20,7 +20,7 @@
     <Filter
         :filters="filterOptions"
         v-model="filterValues"
-        @search="handleSearch"
+        @search="handleFilterSearch"
     />
 
     <!-- 테이블 -->
@@ -136,11 +136,11 @@ function normalizeFilterParams(values) {
 }
 
 // 공지 목록 조회
-const handleSearch = async (values) => {
+const handleSearch = async (values, page = pagination.value.currentPage) => {
   try {
     const params = {
       ...normalizeFilterParams(values),
-      page: pagination.value.currentPage,
+      page,
       size: 10,
     };
 
@@ -149,7 +149,7 @@ const handleSearch = async (values) => {
 
     tableData.value = (responseData.announcements ?? []).map(item => ({
       ...item,
-      createdAt: formatDateTime(item.createdAt) // 날짜 포맷 적용
+      createdAt: formatDateTime(item.createdAt),
     }));
 
     pagination.value = {
@@ -161,6 +161,12 @@ const handleSearch = async (values) => {
     tableData.value = [];
     pagination.value = { currentPage: 1, totalPage: 1 };
   }
+};
+
+const handleFilterSearch = (values) => {
+  pagination.value.currentPage = 1; // 페이지 1로 초기화
+  filterValues.value = values;      // 필터 값 저장
+  handleSearch(values, 1);          // page 1로 검색 실행
 };
 
 // 페이지 변경 시 재조회
