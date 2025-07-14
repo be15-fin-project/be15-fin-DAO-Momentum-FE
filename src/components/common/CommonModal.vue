@@ -118,7 +118,7 @@ watch(() => props.visible, (val) => {
   width: 100%;
   padding: 14px 28px;
   border-radius: var(--radius-md);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   display: flex;
