@@ -91,6 +91,7 @@ const updateSliderPosition = () => {
   nextTick(() => {
     const buttons = pagination.value?.querySelectorAll('.page-btn') || [];
     let activeIndex = 0;
+
     for (let i = 0; i < visiblePages.value.length; i++) {
       const p = visiblePages.value[i];
       if (p === '...') continue;
@@ -99,14 +100,21 @@ const updateSliderPosition = () => {
     }
 
     const activeBtn = buttons[activeIndex];
-    if (!activeBtn) return;
+    if (!activeBtn || !pagination.value) return;
 
     const containerRect = pagination.value.getBoundingClientRect();
     const activeRect = activeBtn.getBoundingClientRect();
-    const left = activeRect.left - containerRect.left + activeRect.width / 2 - 25;
+
+    const zoom = 0.8; // 전체 페이지에 적용된 zoom 값
+    const trackWidth = 50;
+
+    //  zoom 비율 보정
+    const left = ((activeRect.left - containerRect.left) / zoom) + (activeRect.width / 2 / zoom) - (trackWidth / 2);
+
     trackLeft.value = left;
   });
 };
+
 
 const goToPage = (page) => {
   if (page === '...') return;
