@@ -5,7 +5,6 @@
 </template>
 
 <script setup>
-import {ref, onUnmounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useAuthStore} from "@/stores/auth.js"
 import InitialPasswordSetupForm from "@/features/common/components/InitialPasswordSetupForm.vue";
@@ -17,8 +16,6 @@ const authStore = useAuthStore()
 const toast = useToast();
 
 const token = route.query.token
-const modalVisible = ref(false)
-const resetSuccess = ref(false)
 
 
 const handleResult = ({ success, message }) => {
@@ -35,7 +32,7 @@ const handleResult = ({ success, message }) => {
 
 <style scoped>
 .reset-container {
-  min-height: 100vh;
+height:100%;
   display: flex;
   align-items: center;
   justify-content: center;
