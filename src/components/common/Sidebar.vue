@@ -308,13 +308,17 @@ function toggleAlertPanel() {
 const submitAttendance = async () => {
   isLoading.value = true
   try {
-    if (!isAttended.value) await startWork()
-    else await endWork()
+    if (!isAttended.value) {
+      await startWork()
+    }
+    if (isAttended.value) {
+      await endWork()
+    }
     await fetchTodayAttendance()
     toast.success('출퇴근 등록 완료')
     closeAttendanceModal()
   } catch (e) {
-    toast.error('근태 처리 실패')
+    toast.error('출퇴근 처리 실패')
   } finally {
     isLoading.value = false
   }

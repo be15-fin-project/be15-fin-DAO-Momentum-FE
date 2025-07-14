@@ -132,7 +132,7 @@ watch(currentPage, () => fetchSummary(filterValues.value));
 <template>
   <main>
     <HeaderWithTabs
-        :headerItems="[{ label: '내 계약서 조회', to: '/mypage/contracts', active: true }]"
+        :headerItems="[{ label: '내 계약서 조회', to: '/mypage/my-contracts', active: true }]"
         :showTabs="false"
     />
     <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
