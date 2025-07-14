@@ -1,5 +1,5 @@
 // useAttendance.js
-import {reactive, ref} from "vue";
+import {computed, reactive, ref} from "vue";
 import {fetchCompanyInfo} from "@/features/company/api.js";
 import {getMyTodaysAttendance} from "@/features/works/api.js";
 import {useToast} from "vue-toastification";
@@ -18,6 +18,10 @@ export function useAttendance() {
     const toast = useToast()
 
     const isLoading = ref(false)
+
+    const workAlreadyEnded = computed(() => {
+        return !!todaysWork.value?.endPushedAt
+    })
 
     const clockInfo = reactive({
         now: null,
@@ -116,6 +120,12 @@ export function useAttendance() {
 
             return
         }
+        if (workAlreadyEnded.value) {
+            toast.error("이미 퇴근 등록된 근무일입니다.")
+            isLoading.value = false;
+
+            return
+        }
         startClockUpdater()
         await updateClockInfo(new Date())
         openAttendanceModal()
@@ -175,6 +185,7 @@ export function useAttendance() {
         isLoading,
         showAttendanceModal,
         clockInfo,
+        workAlreadyEnded,
         handleCreateAttendance,
         closeAttendanceModal,
         fetchTodayAttendance,
