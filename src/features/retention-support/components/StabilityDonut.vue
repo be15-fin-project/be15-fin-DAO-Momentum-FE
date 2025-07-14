@@ -119,7 +119,7 @@ watch(() => props.distribution, renderChart);
 }
 
 .chart-content {
-  margin: auto auto;
+  margin: auto 0;
   padding: 0;
   display: flex;
   justify-content: center;
