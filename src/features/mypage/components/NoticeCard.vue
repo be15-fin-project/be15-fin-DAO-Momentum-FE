@@ -1,54 +1,85 @@
 <template>
-  <div class="card">
-    <div class="side-section-title">
-      <span class="material-icons" style="color:var(--blue-400);">campaign</span>
+  <div class="card notice-card">
+    <div class="notice-header">
+      <span class="material-icons">campaign</span>
       공지사항
     </div>
     <div class="notice-list">
-      <div v-for="(notice, idx) in notices" :key="idx">
-        <strong>{{ notice.title }}</strong><br />
-        <small>{{ notice.meta }}</small>
+      <div
+          v-for="(notice, idx) in notices"
+          :key="idx"
+          class="notice-item"
+          @click="goToDetail(notice.id)"
+      >
+        <strong>{{ notice.title }}</strong>
+        <div class="notice-meta">{{ notice.meta }}</div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
+
 defineProps({
   notices: {
     type: Array,
     default: () => []
   }
 })
+
+const router = useRouter()
+const goToDetail = (id) => {
+  if (id) router.push(`/announcement/${id}`)
+}
 </script>
 
 <style scoped>
+.notice-card {
+  padding: 20px;
+  border: 1px solid var(--gray-100);
+  border-radius: var(--card-radius);
+  background-color: #ffffff;
+}
+
+.notice-header {
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--blue-500);
+  padding-bottom: 10px;
+  margin-bottom: 14px;
+  gap: 6px;
+}
+
 .notice-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
-.notice-list strong {
-  color: var(--blue-400);
-  font-size: 15px;
-  font-weight: 600;
+.notice-item {
+  cursor: pointer;
+  padding: 6px 4px;
+  transition: background 0.2s;
+  border-radius: 6px;
 }
 
-.notice-list small {
+.notice-item:hover {
+  background-color: var(--gray-50);
+}
+
+.notice-item strong {
+  font-size: 14.5px;
+  color: var(--main-color);
+  display: block;
+  line-height: 1.3;
+}
+
+.notice-meta {
+  font-size: 12px;
   color: var(--gray-400);
-  font-size: 12.5px;
-  font-weight: 500;
-}
-
-.side-section-title {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--blue-400);
-  font-size: 1.06rem;
-  font-weight: 700;
-  margin-bottom: 18px;
-  margin-top: 0;
+  margin-top: 2px;
 }
 </style>
