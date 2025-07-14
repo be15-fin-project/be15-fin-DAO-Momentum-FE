@@ -86,6 +86,7 @@ watch(() => props.visible, (val) => {
 }
 
 .modal-content {
+  zoom: 0.8;
   width: 30rem;
   display: flex;
   flex-direction: column;
