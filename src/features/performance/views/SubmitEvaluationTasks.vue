@@ -30,6 +30,7 @@
     />
 
     <SideModal
+        ref="modalRef"
         v-model:visible="isModalOpen"
         title="평가 제출"
         icon="fa-clipboard-list"
@@ -48,7 +49,7 @@
 
 <script setup>
 // Imports
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { useToast } from 'vue-toastification'
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue'
 import Filter from '@/components/common/Filter.vue'
@@ -78,8 +79,9 @@ const selectedTask = ref(null)
 const formSections = ref([])
 const submitForm = ref({})
 const focusIndex = ref(0)
+const modalRef = ref(null)
 
-// Computed / Watchers
+// Computed
 const filterOptions = computed(() => [
   {
     key: 'formId',
@@ -118,7 +120,7 @@ watch(isModalOpen, open => {
   }
 })
 
-// UI 상수 메서드
+// Methods
 function transformFormTree(rawTree) {
   return rawTree.map(type => ({
     typeId: type.typeId,
@@ -165,7 +167,6 @@ function normalizeFilterParams(values) {
   return normalized
 }
 
-// Methods
 async function fetchTasks() {
   try {
     const params = { page: currentPage.value, size: pageSize, roundId: roundId.value }
@@ -218,7 +219,6 @@ async function openSubmitModal(row) {
 
     const allForms = formTree.value.flatMap(type => type.childDept || [])
     const formDesc = allForms.find(f => f.formId === row.formId)?.name || row.formName
-    const propertyMap = new Map(properties.map(p => [p.name, p.propertyId]))
 
     const noticeInfo = {
       title: '안내 사항',
@@ -248,7 +248,7 @@ async function openSubmitModal(row) {
       icon: 'fa-question-circle',
       layout: 'one-column',
       fields: factor.prompts.map((p, idx) => ({
-        key: `q_${factor.propertyName}_${idx}`,
+        key: `q_${row.formId}_${factor.propertyName}_${idx}`,
         label: p.content,
         type: 'likert',
         min: 1,
@@ -337,14 +337,11 @@ async function handleSubmit() {
   }
 }
 
-import { nextTick } from 'vue'
-
 function handleKeydown(e) {
   const key = e.key
   if (!/^[1-7]$/.test(key)) return
 
   const score = parseInt(key)
-
   const responseSections = formSections.value.filter(
       s => s.title !== '평가 정보' && s.title !== '평가 사유'
   )
@@ -356,29 +353,26 @@ function handleKeydown(e) {
   if (focusIndex.value < likertFields.length) {
     const field = likertFields[focusIndex.value]
     field.value = score
+
+    const isLast = focusIndex.value === likertFields.length - 1
     focusIndex.value += 1
 
-    // DOM 요소로 스크롤 이동
     nextTick(() => {
-      const refComponent = fieldRefs.value[field.key]
-      let el = null
-
-      if (refComponent?.$el) {
-        // Vue 컴포넌트인 경우
-        el = refComponent.$el
-      } else if (refComponent instanceof HTMLElement) {
-        // 일반 DOM
-        el = refComponent
-      }
-
-      if (el && typeof el.scrollIntoView === 'function') {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      if (!isLast) {
+        // 다음 Likert 항목으로 스크롤
+        const refComponent = modalRef.value?.fieldRefs?.[field.key]
+        let el = refComponent?.$el ?? refComponent
+        el?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+      } else {
+        // 마지막 항목 → 사유 입력칸으로 이동
+        const reasonInput = modalRef.value?.fieldRefs?.['reasonInput']
+        const el = reasonInput?.$el ?? reasonInput
+        el?.focus?.()
       }
     })
   }
+
 }
-
-
 
 // Lifecycle
 onMounted(async () => {
