@@ -163,7 +163,7 @@ watch(
   position: fixed;
   top: 0;
   right: 0;
-  height: 100vh;
+  height: 100%;
   width: 40rem;
   max-width: 100%;
   background: var(--color-surface);
