@@ -1,49 +1,36 @@
 <template>
   <div class="reset-container">
     <InitialPasswordSetupForm :token="token" @completed="handleResult" />
-    <CommonModal
-        :visible="modalVisible"
-        :confirm-text="'확인'"
-        @cancel="closeModal"
-    >
-      <p>{{ modalMessage }}</p>
-    </CommonModal>
   </div>
 </template>
 
 <script setup>
 import {ref, onUnmounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
-import CommonModal from "@/components/common/CommonModal.vue"
 import {useAuthStore} from "@/stores/auth.js"
 import InitialPasswordSetupForm from "@/features/common/components/InitialPasswordSetupForm.vue";
+import {useToast} from "vue-toastification";
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const toast = useToast();
 
 const token = route.query.token
 const modalVisible = ref(false)
-const modalMessage = ref('')
 const resetSuccess = ref(false)
 
-const handleResult = ({ success, message }) => {
-  resetSuccess.value = success
-  modalMessage.value = message
-  modalVisible.value = true
-}
 
-const closeModal = () => {
-  modalVisible.value = false
-  if (resetSuccess.value) {
+const handleResult = ({ success, message }) => {
+  if(success){
+    toast.success('비밀번호 초기화에 성공했습니다.')
     authStore.clearAuth()
     router.push('/login')
   }
+  else{
+    toast.error('올바르지 않은 입력입니다. 다시 입력해주세요');
+  }
 }
-
-onUnmounted(() => {
-  authStore.clearAuth()
-})
 </script>
 
 <style scoped>
@@ -53,5 +40,6 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: 2rem;
+  background: var(--gray-100);
 }
 </style>
