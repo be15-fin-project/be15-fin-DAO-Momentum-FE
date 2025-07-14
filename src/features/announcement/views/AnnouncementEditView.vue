@@ -104,9 +104,12 @@ import {
   modifyAnnouncement,
   generatePresignedUrl
 } from '@/features/announcement/api'
+import {useToast} from "vue-toastification";
 
 const router = useRouter()
 const route = useRoute()
+
+const toast = useToast()
 
 const form = ref({
   title: '',
@@ -141,7 +144,7 @@ const fetchDetail = async () => {
     }
   } catch (e) {
     console.error('공지 불러오기 실패:', e)
-    alert('공지 정보를 불러오는 데 실패했습니다.')
+    toast.error('공지 정보를 불러오는 데 실패했습니다.')
     router.push('/announcement')
   }
 }
@@ -199,7 +202,7 @@ const uploadFiles = async (files) => {
       form.value.files.push(file)
     } catch (err) {
       console.error('파일 업로드 실패:', file.name, err)
-      alert(`"${file.name}" 파일 업로드에 실패했습니다. 전체 등록이 중단됩니다.`)
+      toast.error(`"${file.name}" 파일 업로드에 실패했습니다. 전체 등록이 중단됩니다.`)
     }
   }
 }
@@ -225,7 +228,7 @@ const formatSize = (bytes) => {
 const handleSubmit = async () => {
   if (isSubmitting.value) return
   if (uploadedFiles.value.some(f => !f.s3Key)) {
-    alert('모든 파일이 정상적으로 업로드되지 않았습니다.')
+    toast.error('모든 파일이 정상적으로 업로드되지 않았습니다.')
     return
   }
 
@@ -244,11 +247,11 @@ const handleSubmit = async () => {
     })
 
     const editId = res.data.data.announcementId
-    alert('공지사항이 수정되었습니다.')
+    toast.success('공지사항이 수정되었습니다.')
     router.push(`/announcement/${editId}`)
   } catch (err) {
     console.error('공지사항 수정 실패:', err)
-    alert('공지사항 수정에 실패했습니다.')
+    toast.error('공지사항 수정에 실패했습니다.')
   } finally {
     isSubmitting.value = false
   }
