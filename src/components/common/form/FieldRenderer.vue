@@ -47,6 +47,19 @@
         :readonly="readonly"
     />
 
+    <RetentionScoreCard
+        v-else-if="field.type === 'retentionCard'"
+        :retentionScore="field.value.retentionScore"
+        :retentionGrade="field.value.retentionGrade"
+        :stabilityType="field.value.stabilityType"
+        :factorGrades="field.value.factorGrades"
+    />
+
+    <FormNotice
+        v-else-if="field.type === 'notice'"
+        :content="field.value"
+    />
+
     <ProgressTimeline
         v-if="field.type === 'progressTimeline'"
         v-model="model[field.key]"
@@ -56,7 +69,7 @@
 
     <!-- 읽기 전용 -->
     <div
-        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart', 'memberPicker'].includes(field.type)"
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart', 'memberPicker', 'notice', 'retentionCard'].includes(field.type)"
         class="form-input readonly"
         v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
     />
@@ -105,27 +118,6 @@
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
       />
-      <div v-else-if="field.type === 'tree'" class="tree-field">
-        <button
-            type="button"
-            class="form-select tree-trigger"
-            @click="toggleDropdown"
-        >
-          {{ selectedLabel || field.placeholder || '선택하세요' }}
-          <i class="fas fa-chevron-down select-icon"></i>
-        </button>
-        <div v-show="dropdownOpen" class="tree-dropdown">
-          <TreeNode
-              v-for="node in field.options"
-              :key="node.deptId"
-              :node="node"
-              :selected-id="model[field.key]"
-              :depth="0"
-              @select="onSelect"
-          />
-        </div>
-      </div>
-
       <template v-else-if="field.type === 'checkbox-group'">
         <div v-if="field.style === 'permission'" class="permission-group">
           <div
@@ -175,15 +167,16 @@
 </template>
 
 <script setup>
-import {computed, ref} from 'vue';
+import {computed} from 'vue';
 import SliderGroup from "@/components/common/form/SliderGroup.vue";
 import LikertScale from "@/components/common/form/LikertScale.vue";
 import RadarChart from "@/components/common/form/RadarChart.vue";
 import ProgressTimeline from "@/components/common/form/ProgressTimeline.vue";
 import ScoreBarChart from "@/components/common/form/ScoreBarChart.vue";
-import TreeNode from "@/components/common/TreeNode.vue";
 import MemberPickerField from "@/components/common/form/MemberPickerField.vue";
 import DeptList from "@/components/common/form/DeptList.vue";
+import RetentionScoreCard from "@/components/common/form/RetentionScoreCard.vue";
+import FormNotice from "@/components/common/form/FormNotice.vue";
 
 const props = defineProps({
   field: Object,
@@ -218,42 +211,11 @@ const onFileChange = (e) => {
   emit('file-change', { fieldKey: props.field.key, file });
 };
 
-
 const scoreWidth = computed(() => {
   const raw = props.field.value ?? props.model?.[props.field.key];
   const num = parseInt(raw);
   return isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
 });
-
-/* 트리 */
-const dropdownOpen = ref(false)
-
-function toggleDropdown() {
-  dropdownOpen.value = !dropdownOpen.value
-}
-
-function onSelect(id, label) {
-  props.model[props.field.key] = id
-  emit('update:model', {...props.model})
-  dropdownOpen.value = false
-}
-
-const selectedLabel = computed(() => {
-// 선택된 ID → 레이블 매핑
-  function findLabel(list, targetId) {
-    for (const n of list) {
-      if (n.deptId === targetId) return n.name;
-      if (n.childDept) {
-        const child = findLabel(n.childDept, targetId);
-        if (child) return child;
-      }
-    }
-  }
-
-  return props.field.options ?
-      findLabel(props.field.options, props.model[props.field.key]) : '';
-})
-
 
 function getValueByPath(obj, path) {
   return path.split('.').reduce((o, k) => o?.[k], obj);

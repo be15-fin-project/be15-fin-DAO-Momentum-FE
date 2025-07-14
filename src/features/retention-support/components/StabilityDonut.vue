@@ -12,8 +12,16 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue';
 import Chart from 'chart.js/auto';
 
 const props = defineProps({
-  distribution: Object,
-});
+      distribution: {
+        type: Object,
+        default: () => ({
+          stableCount: 0,
+          warningCount: 0,
+          unstableCount: 0,
+          totalCount: 0
+        })
+      }
+    });
 
 const canvasRef = ref(null);
 let chartInstance = null;
@@ -25,28 +33,47 @@ function getCssVar(name) {
 function renderChart() {
   if (!props.distribution || !canvasRef.value) return;
 
-  const { progress20, progress40, progress60, progress80, progress100 } = props.distribution;
-  const data = [progress20, progress40, progress60, progress80, progress100];
+  // 1. StabilityType 매핑
+  const labelMap = {
+    goodCount: '양호',
+    normalCount: '보통',
+    warningCount: '주의',
+    severeCount: '심각'
+  };
 
-  const colors = [
-    getCssVar('--blue-100'),
-    getCssVar('--blue-200'),
-    getCssVar('--blue-400'),
-    getCssVar('--blue-500'),
-    getCssVar('--main-color'),
-  ];
+  const colorMap = {
+    '양호': getCssVar('--blue-200'),
+    '보통': getCssVar('--blue-400'),
+    '주의': getCssVar('--blue-500'),
+    '심각': getCssVar('--main-color'),
+  };
+
+  const orderedKeys = ['goodCount', 'normalCount', 'warningCount', 'severeCount'];
+
+  const entries = orderedKeys.map(key => ({
+    label: labelMap[key],
+    value: props.distribution[key] ?? 0,
+    color: colorMap[labelMap[key]]
+  }));
+
+  const data = entries.map(e => e.value);
+  const labels = entries.map(e => e.label);
+  const colors = entries.map(e => e.color);
 
   if (chartInstance) chartInstance.destroy();
+
   const ctx = canvasRef.value.getContext('2d');
   chartInstance = new Chart(ctx, {
     type: 'doughnut',
     data: {
-      labels: ['20%', '40%', '60%', '80%', '100%'],
-      datasets: [{
-        data,
-        backgroundColor: colors,
-        borderWidth: 0,
-      }],
+      labels,
+      datasets: [
+        {
+          data,
+          backgroundColor: colors,
+          borderWidth: 0,
+        },
+      ],
     },
     options: {
       responsive: true,
@@ -59,6 +86,7 @@ function renderChart() {
     },
   });
 }
+
 
 onMounted(renderChart);
 onBeforeUnmount(() => chartInstance?.destroy());

@@ -1,35 +1,104 @@
 <script setup>
-import {computed, readonly, ref, watch, watchEffect} from 'vue'
+import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue';
+import dayjs from 'dayjs';
 
+/* 부모에게 받아온 부분 */
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: false }
 });
 
-const localFormData = ref({ ...props.formData })
+/* 에러 메세지 */
+const errors = ref({
+  startDate: '',
+  endDate: '',
+  time: '',
+  reason: ''
+});
 
-const emit = defineEmits(['update:formData']);
+// 연장 근무 옵션
+const workTypeOptions = [
+  { value: 'OVERTIME', label: '연장 근무' },
+  { value: 'NIGHT', label: '야간 근무' },
+  { value: 'HOLIDAY', label: '휴일 근무' }
+];
 
-// formData 갱신 함수
-function updateField(field, value) {
-  localFormData.value[field] = value;
+// 시작 관련 로컬 state
+const startDate = computed({
+  get: () => getDateOnly(props.formData.startAt),
+  set: (val) => updateDateTime('startAt', val, startHour.value, startMinute.value)
+});
+
+const startHour = computed({
+  get: () => getHour(props.formData.startAt) || '00',
+  set: (val) => updateDateTime('startAt', startDate.value, val, startMinute.value)
+});
+
+const startMinute = computed({
+  get: () => getMinute(props.formData.startAt) || '00',
+  set: (val) => updateDateTime('startAt', startDate.value, startHour.value, val)
+});
+
+// 추가
+const startTime = computed({
+  get: () => getTimeOnly(props.formData.startAt),
+  set: (val) => {
+    if (!startDate.value || !val) return;
+    props.formData.startAt = `${startDate.value}T${val}:00`;
+  }
+});
+
+// 종료 관련 로컬 state
+const endDate = computed({
+  get: () => getDateOnly(props.formData.endAt),
+  set: (val) => updateDateTime('endAt', val, endHour.value, endMinute.value)
+});
+
+const endHour = computed({
+  get: () => getHour(props.formData.endAt)|| '00',
+  set: (val) => updateDateTime('endAt', endDate.value, val, endMinute.value)
+});
+
+const endMinute = computed({
+  get: () => getMinute(props.formData.endAt)|| '00',
+  set: (val) => updateDateTime('endAt', endDate.value, endHour.value, val)
+});
+
+const endTime = computed({
+  get: () => getTimeOnly(props.formData.endAt),
+  set: (val) => {
+    if (!endDate.value || !val) return;
+    props.formData.endAt = `${endDate.value}T${val}:00`;
+  }
+});
+
+// 기존 getHour, getMinute 통합 유틸
+function getTimeOnly(dateTimeString) {
+  return dateTimeString?.split('T')[1]?.slice(0, 5) || '';
 }
-watch(localFormData, () => {
-  emit('update:formData', { ...localFormData.value });
-}, { deep: true });
 
+// watch로 조합
+watch([startDate, startHour, startMinute], ([date, hour, minute]) => {
+  updateDateTime('startAt', date, hour, minute);
+});
 
-// 시간 옵션
-const hourOptions = Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0'));
-const minuteOptions = ['00', '30'];
+watch([endDate, endHour, endMinute], ([date, hour, minute]) => {
+  updateDateTime('endAt', date, hour, minute);
+});
 
-// 날짜/시간 처리 함수
+// 시간 바뀔 때도 조합해서 반영
+watch([startHour, startMinute], ([h, m]) => {
+  updateDateTime('startAt', startDate.value, h, m);
+});
+
+// 유틸 함수들
 function getHour(dateTimeString) {
-  return dateTimeString?.split('T')[1]?.split(':')[0] || '';
+  return dateTimeString?.split('T')[1]?.split(':')[0] ?? '';
 }
 
 function getMinute(dateTimeString) {
-  return dateTimeString?.split('T')[1]?.split(':')[1] || '';
+  const minute = dateTimeString?.split('T')[1]?.split(':')[1];
+  return minute === undefined ? '' : minute;
 }
 
 function getDateOnly(dateTimeString) {
@@ -37,151 +106,164 @@ function getDateOnly(dateTimeString) {
 }
 
 function updateDateTime(field, date, hour, minute) {
-  if (!date || hour === '' || minute === '') return;
-  const newDateTime = `${date}T${hour.padStart(2, '0')}:${minute.padStart(2, '0')}:00`;
-  updateField(field, newDateTime);
+  if (!date || hour === '' || minute === '') {
+    return;
+  }
+  props.formData[field] = `${date}T${hour}:${minute}:00`;
 }
 
-// 시작 시간 computed
-const startDate = computed({
-  get: () => getDateOnly(props.formData.startAt),
-  set: val => updateDateTime('startAt', val, getHour(props.formData.startAt), getMinute(props.formData.startAt))
-});
-const startHour = computed({
-  get: () => getHour(props.formData.startAt),
-  set: val => updateDateTime('startAt', getDateOnly(localFormData.value.startAt), val, getMinute(localFormData.value.startAt))
-});
-const startMinute = computed({
-  get: () => getMinute(props.formData.startAt),
-  set: val => updateDateTime('startAt', getDateOnly(props.formData.startAt), getHour(props.formData.startAt), val)
-});
+/* 시간과 관련된 validation */
+function validateAndAutoSetBreakTime() {
+  errors.value = {
+    startDate: '',
+    endDate: '',
+    time: '',
+    reason: ''
+  };
 
-// 종료 시간 computed
-const endDate = computed({
-  get: () => getDateOnly(props.formData.endAt),
-  set: val => updateDateTime('endAt', val, getHour(props.formData.endAt), getMinute(props.formData.endAt))
-});
-const endHour = computed({
-  get: () => getHour(props.formData.endAt),
-  set: val => updateDateTime('endAt', getDateOnly(props.formData.endAt), val, getMinute(props.formData.endAt))
-});
-const endMinute = computed({
-  get: () => getMinute(props.formData.endAt),
-  set: val => updateDateTime('endAt', getDateOnly(props.formData.endAt), getHour(props.formData.endAt), val)
-});
+  const start = props.formData.startAt ? dayjs(props.formData.startAt) : null;
+  const end = props.formData.endAt ? dayjs(props.formData.endAt) : null;
+  const reason = props.formData.reason?.trim();
 
-// 에러 메시지
-const startError = ref('');
-const endError = ref('');
-const breakError = ref('');
-const reasonError = ref('');
-
-// 유효성 검사
-watchEffect(() => {
-  if (props.isReadOnly) return;
-
-  const { startAt, endAt, reason, breakTime } = localFormData.value;
-
-  startError.value = '';
-  endError.value = '';
-  breakError.value = '';
-  reasonError.value = '';
-
-  if (!startAt) startError.value = '시작 시간은 필수입니다.';
-  if (!endAt) endError.value = '종료 시간은 필수입니다.';
-  if (!reason || reason.trim() === '') reasonError.value = '초과 근무 사유는 필수입니다.';
-
-  if (!startAt || !endAt) return;
-  const start = new Date(startAt);
-  const end = new Date(endAt);
-  const totalMinutes = (end - start) / 1000 / 60;
-
-  if (start >= end) {
-    endError.value = '시작 시간은 종료 시간보다 빨라야 합니다.';
-  } else if (totalMinutes === 240) {
-    endError.value = '정확히 4시간 근무는 불가능합니다. (4시간 초과 시 30분 휴게 필수)';
-  } else if (totalMinutes % 30 !== 0) {
-    endError.value = '근무 시간은 30분 단위로 설정해야 합니다.';
-  } else if (totalMinutes > 720) {
-    endError.value = '최대 12시간(720분)까지 근무 가능합니다.';
-  } else if (end.getHours() >= 6 && start.toDateString() !== end.toDateString()) {
-    endError.value = '종료 시간은 다음날 오전 6시 이전이어야 합니다.';
+  if (!start || !end) {
+    if (!start) errors.value.startDate = '※ 시작 날짜 및 시간이 필요합니다.';
+    if (!end) errors.value.endDate = '※ 종료 날짜 및 시간이 필요합니다.';
+    return false;
   }
 
-  if (breakTime % 30 !== 0) {
-    breakError.value = '휴게 시간은 30분 단위로 입력해야 합니다.';
+  const totalMinutes = end.diff(start, 'minute');
+
+  if (totalMinutes <= 0) {
+    errors.value.time = '※  종료 시간은 시작 시간 이후여야 합니다.';
+    return false;
   }
-});
+
+  // 다음날 오전 6시 이후 불가
+  if (!end.isSame(start, 'day') && end.hour() >= 6) {
+    errors.value.time = '※ 종료 시간은 다음날 오전 6시 이전이어야 합니다.';
+    return false;
+  }
+
+  let breakMinutes = 0;
+
+  if (totalMinutes < 240) {
+    // 4시간 미만: 휴게 시간 없음, 허용됨
+    breakMinutes = 0;
+  } else if (totalMinutes >= 240 && totalMinutes < 270) {
+    // 4시간 ~ 4시간 29분: 실근무가 4시간 이상인데 휴게 시간 부여 기준 안 됨 → 불가
+    errors.value.time = '※ 4시간 30분 이상 근무 부터 30분 휴게시간으로 초과근무가 인정됩니다..';
+    return false;
+  } else if (totalMinutes >= 270 && totalMinutes < 480) {
+    // 4시간 30분 ~ 8시간 미만
+    breakMinutes = 30;
+  } else if (totalMinutes >= 480 && totalMinutes < 540) {
+    // 8시간 ~ 9시간 미만
+    errors.value.time = '※ 9시간 이상 근무 부터 1시간 휴게시간으로 초과근무가 인정됩니다.';
+    return false;
+  } else if (totalMinutes >= 540 && totalMinutes <= 720) {
+    // 9시간 ~ 12시간
+    breakMinutes = 60;
+  } else {
+    errors.value.time = '※ 잔류 시간은 최대 12시간까지 허용됩니다.';
+    return false;
+  }
+
+  props.formData.breakTime = breakMinutes;
+
+  if (!reason) {
+    errors.value.reason = '※ 초과근무 사유는 필수 항목입니다.';
+    return false;
+  }
+
+  return true;
+}
+
+watch(
+  [
+    () => props.formData.startAt,
+    () => props.formData.endAt,
+    () => props.formData.reason
+  ], () => {
+  validateAndAutoSetBreakTime();}
+  , { immediate: true }
+);
+
+onMounted(validateAndAutoSetBreakTime);
 </script>
 
 <template>
   <div class="form-section">
     <div class="form-grid">
 
-      <!-- 시작 날짜 -->
+      <!-- 시작 -->
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label required">시작 날짜<span class="asterisk"> *</span></label>
+          <label class="form-label required">시작 날짜<span v-if="!isReadOnly" class="asterisk"> *</span></label>
           <div v-if="isReadOnly" class="readonly-box">
             {{ getDateOnly(formData.startAt) || '입력 없음' }}
           </div>
-          <input v-else type="date" v-model="startDate" class="form-input" required />
+          <input v-else v-model="startDate" type="date" class="form-input" />
+          <p v-if="errors.startDate" class="form-error">{{ errors.startDate }}</p>
         </div>
-
+        <!-- 시작 시간 -->
         <div class="form-group">
-          <label class="form-label required">시작 시간<span class="asterisk"> *</span></label>
+          <label class="form-label required">시작 시간<span v-if="!isReadOnly" class="asterisk"> *</span></label>
           <div v-if="isReadOnly" class="readonly-box">
             {{ getHour(formData.startAt) }}시 {{ getMinute(formData.startAt) }}분
           </div>
           <div v-else class="time-select">
-            <select v-model="startHour" class="form-input" required>
-              <option value="">시 선택</option>
-              <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
-            </select>
-            <select v-model="startMinute" class="form-input" required>
-              <option value="">분 선택</option>
-              <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
-            </select>
+            <input
+              class="form-input"
+              type="time"
+              v-model="startTime"
+              required
+            />
           </div>
-          <p v-if="startError" class="error-text">{{ startError }}</p>
         </div>
       </div>
 
-      <!-- 종료 날짜 -->
+      <!-- 종료 -->
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label required">종료 날짜<span class="asterisk"> *</span></label>
-          <div v-if="isReadOnly" class="readonly-box">{{ getDateOnly(formData.endAt) }}</div>
-          <input v-else type="date" v-model="endDate" class="form-input" required />
+          <label class="form-label required">종료 날짜<span v-if="!isReadOnly" class="asterisk"> *</span></label>
+          <div v-if="isReadOnly" class="readonly-box">
+            {{ getDateOnly(formData.endAt) || '입력 없음' }}
+          </div>
+          <input v-else v-model="endDate" type="date" class="form-input" />
+          <p v-if="errors.endDate" class="form-error">{{ errors.endDate }}</p>
         </div>
 
+        <!-- 종료 시간 -->
         <div class="form-group">
-          <label class="form-label required">종료 시간<span class="asterisk"> *</span></label>
+          <label class="form-label required">종료 시간<span v-if="!isReadOnly" class="asterisk"> *</span></label>
           <div v-if="isReadOnly" class="readonly-box">
             {{ getHour(formData.endAt) }}시 {{ getMinute(formData.endAt) }}분
           </div>
           <div v-else class="time-select">
-            <select v-model="endHour" class="form-input" required>
-              <option value="">시 선택</option>
-              <option v-for="h in hourOptions" :key="h" :value="h">{{ h }}시</option>
-            </select>
-            <select v-model="endMinute" class="form-input" required>
-              <option value="">분 선택</option>
-              <option v-for="m in minuteOptions" :key="m" :value="m">{{ m }}분</option>
-            </select>
+            <input
+              class="form-input"
+              type="time"
+              v-model="endTime"
+              required
+            />
           </div>
-          <p v-if="endError && !isReadOnly " class="error-text">{{ endError }}</p>
+          <p v-if="errors.time" class="form-error">{{ errors.time }}</p>
         </div>
       </div>
 
       <!-- 휴게 시간 -->
       <div class="form-group full-width">
-        <label class="form-label required">휴게 시간<span class="asterisk"> *</span></label>
-        <div v-if="isReadOnly" class="readonly-box">{{ formData.breakTime }}</div>
-        <div v-else>
-          <input type="number" class="form-input" v-model="formData.breakTime" required min="0" />
-          <p v-if="breakError" class="error-text">{{ breakError }}</p>
-        </div>
+        <label class="form-label required">휴게 시간<span v-if="!isReadOnly" class="asterisk"> *</span></label>
+        <div v-if="isReadOnly" class="readonly-box">{{ formData.breakTime ?? '입력 없음' }}</div>
+        <input
+          v-else
+          type="number"
+          class="form-input"
+          v-model.number="formData.breakTime"
+          min="0"
+          max="90"
+          step="30"
+        />
       </div>
 
       <!-- 근무 유형 -->
@@ -197,13 +279,12 @@ watchEffect(() => {
 
       <!-- 사유 -->
       <div class="form-group full-width">
-        <label class="form-label required">초과 근무 사유<span class="asterisk"> *</span></label>
+        <label class="form-label required">초과 근무 사유<span v-if="!isReadOnly" class="asterisk"> *</span></label>
         <div v-if="isReadOnly" class="readonly-box">{{ formData.reason || '입력 없음' }}</div>
-        <textarea v-else v-model="formData.reason" class="form-textarea" required></textarea>
-        <p v-if="reasonError" class="error-text">{{ reasonError }}</p>
+        <textarea v-else class="form-textarea" v-model="formData.reason" />
+        <p v-if="errors.reason" class="form-error">{{ errors.reason }}</p>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -251,6 +332,18 @@ select.form-input {
   font-family: inherit;
 }
 
+.form-input::placeholder {
+  color: #9ca3af;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
 .form-textarea {
   resize: vertical;
   min-height: 100px;
@@ -271,10 +364,10 @@ select.form-input {
   min-height: 44px;
 }
 
-.error-text {
+.form-error {
   color: var(--error);
   font-size: 0.85rem;
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .asterisk {

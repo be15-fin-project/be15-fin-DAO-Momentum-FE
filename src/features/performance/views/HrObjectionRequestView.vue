@@ -265,7 +265,7 @@ const handleSubmit = async () => {
       .find(s => s.title === '이의제기 현황')?.fields
       .find(f => f.key === 'reason');
 
-  const reason = reasonField?.value || '';
+  const reason = createForm.value.reason || '';
 
   const payload = {
     objectionId: selectedRow.value.objectionId,

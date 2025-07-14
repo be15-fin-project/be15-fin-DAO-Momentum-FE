@@ -56,7 +56,11 @@
                     v-if="isAllowed(sub)"
                     :to="resolveRoute(sub.hrefs)"
                     class="sidebar-item"
-                    :class="{ active: isActive(resolveRouteList(sub.hrefs)) }"
+                    :class="{
+                      active: sub.activeMatch === 'startsWith'
+                          ? getActiveMatch(sub)
+                          : isActive(resolveRouteList(sub.hrefs))
+                    }"
                 >
                   {{ sub.label }}
                 </router-link>
@@ -81,7 +85,7 @@
 
     <!-- Footer -->
     <div class="sidebar-footer">
-      <router-link to="/setting" class="sidebar-item">
+      <router-link to="/setting" class="sidebar-item" v-if="userRole.includes('MASTER')">
         <i class="fas fa-cog"></i>
         <span class="sidebar-label">설정</span>
       </router-link>
@@ -162,7 +166,7 @@ const menuItems = [
     label: '사원 관리',
     icon: 'fa-users',
     subItems: [
-      { label: '사원 목록 조회', hrefs: ['/employees'] },
+      { label: '사원 목록 조회', hrefs: ['/employees'], activeMatch: "startsWith"},
       { label: '인사 발령 내역 조회', hrefs: ['/appoints'] },
       { label: '계약서 목록 조회', hrefs: ['/contracts'] }
     ],
@@ -190,9 +194,12 @@ const menuItems = [
       {
         label: '전체 결재 내역',
         hrefs: ['/approvals'],
-        requireRole: ['MASTER', 'HR_MANAGER']
+        requireRole: ['MASTER', 'HR_MANAGER'],
+        activeMatch: 'startsWith'
       },
-      { label: '문서함', hrefs: ['/approval/inbox'] }
+      { label: '문서함',
+        hrefs: ['/approval/inbox', '/approval/write'],
+        activeMatch: 'startsWith' }
     ]
   },
   {
@@ -285,6 +292,32 @@ function isActive(hrefs) {
   const list = Array.isArray(hrefs) ? hrefs : [hrefs]
   return list.some(href => currentPath.endsWith(href.replace('../', '/')))
 }
+
+function isActiveStartsWith(hrefs) {
+  const currentPath = route.path
+  const list = Array.isArray(hrefs) ? hrefs : [hrefs]
+  return list.some(href => currentPath.startsWith(href.replace('../', '/')))
+}
+
+function getActiveMatch(item) {
+  // 먼저 현재 라우트 출처를 확인
+  const source = route.state?.source || route.query?.from
+
+  // 출처와 메뉴 라벨 조합으로 분기 처리
+  if (item.label === '전체 결재 내역' && source === 'approvals') {
+    return isActiveStartsWith(['/approval/detail', '/approvals'])
+  }
+
+  if (item.label === '문서함' && source === 'inbox') {
+    return isActiveStartsWith(['/approval/detail', '/approval/inbox', '/approval/write'])
+  }
+
+  // 그 외: activeMatch === 'startsWith' 여부로 처리
+  if (item.activeMatch === 'startsWith') {
+    return isActiveStartsWith(item.hrefs)
+  }
+}
+
 
 function isSubmenuActive(subItems) {
   return subItems.some(item => isAllowed(item) && isActive(resolveRouteList(item.hrefs)))

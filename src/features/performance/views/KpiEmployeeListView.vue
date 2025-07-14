@@ -110,12 +110,9 @@ function normalizeParams(values) {
   const v = { ...values };
 
   // 부서명 → ID 변환
-  if (v.deptId && v.deptId !== '전체') {
-    const match = departmentList.value.find(d => d.name === v.deptId);
-    v.deptId = match?.deptId ?? null;
-  } else {
-    delete v.deptId;
-  }
+  if (v.deptId === '전체') delete v.deptId;
+  else if (typeof v.deptId === 'string') v.deptId = Number(v.deptId);
+
 
   // 직위명 → ID 변환
   if (v.positionId && v.positionId !== '전체') {

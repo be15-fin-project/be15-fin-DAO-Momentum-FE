@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onMounted, reactive, ref, watch} from "vue";
+import {computed, onMounted, reactive, ref, watch, watchEffect} from "vue";
 import Pagination from "@/components/common/Pagination.vue";
 import Filter from "@/components/common/Filter.vue";
 import BaseTable from "@/components/common/BaseTable.vue";
@@ -9,6 +9,7 @@ import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createEmployee, getEmployees} from "@/features/employee/api.js";
 import {useRouter} from "vue-router";
 import {useToast} from "vue-toastification";
+import dayjs from "dayjs";
 
 const toast = useToast();
 const router = useRouter();
@@ -23,6 +24,11 @@ const employees = ref([]);
 const deptOptions = ref([]);
 const positionOptions = ref([]);
 const positionFilterOptions = ref([]);
+
+const MONTHS_IN_YEAR = 12;
+const STANDARD_DAYOFF = 15;
+const MAXIMUM_DAYOFF = 25;
+const WORKING_HOURS_IN_DAY = 8;
 
 const showModal = ref(false);
 
@@ -115,7 +121,7 @@ const handleSearch = () => {
 }
 
 const roleMap = {
-  MASTER: '마스터 관리자',
+  MASTER: '최고 관리자',
   HR_MANAGER: '인사 관리자',
   MANAGER: '팀장',
   EMPLOYEE: '일반',
@@ -161,7 +167,7 @@ const req = reactive({
   address: '',
   deptId: null,
   positionId: null,
-  employeeRoles: [],
+  // employeeRoles: [],
   status: 'EMPLOYED',
   joinDate: null,
   remainingDayoffHours: 0,
@@ -169,8 +175,23 @@ const req = reactive({
   gender: null,
 });
 
+const resetReq = () => {
+  req.name = '';
+  req.birthDate = null;
+  req.email = '';
+  req.contact = '';
+  req.address = '';
+  req.deptId = null;
+  req.positionId = null;
+  // req.employeeRoles = [];
+  req.status = 'EMPLOYED';
+  req.joinDate = null;
+  req.joinDate = dayjs().format('YYYY-MM-DD');
+  req.gender = null;
+}
 
 const openCreateModal = () => {
+  resetReq()
   showModal.value = true;
 }
 
@@ -184,18 +205,18 @@ const modalSections = computed(() => [
     icon: 'fa-user',
     layout: 'two-column',
     fields: [
-      { key: 'name', label: '이름', type: 'input', editable: true, required: true, placeholder: '홍길동' },
+      {key: 'name', label: '이름', type: 'input', editable: true, required: true, placeholder: '홍길동'},
       {
         key: 'gender', label: '성별', type: 'select', editable: true, required: true,
         options: [
-          { label: '남성', value: 'M' },
-          { label: '여성', value: 'F' }
+          {label: '남성', value: 'M'},
+          {label: '여성', value: 'F'}
         ]
       },
-      { key: 'birthDate', label: '생년월일', type: 'date', editable: true, required: true },
-      { key: 'email', label: '이메일', type: 'input', editable: true, required: true, placeholder: 'gildong@example.com' },
-      { key: 'contact', label: '연락처', type: 'input', editable: true, required: true, placeholder: '010-0000-0000' },
-      { key: 'address', label: '주소', type: 'input', editable: true, required: true, placeholder: '도로명 주소를 입력하세요.' },
+      {key: 'birthDate', label: '생년월일', type: 'date', editable: true, required: true},
+      {key: 'email', label: '이메일', type: 'input', editable: true, required: true, placeholder: 'gildong@example.com'},
+      {key: 'contact', label: '연락처', type: 'input', editable: true, required: true, placeholder: '010-0000-0000'},
+      {key: 'address', label: '주소', type: 'input', editable: true, required: true, placeholder: '도로명 주소를 입력하세요.'},
     ]
   },
   {
@@ -203,7 +224,7 @@ const modalSections = computed(() => [
     icon: 'fa-briefcase',
     layout: 'two-column',
     fields: [
-      { key: 'deptId', label: '부서', type: 'tree', editable: true, options: deptOptions.value || [] },
+      { key: 'deptId', label: '부서', type: 'deptList', editable: true, list: deptOptions.value || [] },
       { key: 'positionId', label: '직위', type: 'select', editable: true, required: true, options: positionOptions.value || [] },
       {
         key: 'status', label: '재직 상태', type: 'select', editable: true, required: true,
@@ -218,23 +239,23 @@ const modalSections = computed(() => [
       { key: 'remainingRefreshDays', label: '부여 리프레시 휴가 일수', type: 'number', editable: true, required: true },
     ]
   },
-  {
-    title: '권한 설정 정보',
-    icon: 'fa-shield-alt',
-    layout: 'one-column',
-    fields: [
-      {
-        key: 'employeeRoles',
-        label: '권한',
-        type: 'checkbox-group',
-        style: 'permission',
-        editable: true,
-        options: Object.keys(roleMap).filter(k => k !== 'EMPLOYEE').map(k => ({
-          label: roleMap[k], value: k
-        }))
-      }
-    ]
-  }
+  // {
+  //   title: '권한 설정 정보',
+  //   icon: 'fa-shield-alt',
+  //   layout: 'one-column',
+  //   fields: [
+  //     {
+  //       key: 'employeeRoles',
+  //       label: '권한',
+  //       type: 'checkbox-group',
+  //       style: 'permission',
+  //       editable: true,
+  //       options: Object.keys(roleMap).filter(k => k !== 'EMPLOYEE').map(k => ({
+  //         label: roleMap[k], value: k
+  //       }))
+  //     }
+  //   ]
+  // }
 ]);
 
 const handleHeaderButton = (event) => {
@@ -248,6 +269,60 @@ const handleHeaderButton = (event) => {
   }
 };
 
+watchEffect(() => {
+  const joinDate = req.joinDate;
+  if (!joinDate) return;
+
+  const join = dayjs(joinDate);
+  const now = dayjs();
+
+  const joinYear = join.year();
+  const joinMonth = join.month() + 1;
+  const targetYear = now.year();
+
+  req.remainingDayoffHours = computeDayoffHours(joinYear, joinMonth, targetYear);
+  req.remainingRefreshDays = computeRefreshDays(joinYear, targetYear);
+});
+
+function computeDayoffDays(joinYear, joinMonth, targetYear) {
+  const yearsWorked = targetYear - joinYear;
+
+  if (yearsWorked < 0) return 0;
+
+  if (yearsWorked === 0) {
+    return Math.max(0, MONTHS_IN_YEAR - joinMonth);
+  }
+
+  if (yearsWorked === 1) {
+    const monthsNotWorked = joinMonth - 1;
+    const weight = monthsNotWorked / MONTHS_IN_YEAR;
+
+    return Math.ceil(STANDARD_DAYOFF - (STANDARD_DAYOFF - 12) * weight);
+  }
+
+  const dayoffDays = STANDARD_DAYOFF + Math.floor((yearsWorked - 1) / 2);
+  return Math.min(MAXIMUM_DAYOFF, dayoffDays);
+}
+
+function computeDayoffHours(joinYear, joinMonth, targetYear) {
+  return computeDayoffDays(joinYear, joinMonth, targetYear) * WORKING_HOURS_IN_DAY;
+}
+
+function computeRefreshDays(joinYear, targetYear) {
+  const yearsWorked = targetYear - joinYear;
+
+  switch (yearsWorked) {
+    case 3:
+      return 3;
+    case 5:
+      return 5;
+    case 10:
+      return 10;
+    default:
+      return 0;
+  }
+}
+
 /* TODO: 프론트 검증 로직 작성 */
 const handleRegisterSubmit = async (req) => {
   if (isSubmitting.value) return;
@@ -257,7 +332,7 @@ const handleRegisterSubmit = async (req) => {
     const resp = await createEmployee(req);
     closeModal();
     toast.success('사원 등록 완료');
-    handleSearch();
+    handleSearch(); // 목록 새로고침
   } catch (e) {
     toast.error('사원 등록 실패');
   } finally {

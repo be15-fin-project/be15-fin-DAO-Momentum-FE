@@ -41,15 +41,6 @@ const matchedComponent = computed(() => {
   }
 });
 
-/* 취소 사유 입력 - 수정 부분을 위해 필요한 부분 */
-function validateForm() {
-  if (!cancelForm.value.cancelReason.trim()) {
-    alert('취소 사유를 반드시 입력해주세요.');
-    return false;
-  }
-  return true;
-}
-
 /* mount 하기 */
 onMounted(async () => {
   const parentId = props.parentApproveDTO.approveId;
@@ -85,7 +76,6 @@ onMounted(async () => {
       <div class="form-group full-width">
         <label class="form-label required">취소 사유</label>
         <input v-model="formData.cancelReason" class="form-textarea" readonly></input>
-<!--        <textarea v-model="cancelForm.cancelReason" class="form-textarea" required></textarea>-->
       </div>
     </div>
   </div>

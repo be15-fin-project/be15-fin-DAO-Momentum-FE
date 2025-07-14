@@ -40,7 +40,10 @@
         icon="fa-chart-line"
         :sections="formSections"
         :showSubmit="false"
+        :showEdit="true"
+        editText="면담 요청"
         @close="isOpen = false"
+        @edit="handleOpenContactModal"
     />
   </main>
 </template>
@@ -58,9 +61,12 @@ import {
   getRetentionForecasts,
   getRetentionForecastDetail,
   downloadRetentionPredictionExcel,
+  getManagerIdByRetentionId,
 } from '@/features/retention-support/api.js';
 import { useToast } from 'vue-toastification';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
 const toast = useToast();
 
 const filterOptions = ref([]);
@@ -73,6 +79,7 @@ const tableData = ref([]);
 const isOpen = ref(false);
 const detailSections = ref([]);
 const formSections = ref([]);
+const selectedRetentionId = ref(null);
 
 onMounted(async () => {
   const [deptRes, posRes] = await Promise.all([
@@ -133,9 +140,10 @@ const initFilters = async () => {
       type: 'select',
       options: [
         { label: '전체', value: null },
-        { label: '안정형', value: 'STABLE' },
-        { label: '주의형', value: 'WARNING' },
-        { label: '불안정형', value: 'UNSTABLE' },
+        { label: '양호', value: 'GOOD' },
+        { label: '보통', value: 'NORMAL' },
+        { label: '주의', value: 'WARNING' },
+        { label: '심각', value: 'SEVERE' },
       ]
     },
   ];
@@ -189,8 +197,19 @@ const tableColumns = [
 ];
 
 const openDetail = async (row) => {
+  selectedRetentionId.value = row.retentionId;
   try {
     const detail = await getRetentionForecastDetail(row.retentionId);
+
+    // 안정성 유형이 detail 응답에 없다면 테이블 row에서 가져오기
+    const stabilityType = detail.stabilityType ?? row.stabilityType;
+    const retentionGrade = detail.retentionGrade ?? row.retentionGrade;
+    const retentionScore = detail.retentionScore ?? row.retentionScore;
+    console.log('상세 열기:', {
+      retentionScore,
+      retentionGrade,
+      stabilityType,
+    });
 
     formSections.value = [
       {
@@ -230,18 +249,26 @@ const openDetail = async (row) => {
       {
         title: '근속 지표 등급',
         icon: 'fa-chart-bar',
-        layout: 'two-column',
+        layout: 'one-column',
         fields: [
-          { label: '직무 만족도', value: detail.jobGrade, type: 'input', editable: false },
-          { label: '보상 만족도', value: detail.compGrade, type: 'input', editable: false },
-          { label: '관계 만족도', value: detail.relationGrade, type: 'input', editable: false },
-          { label: '성장 만족도', value: detail.growthGrade, type: 'input', editable: false },
-          { label: '워라밸 만족도', value: detail.wlbGrade, type: 'input', editable: false },
-          { label: '근속 만족도', value: detail.tenureGrade, type: 'input', editable: false },
-          { label: '종합 점수', value: detail.retentionScore, type: 'input', editable: false },
-          { label: '근속 등급', value: detail.retentionGrade, type: 'input', editable: false },
-          { label: '안정성 유형', value: detail.stabilityType, type: 'input', editable: false },
-        ],
+          {
+            type: 'retentionCard',
+            editable: false,
+            value: {
+              retentionScore,
+              retentionGrade,
+              stabilityType,
+              factorGrades: {
+                job: detail.jobGrade,
+                comp: detail.compGrade,
+                relation: detail.relationGrade,
+                growth: detail.growthGrade,
+                wlb: detail.wlbGrade,
+                tenure: detail.tenureGrade
+              }
+            }
+          }
+        ]
       }
     ];
 
@@ -250,6 +277,48 @@ const openDetail = async (row) => {
     toast.error('상세 정보를 불러오는 데 실패했습니다.');
   }
 };
+
+const handleOpenContactModal = async () => {
+  try {
+    const res = await getManagerIdByRetentionId(selectedRetentionId.value);
+    const { targetId, managerId, targetDeptId, managerDeptId } = res;
+
+    if (!targetId || !managerId) {
+      toast.error('면담 요청 정보를 불러올 수 없습니다.');
+      return;
+    }
+
+    handleSubmitModal({ targetId, managerId, targetDeptId, managerDeptId });
+    isOpen.value = false; // 기존 상세 모달 닫기
+  } catch (e) {
+    toast.error('면담 요청 중 오류가 발생했습니다.');
+  }
+};
+
+// 근속 전망 페이지 내부에 추가
+const handleSubmitModal = ({
+                             targetId = null,
+                             managerId = null,
+                             targetDeptId = null,
+                             managerDeptId = null
+                           } = {}) => {
+  if (!targetId || !managerId) {
+    toast.error('면담 요청 대상자 또는 상급자 정보가 누락되었습니다.');
+    return;
+  }
+
+  router.push({
+    name: 'ContactRecordView',
+    state: {
+      targetId,
+      managerId,
+      targetDeptId,
+      managerDeptId
+    }
+  });
+};
+
+
 
 const handleDownload = async () => {
   try {

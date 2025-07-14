@@ -52,15 +52,22 @@
         :title="`KPI 상세 정보`"
         icon="fa-chart-line"
         :sections="formSections"
-        :showReject="canCancelRequest || canReject"
-        :reject-text="rejectText"
-        :showSubmit="canEditProgress"
-        :submit-text="submitText"
+        :showReject="showReject"
+        :rejectText="rejectText"
+        :showEdit="showEdit"
+        :editText="editText"
+        :showCancel="showCancel"
+        :cancelText="cancelText"
+        :showSubmit="showSubmit"
+        :submitText="submitText"
         @close="closeDetailModal"
-        @submit="handleDetailModalSubmit"
         @reject="handleDetailModalReject"
+        @edit="handleEditClick"
+        @cancel="handleCancelClick"
+        @submit="handleSubmitClick"
         v-model:form="createForm"
     />
+
 
 
 
@@ -189,16 +196,45 @@ const editMode = ref(null); // 'progress' | 'cancel' | null
 const cancelReason = ref('');
 
 // 버튼 텍스트 계산
+const showReject = computed(() => {
+  if (editMode.value !== null) return false;
+  const detail = createForm.value;
+  const isCancelable =
+      detail.statusType === 'ACCEPTED' &&
+      new Date(detail.deadline) > new Date();
+  const isPending = detail.statusType === 'PENDING';
+
+  return (isCancelable || isPending) && detail.isDeleted !== 'Y';
+});
+
+const showEdit = computed(() => {
+  const detail = createForm.value;
+  return (
+      editMode.value === null &&
+      detail.statusType === 'ACCEPTED' &&
+      new Date(detail.deadline) > new Date() &&
+      detail.isDeleted !== 'Y'
+  );
+});
+const showCancel = computed(() => editMode.value !== null); // 취소 or 최신화 상태일 때만
+const showSubmit = computed(() => editMode.value !== null); // 취소 or 최신화 상태일 때만
+
 const rejectText = computed(() => {
+  if (createForm.value.statusType === 'PENDING') return '철회';
+  return '취소 신청';
+});
+const editText = '최신화';
+
+const cancelText = computed(() => {
   if (editMode.value === 'cancel') return '신청 취소';
   if (editMode.value === 'progress') return '최신화 취소';
-  return '취소 신청';
+  return '';
 });
 
 const submitText = computed(() => {
   if (editMode.value === 'cancel') return '신청 제출';
   if (editMode.value === 'progress') return '진척도 제출';
-  return '최신화';
+  return '';
 });
 
 // 권한 여부 계산
@@ -393,6 +429,7 @@ async function openModalHandler(kpiId) {
       kpiProgress: detail.kpiProgress,
       statusType: detail.statusType,
       deadline: detail.deadline,
+      isDeleted: detail.isDeleted,
       reason: detail.reason,
       cancelReason: detail.cancelReason,
       cancelResponse: detail.cancelResponse,
@@ -477,13 +514,39 @@ function closeDetailModal() {
 
 
 // 진척도 수정 시작
+function handleRejectClick() {
+  startCancelRequest();  // editMode.value = 'cancel'
+}
+
+function handleEditClick() {
+  startEditProgress();   // editMode.value = 'progress'
+}
+
+function handleCancelClick() {
+  editMode.value = null;
+  cancelReason.value = '';
+  createForm.value.cancelReason = '';
+  formSections.value = formSections.value.filter(s => s.title !== '취소 요청 사유');
+
+  const progressField = formSections.value
+      .flatMap(section => section.fields)
+      .find(f => f.key === 'kpiProgress');
+  if (progressField) progressField.editable = false;
+}
+
+async function handleSubmitClick() {
+  await submitEditOrCancel();  // 상태에 따라 제출 처리
+}
+
 function startEditProgress() {
   editMode.value = 'progress';
   const progressField = formSections.value
       .flatMap(section => section.fields)
       .find(f => f.key === 'kpiProgress');
+
   if (progressField) progressField.editable = true;
 }
+
 
 // KPI 취소 요청 시작
 function startCancelRequest() {
@@ -506,10 +569,50 @@ function startCancelRequest() {
   });
 }
 
-// 취소 버튼 핸들러
+// 제출 처리 함수
+async function submitEditOrCancel() {
+  if (isSubmitting.value) return;
+
+  try {
+    isSubmitting.value = true;
+
+    if (editMode.value === 'progress') {
+      const payload = { progress: createForm.value.kpiProgress };
+      const res = await updateKpiProgress(selectedKpiId.value, payload);
+      toast.success(res.data?.message || 'KPI 진척도가 성공적으로 업데이트되었습니다.');
+    } else if (editMode.value === 'cancel') {
+      const detail = createForm.value;
+
+      // PENDING 상태 → 철회 처리
+      if (detail.statusType === 'PENDING') {
+        const res = await withdrawKpi(selectedKpiId.value);
+        toast.success(res.data?.message || 'KPI가 철회되었습니다.');
+      } else {
+        // 그 외 상태 → 취소 요청 처리
+        const reason = detail.cancelReason?.trim();
+        if (!reason) {
+          toast.error('취소 사유를 입력해주세요.');
+          return;
+        }
+        const res = await deleteKpi(selectedKpiId.value, { reason });
+        toast.success(res.data?.message || 'KPI가 성공적으로 취소 요청되었습니다.');
+      }
+    }
+
+    isOpen.value = false;
+    editMode.value = null;
+    await handleSearch(filterValues.value);
+  } catch (e) {
+    toast.error('제출 중 오류가 발생했습니다.');
+  } finally {
+    isSubmitting.value = false;
+  }
+}
+
+// KPI 철회
 async function handleDetailModalReject() {
-  // 대기 상태일 경우 철회 확인 토스트 띄우기
-  if (canReject.value) {
+  if (createForm.value.statusType === 'PENDING') {
+    // 철회 로직
     const confirmed = await showDeleteConfirm();
     if (!confirmed) return;
 
@@ -524,65 +627,23 @@ async function handleDetailModalReject() {
     return;
   }
 
-  if (editMode.value === 'cancel' || editMode.value === 'progress') {
-    // 편집 취소
-    editMode.value = null;
-    cancelReason.value = '';
-    createForm.value.cancelReason = '';
-    formSections.value = formSections.value.filter(s => s.title !== '취소 요청 사유');
-    const progressField = formSections.value
-        .flatMap(section => section.fields)
-        .find(f => f.key === 'kpiProgress');
-    if (progressField) progressField.editable = false;
-  } else {
-    // 편집 모드 진입
-    startCancelRequest();
-  }
-}
-
-// 제출 버튼 핸들러
-async function handleDetailModalSubmit() {
-  if (editMode.value === 'cancel' || editMode.value === 'progress') {
-    await submitEditOrCancel();
-    return;
-  }
-
-  editMode.value = 'progress';
-  const progressField = formSections.value
-      .flatMap(section => section.fields)
-      .find(f => f.key === 'kpiProgress');
-  if (progressField) progressField.editable = true;
-}
-
-// 제출 처리 함수
-async function submitEditOrCancel() {
-  if (isSubmitting.value) return;
-
-  try {
-    isSubmitting.value = true;
-
-    if (editMode.value === 'progress') {
-      const payload = { progress: createForm.value.kpiProgress };
-      const res = await updateKpiProgress(selectedKpiId.value, payload);
-      toast.success(res.data?.message || 'KPI 진척도가 성공적으로 업데이트되었습니다.');
-    } else if (editMode.value === 'cancel') {
-      const reason = createForm.value.cancelReason?.trim();
-      if (!reason) {
-        toast.error('취소 사유를 입력해주세요.');
-        return;
+  // 그 외는 편집 상태 진입 (취소 신청)
+  editMode.value = 'cancel';
+  cancelReason.value = '';
+  formSections.value.push({
+    title: '취소 요청 사유',
+    icon: 'fa-comment-dots',
+    layout: 'one-column',
+    fields: [
+      {
+        label: '취소 사유',
+        key: 'cancelReason',
+        type: 'textarea',
+        editable: true,
+        value: ''
       }
-      const res = await deleteKpi(selectedKpiId.value, { reason });
-      toast.success(res.data?.message || 'KPI가 성공적으로 취소 요청되었습니다.');
-    }
-
-    isOpen.value = false;
-    editMode.value = null;
-    await handleSearch(filterValues.value);
-  } catch (e) {
-    toast.error('제출 중 오류가 발생했습니다.');
-  } finally {
-    isSubmitting.value = false;
-  }
+    ]
+  });
 }
 
 // KPI 등록 모달 열기

@@ -1,19 +1,21 @@
 <script setup>
-import {onMounted, reactive, ref, toRefs} from "vue";
+import {onMounted, ref} from "vue";
 import TabNav from "@/components/common/NavigationTab.vue";
 import CompanyBanner from "@/features/settings/components/CompanyBanner.vue";
 import {fetchCompanyInfo} from "@/features/company/api.js";
 import {useToast} from "vue-toastification";
-import {useRouter} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 
 const toast = useToast()
-const route = useRouter();
+const route = useRoute();     // 현재 경로 정보
+const router = useRouter();   // push 용
 
 const tabItems = [
   { label: '회사 관리', value: 'COMPANY', icon: 'fa-building' },
   { label: '부서 관리', value: 'DEPARTMENT', icon: 'fa-sitemap' },
   { label: '직위 관리', value: 'POSITION', icon: 'fa-user-tie' },
-  { label: '권한 관리', value: 'ROLE', icon: 'fa-shield-alt' }
+  { label: '권한 관리', value: 'ROLE', icon: 'fa-shield-alt' },
+  { label: '휴일 관리', value: 'HOLIDAY', icon: 'fa-calendar' }
 ]
 const selectedTab = ref('COMPANY');
 
@@ -27,13 +29,19 @@ const company = ref({
 const changeTab = async () => {
   switch(selectedTab.value){
     case 'COMPANY':
-      await route.push("/setting/company");
+      await router.push("/setting/company");
       break;
     case 'DEPARTMENT':
-      await route.push("/setting/department")
+      await router.push("/setting/department")
+      break;
+    case 'ROLE':
+      await router.push("/setting/role");
       break;
     case 'POSITION':
-      await route.push("/setting/position");
+      await router.push("/setting/position");
+      break;
+    case 'HOLIDAY':
+      await router.push("/setting/holiday");
       break;
   }
 }
@@ -48,8 +56,15 @@ const getCompanyInfo = async () => {
 }
 
 onMounted(async () => {
+  const path = route.path;
+  if (path.includes('/setting/department')) selectedTab.value = 'DEPARTMENT';
+  else if (path.includes('/setting/position')) selectedTab.value = 'POSITION';
+  else if (path.includes('/setting/role')) selectedTab.value = 'ROLE';
+  else if (path.includes('/setting/holiday')) selectedTab.value = 'HOLIDAY';
+  else selectedTab.value = 'COMPANY';
+
   await getCompanyInfo();
-})
+});
 </script>
 
 <template>

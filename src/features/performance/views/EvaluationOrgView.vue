@@ -25,7 +25,7 @@
     <BaseTable
         :columns="[
         { key: 'roundNo', label: '회차' },
-        { key: 'formDisplayName', label: '평가 유혀' },
+        { key: 'formDisplayName', label: '평가 유형' },
         { key: 'evalName', label: '사원 이름' },
         { key: 'score', label: '점수' },
         { key: 'action', label: '상세' }

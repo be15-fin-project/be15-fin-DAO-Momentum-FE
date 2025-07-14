@@ -1,14 +1,20 @@
 <script setup>
-import {ref, onMounted, computed, watch, watchEffect} from 'vue'
+import { ref, onMounted, computed , watchEffect } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import FormSection from '@/features/approvals/components/FormSection.vue'
 import ApprovalSideSection from '@/features/approvals/components/ApprovalSideSection.vue'
-import { approveOrReject, getApprovalDetail } from "@/features/approvals/api.js"
+import { approveOrReject, checkApproval, deleteApproval, getApprovalDetail } from "@/features/approvals/api.js"
 import { useAuthStore } from "@/stores/auth.js"
+import { useToast } from "vue-toastification";
+import CommonModal from "@/components/common/CommonModal.vue";
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const toast = useToast();
+
+/* 모달을 위한 변수 */
+const showDeleteConfirmModal = ref(false);
 
 /* 없는 문서인 경우를 구분하기 위한 변수 */
 const fetchError = ref(false);
@@ -30,6 +36,7 @@ const statusText = (statusType) => {
   }
 }
 
+/* 결재 문서 종류 */
 const approveTypeText = (approveType) => {
   switch (approveType) {
     case 'WORKCORRECTION': return '출퇴근 정정 신청서'
@@ -38,7 +45,7 @@ const approveTypeText = (approveType) => {
     case 'BUSINESSTRIP': return '출장 신청서'
     case 'VACATION': return '휴가 신청서'
     case 'PROPOSAL': return '품의서'
-    case 'RECEIPT': return '영수증'
+    case 'RECEIPT': return '비용 처리'
     case 'CANCEL': return '취소'
   }
 }
@@ -47,14 +54,49 @@ const approveTypeText = (approveType) => {
 async function fetchApproval() {
   try {
     fetchError.value = false;
+
     const documentId = route.params.documentId;
     const res = await getApprovalDetail(documentId);
+
     approval.value = res.data.data;
     status.value = statusText(approval.value.approveDTO.statusType);
     approveType.value = approveTypeText(approval.value.approveDTO.approveType);
+
+    /* 참조 기능 */
+    if (approval.value.approveDTO.receivedType === 'REFERENCE') {
+        await checkApproval(documentId);
+        const newRes = await getApprovalDetail(documentId);
+        approval.value = newRes.data.data;
+    }
   } catch (e) {
     console.error("상세 조회 실패:", e)
     fetchError.value = true;
+  }
+}
+
+// function handleEdit() {
+//   const documentId = route.params.documentId;
+//   router.push({ name: 'ApprovalEdit', params: { documentId } });
+// }
+
+
+/* 결재 문서 회수하기 */
+async function handleDelete() {
+  try {
+    await deleteApproval(route.params.documentId);
+    goBack();
+  } catch (e) {
+    console.error('삭제 실패:', e);
+
+    const errorCode = e?.response?.data?.errorCode;
+
+    switch (errorCode) {
+      case '30026':
+        toast.error('결재가 시작되어 회수할 수 없습니다.');
+        break;
+      default:
+        toast.error('삭제 중 오류가 발생했습니다.');
+    }
   }
 }
 
@@ -77,7 +119,6 @@ watchEffect(() => {
 
   myApproveLineListId.value = null;
 });
-
 
 /* 승인/반려를 처리하는 api */
 async function handleApprove(isApprove, reason) {
@@ -102,11 +143,18 @@ async function handleApprove(isApprove, reason) {
 
 /* 문서함으로 돌아가기 */
 function goBack() {
-  const from = route.query.from || window.history.state?.from
-  if (from === 'list') {
-    router.push({ name: 'ApprovalList' })
+  const from = route.query.from;
+  const tab = route.query.tab;
+
+  if (from === 'approvals') {
+    router.push('/approvals')
+  } else if (from === 'inbox') {
+    router.push({
+      path: '/approval/inbox',
+      query: tab ? { tab } : {}
+    })
   } else {
-    router.go(-1)
+    router.back();
   }
 }
 
@@ -115,6 +163,7 @@ onMounted(fetchApproval)
 
 <template>
 
+  <!-- 1. 결재 문서 헤더 (제목, 상태, 문서함으로 돌아가는 버튼) -->
   <div v-if="approval" class="approval-header">
     <div class="header-left">
       <div class="icon-wrapper">
@@ -142,18 +191,22 @@ onMounted(fetchApproval)
     </div>
   </div>
 
+  <!-- 2. 결재 내역 나오는 부분  -->
   <div v-if="approval" class="container">
+
     <div class="approval-page">
       <div class="page-body">
         <FormSection
           :approveDTO="approval.approveDTO"
           :parentApproveDTO="approval.parentApproveDTO"
           :approveLineGroupDTO="approval.approveLineGroupDTO"
+          :approveRefDTO="approval.approveRefDTO"
           :approveFileDTO="approval.approveFileDTO"
           :formDetail="approval.formDetail"
           :isReadOnly="true"
           @approve="(reason) => handleApprove(true, reason)"
           @reject="(reason) => handleApprove(false, reason)"
+          @request-delete="showDeleteConfirmModal = true"
         />
         <ApprovalSideSection
           :approveLineGroupDTO="approval.approveLineGroupDTO"
@@ -164,10 +217,23 @@ onMounted(fetchApproval)
     </div>
   </div>
 
+  <!-- 3. 에러 표시 (문서가 없거나 열람 권한이 없는 경우)  -->
   <div v-if="fetchError" class="error-message">
     <i class="fas fa-exclamation-triangle"></i>
-    삭제되었거나 존재하지 않는 문서입니다.
+    존재하지 않거나 열람 권한이 없는 문서 입니다.
   </div>
+
+  <!-- 4. 삭제 모달  -->
+  <CommonModal
+    :visible="showDeleteConfirmModal"
+    confirm-visible
+    confirm-text="삭제"
+    cancel-text="취소"
+    @confirm="() => { showDeleteConfirmModal = false; handleDelete(); }"
+    @cancel="() => { showDeleteConfirmModal = false }"
+  >
+    <p>정말 회수하시겠습니까?</p>
+  </CommonModal>
 </template>
 
 <style scoped>

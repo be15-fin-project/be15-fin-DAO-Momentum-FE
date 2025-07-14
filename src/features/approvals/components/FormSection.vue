@@ -1,5 +1,5 @@
 <script setup>
-import {computed, ref} from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 import OvertimeForm from "@/features/approvals/components/approveType/OvertimeForm.vue";
 import CancelForm from "@/features/approvals/components/approveType/CancelForm.vue";
 import WorkCorrectionForm from "@/features/approvals/components/approveType/WorkCorrectionForm.vue";
@@ -9,10 +9,27 @@ import VacationForm from "@/features/approvals/components/approveType/VacationFo
 import ProposalForm from "@/features/approvals/components/approveType/ProposalForm.vue";
 import ReceiptForm from "@/features/approvals/components/approveType/ReceiptForm.vue";
 import ApproveReasonList from "@/features/approvals/components/ApproveReasonList.vue";
+import {submitApproval} from "@/features/approvals/api.js";
+import {useToast} from "vue-toastification";
+import {useRouter} from "vue-router";
+
+const router = useRouter();
+const toast = useToast();
+
+const cancelReasonError = ref('');
 
 /* 승인/반려 사유 */
 const reason = ref('');
 const rejectError = ref('');
+
+/* 결재 취소 요청 */
+const showCancelForm = ref(false);
+const showCancelButton = ref(true);
+
+const cancelForm = ref({
+  approveTitle: '결재 취소 요청',
+  cancelReason: '',
+});
 
 /* 부모에게 받아 온 값 */
 const {
@@ -20,6 +37,7 @@ const {
   parentApproveDTO,
   approveFileDTO,
   approveLineGroupDTO,
+  approveRefDTO,
   formDetail,
   isReadOnly
 } = defineProps({
@@ -27,13 +45,19 @@ const {
   parentApproveDTO: { type: Object, default: null },
   approveFileDTO: { type: Array, default: () => [] },
   approveLineGroupDTO: { type: Object },
+  approveRefDTO: { type: Array },
   formDetail: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: true },
 });
 
-/* 대기 상태인 경우 */
+/* 대기 상태이면서 내가 결재자인 문서인 경우 */
 const canAction = computed(() => {
-  return approveDTO.statusType === 'PENDING'
+  return approveDTO.statusType === 'PENDING' && approveDTO.receivedType === 'APPROVAL';
+})
+
+/* 사원이 직접 작성한 메일인지 확인 */
+const isSent = computed(() => {
+  return approveDTO.receivedType === 'WRITER';
 })
 
 /* form에 따라서 매핑 하기 */
@@ -52,24 +76,81 @@ const selectedFormComponent = computed(() => {
   return formMap[approveDTO.approveType] || null;
 });
 
-const emit = defineEmits(['approve', 'reject']);
+const emit = defineEmits(['approve', 'reject', 'request-delete']);
 
-/* 반려 하기 */
+/* 결재 문서 반려 하기 */
 function handleReject() {
   if (!reason.value || reason.value.trim() === '') {
     rejectError.value = '반려 사유는 반드시 입력해야 합니다.';
     return;
   }
-  console.log('emit reject:', reason.value);
 
   rejectError.value = '';
   emit('reject', reason.value);
 }
+
+watch(() => cancelForm.value.cancelReason, (newVal) => {
+  if (!newVal || !newVal.trim()) {
+    cancelReasonError.value = '취소 사유는 반드시 입력해야 합니다.';
+  } else {
+    cancelReasonError.value = '';
+  }
+});
+
+async function submitCancelApproval() {
+  if (!cancelForm.value.cancelReason.trim()) {
+    cancelReasonError.value = '※ 취소 사유는 반드시 입력해야 합니다.';
+    toast.error('취소 사유를 입력해주세요.');
+    return;
+  }
+
+  cancelReasonError.value = ''; // 성공 시 초기화
+
+  const request = {
+    parentApproveId: approveDTO.approveId,
+    approveTitle: cancelForm.value.approveTitle,
+    approveType: 'CANCEL',
+    formDetail: {
+      cancelReason: cancelForm.value.cancelReason
+    },
+    attachments: [],
+
+    approveLineLists: (approveLineGroupDTO || []).map((group, index) => ({
+      statusId: 1,
+      approveLineOrder: index + 1,
+      isRequiredAll: group.approveLineDTO?.isRequiredAll ?? 'REQUIRED',
+      approveLineList: (group.approveLineListDTOs || []).map(approver => ({
+        empId: parseInt(approver.empId),
+        statusId: 1
+      }))
+    })),
+
+    refRequests: approveRefDTO.map(ref => ({
+      empId: parseInt(ref.empId),
+      isConfirmed: 'N'
+    }))
+  };
+  console.log(request);
+  try {
+    await submitApproval(request);
+    toast.success('취소 결재가 제출되었습니다.');
+    router.push({ name: 'MyApprovalsList', query: { tab: 'sent' } });
+  } catch (e) {
+    toast.error('취소 결재 제출에 실패했습니다.');
+  }
+}
+
+onMounted(() => {
+  if (!cancelForm.value.cancelReason.trim()) {
+    cancelReasonError.value = '* 취소 사유는 반드시 입력해야 합니다.';
+  }
+});
 </script>
 
 <template>
   <div class="form-wrapper">
     <div class="form-container">
+      <!-- 1. 결재 문서 제목 -->
       <section class="form-section">
         <h3 class="section-title">
           <i class="fas fa-pen-nib"></i>제목
@@ -86,6 +167,7 @@ function handleReject() {
         </div><br>
       </section>
 
+      <!-- 2. 작성자 -->
       <div class="form-group-row">
         <div class="form-group half-width">
           <h3 class="section-title">
@@ -106,11 +188,13 @@ function handleReject() {
         </div>
       </div>
 
+      <!-- 3. 결재 내역 -->
       <section class="form-section">
         <h3 class="section-title">
           <i class="fas fa-file-alt"></i>결재 내역
         </h3>
         <div class="form-group">
+          <!-- 각각의 결재 내역에 맞게 연결 -->
           <component
             :is="selectedFormComponent"
             v-if="selectedFormComponent"
@@ -123,8 +207,10 @@ function handleReject() {
         </div>
       </section>
 
+      <!-- 4. 결재 승인 or 반려 사유 -->
       <ApproveReasonList :items="approveLineGroupDTO?.[0]?.approveLineListDTOs || []" />
 
+      <!-- 5. 승인, 반려 하기 -->
       <div
         v-if="canAction && isReadOnly"
         class="approve-action-wrapper"
@@ -153,6 +239,67 @@ function handleReject() {
             data-v-fb076351 data-v-f51fb21f
           >
             반려
+          </button>
+        </div>
+      </div>
+
+      <!-- 6. 수정, 회수, 취소 버튼 (수정과 회수는 대기 문서인 경우, 취소는 승인/반려 문서인 경우) -->
+      <div v-else-if="isSent" class="approve-action-wrapper">
+        <div class="form-buttons">
+          <button
+            v-if="approveDTO.statusType === 'PENDING' "
+            type="button"
+            class="btn-action btn-edit"
+            data-v-fb076351 data-v-f51fb21f
+          >
+            수정
+          </button>
+          <button
+            v-if="approveDTO.statusType === 'PENDING'"
+            type="button"
+            class="btn-action btn-reject"
+            @click="$emit('request-delete')"
+            data-v-fb076351 data-v-f51fb21f
+          >
+            회수
+          </button>
+          <button
+            v-if="(approveDTO.statusType === 'ACCEPTED' || approveDTO.statusType === 'REJECTED') && showCancelButton"
+            type="button"
+            class="btn-action btn-cancel"
+            @click="showCancelForm = true; showCancelButton = false"
+            data-v-fb076351 data-v-f51fb21f
+          >
+            결재 취소
+          </button>
+        </div>
+      </div>
+
+      <!-- 7. 취소 결재와 관련된 요소 -->
+      <div v-if="showCancelForm" class="cancel-form-wrapper">
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="fas fa-pen-nib"></i>취소 제목<span class="asterisk"> *</span>
+          </h3>
+          <input v-model="cancelForm.approveTitle" type="text" class="form-input"/>
+        </div>
+
+        <div class="form-section">
+          <h3 class="section-title">
+            <i class="fas fa-file-alt"></i>취소 사유<span class="asterisk"> *</span>
+          </h3>
+          <textarea v-model="cancelForm.cancelReason" class="form-textarea" />
+          <p v-if="cancelReasonError" class="error-message">{{ cancelReasonError }}</p>
+        </div>
+
+        <div class="approve-action-wrapper">
+          <button
+            type="button"
+            class="btn-action btn-edit"
+            @click="submitCancelApproval"
+            data-v-fb076351 data-v-f51fb21f
+          >
+            취소 결재 제출
           </button>
         </div>
       </div>
@@ -298,5 +445,10 @@ function handleReject() {
   font-size: 0.9rem;
   margin-top: 4px;
   align-self: flex-start;
+}
+
+.asterisk {
+  color: var(--error);
+  margin-left: 4px;
 }
 </style>
