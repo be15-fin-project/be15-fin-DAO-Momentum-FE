@@ -123,7 +123,6 @@ onMounted(async () => {
 <style scoped>
 .dept-card{
   height:100%;
-  margin:20px;
 }
 
 .main-grid {
