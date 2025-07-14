@@ -76,7 +76,7 @@ async function submitForm() {
         empId: approver.empId
       }))
     })),
-    approveRefList: selectedRefList.value.map(ref => ({
+    refRequests: selectedRefList.value.map(ref => ({
       empId: ref.empId,
       isConfirmed: 'N'
     }))
@@ -139,6 +139,7 @@ async function submitForm() {
           v-model:modelValueReferenceList="selectedRefList"
           :approve-type="form.approveType"
           :read-only="false"
+          :is-read-only="form.approveType === 'CANCEL'"
         />
       </div>
 
