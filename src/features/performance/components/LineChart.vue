@@ -1,7 +1,7 @@
 <template>
   <div class="chart-box">
     <div class="chart-header">
-      <h3 class="chart-title"><i class="fas fa-chart-line icon-blue" /> 월별 KPI 추이</h3>
+      <h3 class="chart-title"><i class="fas fa-chart-line icon-blue" />  KPI 추이 및 진척도 분석</h3>
     </div>
     <div class="chart-content">
       <canvas ref="canvasRef"></canvas>
