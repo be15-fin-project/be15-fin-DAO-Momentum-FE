@@ -89,7 +89,7 @@ const handleDeleteHoliday = async (row) => {
     });
     if (!result) return;
     await deleteHoliday(holidayId);
-    toast.success('직위가 삭제되었습니다.');
+    toast.success('휴일이 삭제되었습니다.');
     await fetchHolidays();
   }catch(e){
     toast.error('휴일 삭제에 실패했습니다.')
