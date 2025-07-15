@@ -5,6 +5,7 @@ import ApprovalSideSection from '@/features/approvals/components/ApprovalSideSec
 import WriteFormSection from "@/features/approvals/components/WriteFormSection.vue";
 import { submitApproval, updateApproval} from "@/features/approvals/api.js";
 import {useToast} from "vue-toastification";
+import BaseButton from "@/components/common/BaseButton.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -90,8 +91,6 @@ async function submitForm() {
 
   try {
     if (isEditMode.value) {
-      console.log('documentId:', documentId, typeof documentId);
-      console.log('documentId.value:', documentId.value, typeof documentId.value);
       await updateApproval(request, documentId.value);
       toast.success('결재 문서가 수정됐습니다.');
     } else {
@@ -105,8 +104,15 @@ async function submitForm() {
     });
 
   } catch (error) {
-    console.error(error);
-    toast.error('결재 문서 제출 중 오류가 발생했습니다.');
+    const errorCode = error?.response?.data?.errorCode;
+
+    switch (errorCode) {
+      case '30026':
+        toast.error('결재가 시작되어 수정할 수 없습니다.');
+        break;
+      default:
+        toast.error('결재 문서 제출 중 오류가 발생했습니다.');
+    }
   } finally {
     isSubmitting.value = false;
   }
@@ -137,20 +143,26 @@ onMounted(() => {
         uploadedFiles.value = approveFileDTO || [];
       }
 
-      selectedApprovalLine.value = (approveLineGroupDTO || []).map(group => ({
-        requiredType: group.approveLineDTO?.isRequiredAll === 'REQUIRED' ? '필수' : '선택',
-        approvers: (group.approveLineListDTOs || []).map(line => ({
-          empId: line.empId,
-          name: line.employeeDisplayName,
-          teamName: line.departmentName
-        }))
-      }));
+      if (selectedApprovalLine.value.length === 0) {
+        selectedApprovalLine.value = (approveLineGroupDTO || []).map((group, idx) => ({
+          step: group.approveLineDTO?.approveLineOrder ?? idx + 1,
+          requiredType: group.approveLineDTO?.isRequiredAll === 'REQUIRED' ? '필수' : '선택',
+          approvers: (group.approveLineListDTOs || []).map(line => ({
+            empId: line.empId,
+            name: line.employeeDisplayName,
+            deptName: line.departmentName,
+            status: line.statusType
+          }))
+        }));
+      }
 
-      selectedRefList.value = (approveRefDTO || []).map(ref => ({
-        empId: Number(ref.empId),
-        name: ref.employeeDisplayName,
-        teamName: ref.departmentName
-      }));
+      if (selectedRefList.value.length === 0) {
+        selectedRefList.value = (approveRefDTO || []).map(ref => ({
+          empId: Number(ref.empId),
+          name: ref.employeeDisplayName,
+          deptName: ref.departmentName
+        }));
+      }
     }
   } else {
     // 작성 모드일 때만 기본값 설정
@@ -191,6 +203,7 @@ onMounted(() => {
         <ApprovalSideSection
           v-model:modelValueApprovalLines="selectedApprovalLine"
           v-model:modelValueReferenceList="selectedRefList"
+          :is-editing="isEditMode"
           :approve-type="form.approveType"
           :read-only="false"
           :is-read-only="form.approveType === 'CANCEL'"
@@ -198,7 +211,7 @@ onMounted(() => {
       </div>
 
       <div class="form-buttons">
-        <button
+        <BaseButton
           type="button"
           class="btn-action btn-submit"
           data-v-fb076351 data-v-f51fb21f
@@ -206,8 +219,9 @@ onMounted(() => {
         >
           <i data-v-fb076351="" class="fas fa-paper-plane"></i>
           제출
-        </button>
+        </BaseButton>
       </div>
+
     </div>
   </div>
 

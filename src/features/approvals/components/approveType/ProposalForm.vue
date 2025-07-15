@@ -292,7 +292,7 @@ onMounted(() => {
 
 .form-textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 500px;
 }
 
 .asterisk {

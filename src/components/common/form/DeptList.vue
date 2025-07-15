@@ -87,7 +87,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   <div class="dropdown-wrapper" ref="dropdownRef">
     <div class="dropdown-input" @click="toggleDropdown">
       {{ selectedLabel || '부서 선택' }}
-      <span class="arrow" :class="{ open: isOpen }">▾</span>
+      <i class="fas fa-chevron-down" :class="{ open: isOpen }"></i>
     </div>
 
     <div v-if="isOpen" class="dropdown-panel">
