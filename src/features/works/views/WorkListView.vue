@@ -5,7 +5,14 @@ import Filter from "@/components/common/Filter.vue";
 import BaseTable from "@/components/common/BaseTable.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
-import {getPositions, getVacationTypes, getWorkDetails, getWorks, getWorkTypes} from "@/features/works/api.js";
+import {
+  getDepartments,
+  getPositions,
+  getVacationTypes,
+  getWorkDetails,
+  getWorks,
+  getWorkTypes
+} from "@/features/works/api.js";
 
 const currentPage = ref(1);
 const pagination = ref({currentPage: 1, totalPage: 1});
@@ -25,17 +32,7 @@ const childWorkTypeOptions = ref([]);
 
 const workTypeIdMap = ref({VACATION: null, ADDITIONAL: null});
 
-const deptOptions = ref([
-  {label: '전체', value: null},
-  {label: '테크놀로지(주)', value: 1},
-  {label: '인사팀', value: 10},
-  {label: '재무팀', value: 11},
-  {label: '프론트엔드팀', value: 12},
-  {label: '백엔드팀', value: 13},
-  {label: '데이터팀', value: 14},
-  {label: '영업팀', value: 15},
-  {label: '디지털마케팅팀', value: 16},
-]);
+const departmentTree = ref([]);
 
 const columns = computed(() => {
   const baseColumns = [
@@ -46,16 +43,18 @@ const columns = computed(() => {
     {key: 'startAt', label: '출근 일시', format: val => val.replace('T', ' ').slice(0, -3)},
     {key: 'endAt', label: '퇴근 일시', format: val => val.replace('T', ' ').slice(0, -3)},
     {key: 'workTime', label: '근무 시간', format: val => `${Math.floor(val / 60)}시간 ${val % 60}분`},
-    {key: 'typeName', label: '유형',
-      format: val => ({
-        WORK: '근무',
-        REMOTE_WORK: '재택근무',
-        VACATION: '휴가',
-        ADDITIONAL: '초과근무',
-        BUSINESS_TRIP: '출장',
-      }[val] || '-')
+    {
+      key: 'workType', label: '유형',
+      format: ((val, row) => (
+              {
+                WORK: '근무',
+                REMOTE_WORK: '재택근무',
+                VACATION: '휴가',
+                ADDITIONAL: '초과근무',
+                BUSINESS_TRIP: '출장',
+              }[row.typeName] || '-')
+      )
     },
-    {key: 'isNormalWork', label: '정상 근무'},
     {key: 'action', label: '상세'},
   ];
 
@@ -72,20 +71,26 @@ const columns = computed(() => {
   return baseColumns;
 });
 
+const tabOptions = [
+  { key: 'isNormalWork', label: '전체', value: null },
+  { key: 'isNormalWork', label: '정상', value: 'Y' },
+  { key: 'isNormalWork', label: '이상', value: 'N' },
+];
+
 // 필터
 const baseFilterOptions = computed(() => [
   {key: 'empNo', type: 'input', label: '사번', icon: 'fa-id-badge', placeholder: '사번 입력'},
   {key: 'empName', type: 'input', label: '이름', icon: 'fa-user', placeholder: '이름 입력'},
-  {key: 'deptId', type: 'select', label: '부서', icon: 'fa-building', options: deptOptions.value},
+  {key: 'deptId', type: 'tree', label: '부서', icon: 'fa-building', options: departmentTree.value},
   {key: 'positionId', type: 'select', label: '직위', icon: 'fa-user-tie', options: positionOptions.value},
-  {key: 'startAt', type: 'date-range', label: '시작 일시', icon: 'fa-calendar-day'},
+  {key: 'startAt', type: 'date-range', label: '출근 일시', icon: 'fa-calendar-day'},
   {
-    key: 'order', type: 'select', label: '정렬 (시작 일시)', icon: 'fa-filter', options: [
+    key: 'order', type: 'select', label: '정렬 (출근 일시)', icon: 'fa-sort', options: [
       {label: '오름차순', value: 'ASC'},
       {label: '내림차순', value: 'DESC'}
     ]
   },
-  {key: 'typeId', type: 'select', label: '유형', options: typeOptions.value}
+  {key: 'typeId', type: 'select', label: '유형', icon: 'fa-filter', options: typeOptions.value}
 ]);
 
 const dynamicChildFilter = computed(() => {
@@ -108,6 +113,7 @@ const setParams = (v) => {
     positionId: v.positionId ?? null,
     rangeStartDate: v.startAt_start || null,
     rangeEndDate: v.startAt_end || null,
+    isNormalWork: v.isNormalWork || null,
     order: v.order || null,
     typeId: v.typeId ?? null,
     childTypeId: v.typeId === workTypeIdMap.value.ADDITIONAL ? (v.childTypeId ?? null) : null,
@@ -159,6 +165,10 @@ const additionalWorkMap = {
 };
 
 onMounted(async () => {
+  filterValues.value = { isNormalWork: null };
+  const depts = await getDepartments();
+  departmentTree.value = depts.data?.departmentInfoDTOList || [];
+
   const positions = await getPositions();
   positionOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({label: p.name, value: p.positionId}))];
 
@@ -182,7 +192,6 @@ onMounted(async () => {
   }))];
 
   handleSearch();
-  filterValues.value = {};
 });
 
 watch(currentPage, () => fetchSummary(filterValues.value));
@@ -216,6 +225,14 @@ const formatDuration = (minutes) => {
   return (h >= 1 ? `${h}시간 ` : '') + `${m}분`;
 }
 
+const formatIsNormalWork = (isNormalWork) => {
+  switch (isNormalWork)  {
+    case 'Y': return '예';
+    case 'N': return '아니오';
+    default: return '-';
+  }
+};
+
 const modalSections = computed(() => {
   if (!workDetails.value) return [];
 
@@ -242,7 +259,8 @@ const modalSections = computed(() => {
           label: '휴게 시간',
           value: formatDuration(workDetails.value.breakTime)
         },
-        { key: 'isNormalWork', label: '정상 근무 여부', value: workDetails.value.isNormalWork}
+        {key: 'isNormalWork', label: '정상 근무 여부', value: formatIsNormalWork(workDetails.value.isNormalWork)
+        }
       ],
     },
   ];
@@ -252,9 +270,9 @@ const modalSections = computed(() => {
 <template>
   <main>
     <HeaderWithTabs :headerItems="[
-        { label: '출퇴근 내역 조회', to: '/works', active: true },
+        { label: '근태 내역 조회', to: '/works', active: true },
     ]" :showTabs="false"/>
-    <Filter :filters="filterOptions" v-model="filterValues" @search="handleSearch"/>
+    <Filter :tabs="tabOptions" :filters="filterOptions" v-model="filterValues" @search="handleSearch"/>
 
     <!-- Table Section -->
     <BaseTable :columns="columns" :rows="works" @click-detail="openDetailsModal"/>

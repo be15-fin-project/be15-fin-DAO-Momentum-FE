@@ -4,29 +4,30 @@
     <div class="sidebar-header">
       <div class="sidebar-brand">
         <div class="sidebar-logo">
-          <i class="fas fa-building"></i>
+          <button class="side-btn" @click="handleCreateAttendance" :disabled="isLoading">
+            <i :class="[isAttended ? 'fas fa-hourglass-end' : 'fas fa-hourglass-start', 'shake-icon']"></i>
+          </button>
         </div>
-        <h2 class="sidebar-title">Momentum</h2>
-      </div>
-      <span class="top-icons">
-        <button class="side-btn" @click="handleCreateAttendance" :disabled="isLoading">
-          {{ isAttended ? '퇴근' : '출근' }}
-        </button>
+        <div class="profile-content">
+          <h2 class="sidebar-title"> {{ profile.name }} </h2>
+          <span class="profile-label">{{ profile.department }} / {{ profile.position }}</span>
+        </div>
+        <span class="top-icons">
         <button class="sidebar-toggle" @click="toggleAlertPanel">
           <i class="fas fa-bell notification-icon"></i>
         </button>
       </span>
+      </div>
       <button class="sidebar-toggle" @click="toggleSidebar">
         <i
             class="fas fa-bars"
             :class="{ 'rotate-icon': collapsed }"
         ></i>
-
       </button>
     </div>
 
     <!-- Alert Panel -->
-    <AlertPanel :visible="showAlertPanel" @close="toggleAlertPanel" />
+    <AlertPanel :visible="showAlertPanel" @close="toggleAlertPanel"/>
 
     <!-- Navigation -->
     <nav class="sidebar-nav">
@@ -56,7 +57,11 @@
                     v-if="isAllowed(sub)"
                     :to="resolveRoute(sub.hrefs)"
                     class="sidebar-item"
-                    :class="{ active: isActive(resolveRouteList(sub.hrefs)) }"
+                    :class="{
+                      active: sub.activeMatch === 'startsWith'
+                          ? getActiveMatch(sub)
+                          : isActive(resolveRouteList(sub.hrefs))
+                    }"
                 >
                   {{ sub.label }}
                 </router-link>
@@ -78,60 +83,91 @@
       </div>
     </nav>
 
-    <!-- 출퇴근 모달 -->
-    <AttendanceModal
-        :visible="showAttendanceModal"
-        :is-attended="isAttended"
-        :clock-info="clockInfo"
-        :format-time="formatTime"
-        :format-duration="formatDuration"
-        @confirm="submitAttendance"
-        @cancel="closeAttendanceModal"
-    />
 
     <!-- Footer -->
     <div class="sidebar-footer">
-      <router-link to="/setting" class="sidebar-item">
+      <router-link
+          to="/setting"
+          class="sidebar-item"
+          :class="{ active: route.path.startsWith('/setting') }"
+          v-if="userRole.includes('MASTER')"
+      >
         <i class="fas fa-cog"></i>
         <span class="sidebar-label">설정</span>
       </router-link>
+
       <div class="sidebar-item" @click="handleLogout">
         <i class="fas fa-sign-out-alt"></i>
         <span class="sidebar-label">로그아웃</span>
       </div>
     </div>
   </aside>
+
+
+  <!-- 출퇴근 모달 -->
+  <AttendanceModal
+      :visible="showAttendanceModal"
+      :clock-info="clockInfo"
+      :format-time="formatTime"
+      :format-duration="formatDuration"
+      :mode="isAttended ? 'end' : 'start'"
+      @confirm="submitAttendance"
+      @cancel="closeAttendanceModal"
+  />
 </template>
 
 <script setup>
 /* ======================== 공통 모듈 ======================== */
-import { ref, onMounted, onUnmounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { storeToRefs } from 'pinia'
+import {ref, reactive, onMounted, onUnmounted} from 'vue'
+import {useRoute} from 'vue-router'
+import {storeToRefs} from 'pinia'
 import router from '@/router'
-import { useToast } from 'vue-toastification'
+import {useToast} from 'vue-toastification'
 
 /* ======================== 외부 컴포넌트 ======================== */
 import AlertPanel from '@/components/common/AlertPanel.vue'
 import AttendanceModal from '@/features/works/components/AttendanceModal.vue'
 
 /* ======================== 스토어 & API ======================== */
-import { useAuthStore } from '@/stores/auth.js'
-import { logoutUser } from '@/features/common/api.js'
-import { startWork, endWork } from '@/features/works/api.js'
-import { getEvaluationRoundStatus } from '@/features/performance/api.js'
-import { useAttendance } from '@/features/works/composable/useAttendance.js'
+import {useAuthStore} from '@/stores/auth.js'
+import {logoutUser} from '@/features/common/api.js'
+import {startWork, endWork} from '@/features/works/api.js'
+import {getEvaluationRoundStatus} from '@/features/performance/api.js'
+import {useAttendance} from '@/features/works/composable/useAttendance.js'
+import {fetchCompanyInfo} from "@/features/company/api.js";
+import {fetchEmpInfo} from '@/features/mypage/api.js'
 
 /* ======================== 기본 상태 ======================== */
 const authStore = useAuthStore()
-const { userRole } = storeToRefs(authStore)
+const {userRole} = storeToRefs(authStore)
 const route = useRoute()
 const toast = useToast()
 
 const collapsed = ref(false)
 const openSubmenu = ref(null)
 const showAlertPanel = ref(false)
-const roundStatus = ref({ inProgress: false, roundId: null })
+const roundStatus = ref({inProgress: false, roundId: null})
+const companyName = ref('')
+
+/* ======================== 출퇴근 상태 ======================== */
+const profile = reactive({
+  name: '',
+  department: '',
+  position: '',
+})
+
+const getProfile = async () => {
+  try {
+    const resp = await fetchEmpInfo()
+    const emp = resp?.data?.data?.employeeDetails
+
+    profile.name = emp.name
+    profile.department = emp.deptName || '-'
+    profile.position = emp.positionName || '-'
+  } catch (e) {
+    console.error("사원 정보 불러오기 실패", e)
+  }
+}
 
 /* ======================== 출퇴근 상태 ======================== */
 const {
@@ -152,33 +188,33 @@ const menuItems = [
     label: '회사 정보',
     icon: 'fa-city',
     subItems: [
-      { label: '회사 정보', hrefs: ['../company/company-info'] },
-      { label: '조직도', hrefs: ['../company/org-chart'] }
+      {label: '회사 정보', hrefs: ['/company/company-info']},
+      {label: '조직도', hrefs: ['/company/org-chart']}
     ]
   },
   {
     label: '사원 관리',
     icon: 'fa-users',
     subItems: [
-      { label: '사원 목록 조회', hrefs: ['../employees'] },
-      { label: '인사 발령 내역', hrefs: ['../appoints'] },
-      { label: '계약서 목록 조회', hrefs: ['../contracts'] }
+      {label: '사원 목록 조회', hrefs: ['/employees'], activeMatch: "startsWith"},
+      {label: '인사 발령 내역 조회', hrefs: ['/appoints']},
+      {label: '계약서 목록 조회', hrefs: ['/contracts']}
     ],
     requireRole: ['MASTER', 'HR_MANAGER']
   },
   {
     label: '근태 관리',
     icon: 'fa-clock',
-    hrefs: ['../works'],
+    hrefs: ['/works'],
     requireRole: ['MASTER', 'HR_MANAGER']
   },
   {
     label: '내 정보',
     icon: 'fa-user',
     subItems: [
-      { label: '대시보드', hrefs: ['../mypage/dashboard'] },
-      { label: '내 정보 조회', hrefs: ['../mypage/profile'] },
-      { label: '계약서 내역 조회', hrefs: ['../mypage/contracts'] }
+      {label: '대시보드', hrefs: ['/mypage/dashboard']},
+      {label: '내 정보 조회', hrefs: ['/mypage/profile']},
+      {label: '내 계약서 조회', hrefs: ['/mypage/my-contracts']}
     ]
   },
   {
@@ -187,10 +223,15 @@ const menuItems = [
     subItems: [
       {
         label: '전체 결재 내역',
-        hrefs: ['../approvals'],
-        requireRole: ['MASTER', 'HR_MANAGER']
+        hrefs: ['/approvals'],
+        requireRole: ['MASTER', 'HR_MANAGER'],
+        activeMatch: 'startsWith'
       },
-      { label: '문서함', hrefs: ['../approval/inbox'] }
+      {
+        label: '문서함',
+        hrefs: ['/approval/inbox', '/approval/write'],
+        activeMatch: 'startsWith'
+      }
     ]
   },
   {
@@ -199,29 +240,29 @@ const menuItems = [
     subItems: [
       {
         label: 'KPI 분석',
-        hrefs: ['../kpi/statics', '../kpi/employee-kpis', '../kpi/employee-detail'],
+        hrefs: ['/kpi/statics', '/kpi/employee-kpis', '/kpi/employee-detail'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
-      { label: 'KPI 조회', hrefs: ['../kpi/kpi-list'] },
+      {label: 'KPI 조회', hrefs: ['/kpi/kpi-list']},
       {
         label: 'KPI 요청 관리',
-        hrefs: ['../kpi/requests'],
+        hrefs: ['/kpi/requests'],
         requireRole: ['MANAGER']
       },
       {
         label: '평가 관리',
-        hrefs: ['/eval/manage-peer', '../eval/manage-org', '../eval/manage-self', '../eval/round'],
+        hrefs: ['/eval/manage-peer', '/eval/manage-org', '/eval/manage-self', '/eval/round'],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       {
         label: '다면 평가 제출',
-        hrefs: ['../eval/submit'],
+        hrefs: ['/eval/submit'],
         required: () => roundStatus.value.inProgress === true
       },
-      { label: '인사 평가 조회', hrefs: ['../hr/hr-list'] },
+      {label: '인사 평가 조회', hrefs: ['/hr/hr-list']},
       {
         label: '이의 제기 관리',
-        hrefs: ['../hr/my-objection', '../hr/objection-requests']
+        hrefs: ['/hr/my-objection', '/hr/objection-requests']
       }
     ]
   },
@@ -231,26 +272,21 @@ const menuItems = [
     subItems: [
       {
         label: '근속 전망',
-        hrefs: ['../retention/prospect-dash'],
+        hrefs: ['/retention/prospect-dash', '/retention/prospect-employees', '/retention/prospect-rounds',],
         requireRole: ['MASTER', 'HR_MANAGER']
       },
       {
         label: '면담 기록',
-        hrefs: (role) =>
-            ['MASTER', 'HR_MANAGER'].includes(role)
-                ? ['../retention/admin-contact']
-                : ['MANAGER'].includes(role)
-                    ? ['../retention/user-contact']
-                    : [],
+        hrefs: ['/retention/my-contacts', '/retention/contact-list'],
         requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
       }
     ],
     requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
   },
   {
-    label: '공지 관리',
+    label: '공지사항',
     icon: 'fa-bullhorn',
-    hrefs: ['../notice/notice']
+    hrefs: ['/announcement']
   }
 ]
 
@@ -270,7 +306,7 @@ function resolveRoute(hrefs) {
   if (typeof hrefs === 'function') {
     const result = hrefs()
     if (result?.length > 0) {
-      return { path: result[0], state: { roundId: roundStatus.value.roundId } }
+      return {path: result[0], state: {roundId: roundStatus.value.roundId}}
     }
     return '/'
   }
@@ -288,6 +324,32 @@ function isActive(hrefs) {
   const list = Array.isArray(hrefs) ? hrefs : [hrefs]
   return list.some(href => currentPath.endsWith(href.replace('../', '/')))
 }
+
+function isActiveStartsWith(hrefs) {
+  const currentPath = route.path
+  const list = Array.isArray(hrefs) ? hrefs : [hrefs]
+  return list.some(href => currentPath.startsWith(href.replace('../', '/')))
+}
+
+function getActiveMatch(item) {
+  // 먼저 현재 라우트 출처를 확인
+  const source = route.state?.source || route.query?.from
+
+  // 출처와 메뉴 라벨 조합으로 분기 처리
+  if (item.label === '전체 결재 내역' && source === 'approvals') {
+    return isActiveStartsWith(['/approval/detail', '/approvals'])
+  }
+
+  if (item.label === '문서함' && source === 'inbox') {
+    return isActiveStartsWith(['/approval/detail', '/approval/inbox', '/approval/write'])
+  }
+
+  // 그 외: activeMatch === 'startsWith' 여부로 처리
+  if (item.activeMatch === 'startsWith') {
+    return isActiveStartsWith(item.hrefs)
+  }
+}
+
 
 function isSubmenuActive(subItems) {
   return subItems.some(item => isAllowed(item) && isActive(resolveRouteList(item.hrefs)))
@@ -311,13 +373,17 @@ function toggleAlertPanel() {
 const submitAttendance = async () => {
   isLoading.value = true
   try {
-    if (!isAttended.value) await startWork()
-    else await endWork()
+    if (!isAttended.value) {
+      await startWork()
+    }
+    if (isAttended.value) {
+      await endWork()
+    }
     await fetchTodayAttendance()
     toast.success('출퇴근 등록 완료')
     closeAttendanceModal()
   } catch (e) {
-    toast.error('근태 처리 실패')
+    toast.error('출퇴근 처리 실패')
   } finally {
     isLoading.value = false
   }
@@ -350,10 +416,13 @@ async function handleLogout() {
 /* ======================== 초기 실행 ======================== */
 onMounted(async () => {
   try {
+    await getProfile()
     await getStartTime()
     await fetchTodayAttendance()
     const result = await getEvaluationRoundStatus()
-    roundStatus.value = result || { inProgress: false, roundId: null }
+    roundStatus.value = result || {inProgress: false, roundId: null}
+    const companyInfo = await fetchCompanyInfo();
+    companyName.value = companyInfo.data.companyInfoDTO.name;
   } catch (e) {
     console.error('초기 로딩 실패', e)
   }
@@ -365,31 +434,31 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-/* ===== 공통 스타일 ===== */
+/* ================= 공통 레이아웃 ================= */
 .sidebar {
   width: 23rem;
   min-width: 4.8rem;
-  height: 100vh;
-  padding: 1.5rem;
+  height: 100%;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
   background: var(--side-background);
   color: var(--color-surface);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
-
   transition:
       width 0.4s ease,
       transform 0.6s ease,
       padding 0.3s ease;
-  transform: translateX(0);
 }
 
+/* ================= 헤더 ================= */
 .sidebar-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
+  padding-bottom: 1.3rem;
+  border-bottom: 3px dotted var(--gray-700);
 }
 
 .sidebar-brand {
@@ -398,14 +467,27 @@ onUnmounted(() => {
 }
 
 .sidebar-logo {
-  width: 2.5rem;
-  height: 2.5rem;
-  background-color: var(--blue-450);
-  border-radius: 0.5rem;
+  width: 2.8rem;
+  height: 2.8rem;
+  background: var(--icon-gradient);
+  border-radius: var(--radius-full);
+  box-shadow: var(--filter-shadow);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 0.75rem;
+  margin-right: 1rem;
+}
+
+.profile-content,
+.sidebar-label,
+.sidebar-indent {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateX(0);
+  transition: max-width 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .sidebar-title {
@@ -413,29 +495,35 @@ onUnmounted(() => {
   font-weight: 700;
 }
 
-.sidebar-toggle {
+.profile-label {
+  font-size: 0.8rem;
+  color: var(--font-none);
+}
+
+.notification-icon {
+  font-size: 18px;
+}
+/* ================= 토글 버튼 ================= */
+.sidebar-toggle,
+.side-btn {
   background: none;
   border: none;
   color: var(--color-surface);
-  font-size: 1rem;
   cursor: pointer;
+  font-size: 1rem;
 }
 
 .side-btn {
-  background: var(--main-color);
-  color: var(--color-surface);
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+  font-size: 20px;
 }
 
 .top-icons {
   display: flex;
   align-items: center;
-  gap: 8px;
+  margin-left: 4.5rem;
 }
 
+/* ================= 내비게이션 ================= */
 .sidebar-nav {
   display: flex;
   flex-direction: column;
@@ -448,12 +536,6 @@ onUnmounted(() => {
   width: 4px;
 }
 
-.sidebar-footer {
-  margin-top: auto;
-  padding-top: 2rem;
-}
-
-/* ===== 메뉴 항목 ===== */
 .sidebar-item {
   display: flex;
   align-items: center;
@@ -466,12 +548,7 @@ onUnmounted(() => {
   transition: background 0.2s, color 0.2s;
 }
 
-.sidebar-item:hover {
-  background-color: var(--gray-600);
-  color: var(--color-surface);
-  cursor: pointer;
-}
-
+.sidebar-item:hover,
 .sidebar-item.active {
   background-color: var(--gray-600);
   color: var(--color-surface);
@@ -482,17 +559,18 @@ onUnmounted(() => {
   color: var(--color-surface);
 }
 
+/* 서브 토글 아이콘 */
 .sidebar-sub-toggle {
   margin-left: auto;
+  transform: rotate(0deg);
   transition: transform 0.2s ease;
-  transform: rotate(0deg); /* 닫힌 상태 */
 }
 
 .sidebar-item.active .sidebar-sub-toggle {
-  transform: rotate(90deg); /* 열린 상태 */
+  transform: rotate(90deg);
 }
 
-/* ===== 서브 메뉴 ===== */
+/* 서브메뉴 */
 .sidebar-indent {
   padding-left: 1rem;
   display: flex;
@@ -512,12 +590,21 @@ onUnmounted(() => {
   color: var(--gray-50);
 }
 
-/* ===== Collapsed 상태 ===== */
+/* ================= 푸터 ================= */
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 1.3rem;
+  border-top: 3px dotted var(--gray-600);
+}
+
+/* ================= Collapsed 상태 ================= */
 .sidebar.collapsed {
   width: 4.8rem;
 }
 
+.sidebar.collapsed .profile-content,
 .sidebar.collapsed .sidebar-title,
+.sidebar.collapsed .profile-label,
 .sidebar.collapsed .sidebar-label,
 .sidebar.collapsed .sidebar-indent,
 .sidebar.collapsed .sidebar-sub-toggle,
@@ -525,6 +612,12 @@ onUnmounted(() => {
 .sidebar.collapsed .side-btn,
 .sidebar.collapsed .notification-icon {
   display: none;
+}
+
+.sidebar.collapsed .sidebar-brand {
+  width: 0;
+  margin-left: 0;
+  overflow: hidden;
 }
 
 .sidebar.collapsed .sidebar-item {
@@ -539,6 +632,13 @@ onUnmounted(() => {
   margin-left: 0.4rem;
 }
 
+.sidebar.collapsed .profile-content,
+.sidebar.collapsed .sidebar-label {
+  opacity: 0;
+  max-width: 0;
+}
+
+/* ================= 아이콘 애니메이션 ================= */
 .rotate-icon {
   transform: rotate(180deg);
   transition: transform 0.3s ease;
@@ -547,4 +647,19 @@ onUnmounted(() => {
 .fas.fa-bars {
   transition: transform 0.3s ease;
 }
+
+@keyframes shake {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  50% { transform: rotate(0deg); }
+  75% { transform: rotate(-5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.shake-icon {
+  animation: shake 1s infinite;
+  display: inline-block;
+}
+
+
 </style>

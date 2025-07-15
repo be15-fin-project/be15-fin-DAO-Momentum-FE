@@ -25,7 +25,7 @@
     <BaseTable
         :columns="[
         { key: 'roundNo', label: '회차' },
-        { key: 'formDisplayName', label: '평가 유혀' },
+        { key: 'formDisplayName', label: '평가 유형' },
         { key: 'evalName', label: '사원 이름' },
         { key: 'score', label: '점수' },
         { key: 'action', label: '상세' }
@@ -70,6 +70,9 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 // ====================== 상태 변수 ======================
 const currentPage = ref(1);
@@ -102,7 +105,7 @@ onMounted(async () => {
     initFilters();
     await handleSearch({});
   } catch (e) {
-    console.error('초기화 실패:', e);
+    toast.error('초기화 중 오류가 발생했습니다.');
   }
 });
 
@@ -210,7 +213,6 @@ const handleSearch = async (values) => {
     page: currentPage.value,
     size: 10,
   };
-  console.log('[SEARCH PARAMS]', params);
 
   try {
     const resData = await getOrgEvaluations(params);
@@ -220,7 +222,7 @@ const handleSearch = async (values) => {
       totalPage: Math.max(resData.pagination?.totalPage || 1, 1)
     };
   } catch (e) {
-    console.error('조직 평가 조회 실패:', e);
+    toast.error('조직 평가 조회에 실패했습니다.');
     tableData.value = [];
   }
 };
@@ -297,7 +299,7 @@ const openModalHandler = async (row) => {
 
     formSections.value = [...baseSections, ...reasonSection, ...factorSection];
   } catch (err) {
-    console.error('상세 조회 실패:', err);
+    toast.error('상세 정보를 불러오지 못했습니다.');
     isOpen.value = false;
   }
 };
@@ -305,7 +307,13 @@ const openModalHandler = async (row) => {
 // ====================== 엑셀 다운로드 ======================
 const handleDownload = async () => {
   try {
+    toast.success('엑셀 다운로드가 시작되었습니다.');
     const normalized = normalizeFilterParams(filterValues.value);
+    if (normalized.roundNo) {
+      const match = roundList.value.find(r => r.roundNo === normalized.roundNo);
+      normalized.roundId = match?.roundId ?? null;
+    }
+    delete normalized.roundNo;
     const blob = await getOrgExcelDownload({ ...normalized });
 
     const url = window.URL.createObjectURL(new Blob([blob]));
@@ -317,8 +325,7 @@ const handleDownload = async () => {
     link.remove();
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error('엑셀 다운로드 오류:', err);
-    alert('엑셀 다운로드 실패');
+    toast.error('엑셀 다운로드에 실패했습니다.');
   }
 };
 </script>

@@ -58,6 +58,9 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 /* ========== State ========== */
 const currentPage = ref(1);
@@ -88,11 +91,25 @@ const tableColumns = [
 ];
 
 /* ========== Computed ========== */
-const mappedTableData = computed(() => tableData.value.map(row => {
-  const baseRow = { ...row, evaluatedAt: row.evaluatedAt?.split('T')[0] ?? '' };
-  row.factorScores?.forEach(f => baseRow[f.propertyName] = f.score);
-  return baseRow;
-}));
+const mappedTableData = computed(() => {
+  return tableData.value.map(row => {
+    const baseRow = {
+      roundNo: row.item?.roundNo ?? '',
+      evaluatedAt: row.item?.evaluatedAt?.split('T')[0] ?? '',
+      overallGrade: row.item?.overallGrade ?? '',
+      objectionSubmitted: row.item?.objectionSubmitted ?? false,
+      resultId: row.item?.resultId ?? null
+    };
+
+    // 각 평가 항목(요인)에 대해 propertyName을 key로 score를 넣어줌
+    row.factorScores?.forEach(f => {
+      baseRow[f.propertyName] = f.score;
+    });
+
+    return baseRow;
+  });
+});
+
 
 /* ========== Util ========== */
 const normalizeFilterParams = (values) => {
@@ -127,7 +144,7 @@ const handleSearch = async (values) => {
       totalPage: res.pagination?.totalPage || 1,
     };
   } catch (e) {
-    console.error('인사 평가 내역 조회 실패:', e);
+    toast.error('인사 평가 목록 조회에 실패했습니다.');
     tableData.value = [];
   }
 };
@@ -199,7 +216,7 @@ const openModalHandler = async (row) => {
       }
     ];
   } catch (e) {
-    console.error('상세 조회 실패:', e);
+    toast.error('상세 정보를 불러오지 못했습니다.');
     isOpen.value = false;
   }
 };
@@ -230,16 +247,15 @@ const handleCancel = () => {
 
 const handleSubmit = async () => {
   const reason = createForm.value.reason?.trim();
-  if (!reason) return alert('이의제기 사유를 입력해주세요.');
+  if (!reason) return toast.error('이의제기 사유를 입력해주세요.');
   try {
     await submitHrObjection(selectedRow.value.resultId, { reason });
-    alert('이의제기가 성공적으로 제출되었습니다.');
+    toast.success('이의제기가 성공적으로 제출되었습니다.');
     isOpen.value = false;
     isRejecting.value = false;
     createForm.value = { reason: '' };
   } catch (e) {
-    console.error('이의제기 제출 실패:', e);
-    alert('이의제기 제출에 실패했습니다.');
+    toast.error('이의제기 제출에 실패했습니다.');
   }
 };
 
@@ -275,7 +291,7 @@ onMounted(async () => {
     initFilters();
     await handleSearch({});
   } catch (e) {
-    console.error('초기 로딩 실패:', e);
+    toast.error('초기화 중 오류가 발생했습니다.');
   }
 });
 </script>

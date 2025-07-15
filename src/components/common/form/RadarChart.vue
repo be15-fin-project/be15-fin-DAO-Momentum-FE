@@ -14,6 +14,7 @@ const props = defineProps({
   values: Array,
   editable: Boolean,
   readonly: Boolean,
+    showTooltip: { type: Boolean, default: false }
 });
 
 const chartRef = ref();
@@ -28,9 +29,10 @@ function convertLevelsToScores(levels) {
     '위험': 50,
   };
 
+
   return levels.map(level => {
-    if (typeof level === 'string' && /^[0-9]+$/.test(level)) {
-      return parseInt(level, 10);
+    if (!isNaN(Number(level))) {
+      return Number(level);
     }
     return levelMap[level] ?? 0;
   });
@@ -84,8 +86,15 @@ function createChart(data) {
           }
         }
       },
+      interaction: {
+        mode: 'nearest',
+        intersect: false
+      },
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          enabled: props.showTooltip
+        }
       }
     }
   });
@@ -99,5 +108,8 @@ function createChart(data) {
   height: 300px;
   position: relative;
   margin : 2rem 0;
+}
+canvas {
+  pointer-events: auto;
 }
 </style>

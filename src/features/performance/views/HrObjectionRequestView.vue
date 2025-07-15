@@ -69,6 +69,9 @@ import SideModal from '@/components/common/SideModal.vue';
 import { storeToRefs } from 'pinia';
 import { useAuthStore } from '@/stores/auth.js';
 import { useRoute } from 'vue-router';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 /* ========== State ========== */
 const currentPage = ref(1);
@@ -105,13 +108,15 @@ const tableColumns = [
   { key: 'roundNo', label: '회차' },
   { key: 'statusType', label: '상태' },
   { key: 'createdAt', label: '평가일' },
-  { key: 'score', label: '등급' },
+  { key: 'score', label: '점수' },
   { key: 'action', label: '상세' },
 ];
 
-const isPending = computed(() =>
-    selectedRow.value?.statusType === '대기 중' || selectedRow.value?.statusType === 'PENDING'
-);
+const isPending = computed(() => {
+  const status = selectedRow.value?.statusType ?? '';
+  return status === '대기 중' || status === 'PENDING' || status === getStatusLabel('PENDING');
+});
+
 
 /* ========== Computed ========== */
 const mappedTableData = computed(() =>
@@ -142,12 +147,15 @@ const normalizeFilterParams = (values) => {
   switch (normalized.status) {
     case 'ACCEPTED':
       normalized.statusId = 2;
+      normalized.isDeleted = 'N';
       break;
     case 'REJECTED':
       normalized.statusId = 3;
+      normalized.isDeleted = 'N';
       break;
     default:
       normalized.statusId = 1;
+      normalized.isDeleted = 'N';
   }
   delete normalized.status;
 
@@ -181,7 +189,7 @@ const handleSearch = async (values) => {
       totalPage: res.pagination?.totalPage || 1,
     };
   } catch (e) {
-    console.error('인사 평가 내역 조회 실패:', e);
+    toast.error('이의제기 목록을 불러오지 못했습니다.');
     tableData.value = [];
   }
 };
@@ -190,20 +198,32 @@ const openModalHandler = async (row) => {
   try {
     const { itemDto: content, factorScores, weightInfo, rateInfo } = await getHrObjectionRequestDetail(row.objectionId);
 
+    isSubmit.value = false;
+    isEditing.value = false;
+    isApproval.value = false;
+    isRejecting.value = false;
+
     selectedRow.value = row;
     isOpen.value = true;
     isRejecting.value = false;
     createForm.value = { reason: '' };
 
-    selectedContent.value = content;
+    const enrichedContent = {
+      ...content,
+      roundNo: row.roundNo ?? content.roundNo,
+      overallGrade: row.score ?? content.overallGrade,
+      statusType: row.statusType ?? content.statusType,
+    };
+
+    selectedContent.value = enrichedContent;
     selectedFactorScores.value = factorScores;
     selectedWeightInfo.value = weightInfo;
     selectedRateInfo.value = rateInfo;
 
-    formSections.value = buildFormSections(content, factorScores, weightInfo, rateInfo);
+    formSections.value = buildFormSections(enrichedContent, factorScores, weightInfo, rateInfo);
 
   } catch (e) {
-    console.error('상세 조회 실패:', e);
+    toast.error('상세 정보를 불러오지 못했습니다.');
     isOpen.value = false;
   }
 };
@@ -255,7 +275,7 @@ const handleSubmit = async () => {
       .find(s => s.title === '이의제기 현황')?.fields
       .find(f => f.key === 'reason');
 
-  const reason = reasonField?.value || '';
+  const reason = createForm.value.reason || '';
 
   const payload = {
     objectionId: selectedRow.value.objectionId,
@@ -267,26 +287,19 @@ const handleSubmit = async () => {
     const factorSection = formSections.value.find(s => s.title === '요인별 평가 결과');
     const scoreField = factorSection?.fields?.find(f => f.type === 'scoreChart');
 
-    // ✅ 여기 넣으세요
-    console.log('[DEBUG] scoreField.value:', scoreField?.value);
-
     payload.factorScores = scoreField?.value?.map(f => ({
       propertyId: f.propertyId,
       score: f.score
     })) || [];
-
-    // ✅ 여기도 넣으세요
-    console.log('[DEBUG] payload:', payload);
   }
 
   try {
     await processHrObjection(payload);
-    alert(isApproval.value ? '승인 처리되었습니다.' : '반려 처리되었습니다.');
+    toast.success(isApproval.value ? '승인 처리되었습니다.' : '반려 처리되었습니다.');
     isOpen.value = false;
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('[ERROR] 이의제기 처리 실패:', e);
-    alert('처리 중 오류가 발생했습니다.');
+    toast.error('이의제기 처리 중 오류가 발생했습니다.');
   }
 };
 
@@ -372,7 +385,7 @@ function buildFormSections(content, factorScores, weightInfo, rateInfo, editable
       fields: [
         { label: '회차', value: content.roundNo, type: 'input', editable: false },
         { label: '사원명', value: `${content.empName} (${content.empNo})`, type: 'input', editable: false },
-        { label: '등급', value: content.overallGrade, type: 'input', editable: false },
+        { label: '점수', value: content.overallGrade, type: 'input', editable: false },
         { label: '평가일', value: content.evaluatedAt?.split(' ')[0], type: 'input', editable: false },
       ]
     },

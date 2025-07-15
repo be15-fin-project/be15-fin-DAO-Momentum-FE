@@ -16,6 +16,8 @@
     "@fullcalendar/vue3": "^6.1.18",
     "axios": "^1.10.0",
     "chart.js": "^4.5.0",
+    "chartjs-chart-error-bars": "^4.4.4",
+    "dayjs": "^1.11.13",
     "event-source-polyfill": "^1.0.31",
     "nouislider": "^15.8.1",
     "pinia": "^3.0.1",

@@ -12,6 +12,17 @@ export const approvalsRoutes = [
     {
         path: '/approval/detail/:documentId',
         name: 'ApprovalDetail',
-        component: () => import('@/features/approvals/views/ApprovalDetail.vue')
+        component: () => import('@/features/approvals/views/ApproveDetailActionView.vue')
+    },
+    {
+        path: '/approval/write',
+        name: 'ApprovalWrite',
+        component: () => import('@/features/approvals/views/ApproveEditCreateView.vue')
+    },
+    {
+        path: '/approval/edit/:documentId',
+        name: 'ApprovalEdit',
+        component: () => import('@/features/approvals/views/ApproveEditCreateView.vue')
     }
+
 ];

@@ -59,6 +59,9 @@ import EmployeeFilter from '@/components/common/Filter.vue';
 import Pagination from '@/components/common/Pagination.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
 import SideModal from '@/components/common/SideModal.vue';
+import { useToast } from 'vue-toastification';
+
+const toast = useToast()
 
 // ───────── 상태값 ─────────
 const route = useRoute();
@@ -168,7 +171,7 @@ async function handleSearch(values) {
     const total = res.pagination?.totalPage > 0 ? res.pagination.totalPage : 1;
     pagination.value = { currentPage: current, totalPage: total };
   } catch (err) {
-    console.error('KPI 요청 조회 실패:', err);
+    toast.error('KPI 요청 목록을 불러오지 못했습니다.');
   }
 }
 
@@ -257,7 +260,7 @@ async function openModalHandler(kpiId) {
       }
     ].filter(section => section.fields.length > 0);
   } catch (err) {
-    console.error('KPI 상세 조회 실패:', err);
+    toast.error('KPI 상세 정보를 불러오지 못했습니다.');
     isOpen.value = false;
   }
 }
@@ -274,7 +277,7 @@ async function submitEditOrCancel(approved = true) {
     const finalReason = isCancelRequest ? cancelResponse : reason;
 
     if (!approved && !finalReason?.trim()) {
-      alert(isCancelRequest ? '취소 반려 사유를 입력해주세요.' : '반려 사유를 입력해주세요.');
+      toast.error(isCancelRequest ? '취소 반려 사유를 입력해주세요.' : '반려 사유를 입력해주세요.');
       return;
     }
 
@@ -286,13 +289,12 @@ async function submitEditOrCancel(approved = true) {
         ? isCancelRequest ? 'KPI 취소 요청이 승인되었습니다.' : 'KPI 요청이 승인되었습니다.'
         : isCancelRequest ? 'KPI 취소 요청이 반려되었습니다.' : 'KPI 요청이 반려되었습니다.';
 
-    alert(message);
+    toast.success(message);
     isOpen.value = false;
     editMode.value = null;
     await handleSearch(filterValues.value);
   } catch (err) {
-    console.error('KPI 승인/반려 처리 오류:', err);
-    alert('처리 중 오류가 발생했습니다.');
+    toast.error('KPI 요청 처리 중 오류가 발생했습니다.');
   } finally {
     isSubmitting.value = false;
   }

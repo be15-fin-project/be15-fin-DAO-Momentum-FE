@@ -1,13 +1,12 @@
 <script setup>
 import {ref} from "vue";
-import "@/assets/css/login.css";
 import {forgetPassword, loginUser} from "@/features/common/api.js";
-import CommonModal from "@/components/common/CommonModal.vue";
+import {useToast} from "vue-toastification";
 
 const email = ref('')
 const isSubmitting = ref(false)
 const modalVisible = ref(false)
-const modalMessage = ref('') // 모달에 표시할 메시지
+const toast = useToast();
 
 const submitEmail = async () => {
   isSubmitting.value = true
@@ -16,12 +15,10 @@ const submitEmail = async () => {
     const response = await forgetPassword({
       email: email.value,
     })
-    const message = response.data.data.message
-    modalMessage.value = message || '이메일이 전송되었습니다.'
+    toast.success('이메일이 전송되었습니다.');
   } catch (error) {
-    modalMessage.value = error.response?.data?.message || '이메일 전송에 실패했습니다.'
+    toast.error('유효하지 않은 이메일입니다.');
   } finally {
-    modalVisible.value = true // 항상 모달 띄우기
     isSubmitting.value = false
   }
 }
@@ -51,7 +48,7 @@ const closeModal = () => {
               <input
                   v-model="email"
                   type="text"
-                  placeholder="사번을 입력하세요"
+                  placeholder="이메일을 입력하세요"
                   class="login-input-field"
                   required
               />
@@ -82,14 +79,6 @@ const closeModal = () => {
       </div>
     </div>
   </div>
-  <!-- 모달 컴포넌트 -->
-  <CommonModal
-      :visible="modalVisible"
-      :confirm-text="'확인'"
-      @cancel="closeModal"
-  >
-    <p>{{ modalMessage }}</p>
-  </CommonModal>
 </template>
 
 <style scoped>
@@ -100,9 +89,10 @@ body {
 }
 
 .reset-container {
-  min-height: 100vh;
+  height:100%;
   display: flex;
   align-items: center;
+  background: var(--gray-100);
   justify-content: center;
   padding: 2rem;
 }
@@ -172,5 +162,96 @@ body {
 
 .form-footer a:hover {
   color: var(--blue-400);
+}
+
+/* 로그인 카드 */
+.login-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 36px 0 rgba(57,88,134,0.12), 0 1.5px 9px 0 rgba(98,142,203,0.10);
+  padding: 38px 32px 32px 32px;
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 4;
+}
+.login-card form {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.login-input-label {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--main-color);
+  margin-bottom: 7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.login-input-label i {
+  color: var(--blue-400);
+  font-size: 1.11rem;
+}
+.login-input-group {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+.login-input-field {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1.7px solid var(--gray-300);
+  border-radius: 7px;
+  outline: none;
+  font-size: 1.09rem;
+  background: var(--blue-50);
+  color: var(--font-color);
+  transition: border-color 0.23s, box-shadow 0.23s, background 0.23s;
+}
+.login-input-field:focus {
+  border-color: var(--main-color);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(98,142,203,0.11);
+}
+.login-input-group:focus-within {
+  transform: scale(1.03);
+}
+
+.login-checkbox-group input[type="checkbox"] {
+  accent-color: var(--main-color);
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.2px solid var(--gray-300);
+}
+.login-btn-gradient {
+  width: 100%;
+  padding: 15px 0;
+  background: var(--icon-gradient);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  font-size: 1.14rem;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 18px 0 rgba(98,142,203,0.13);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+  outline: none;
+}
+.login-btn-gradient:active {
+  opacity: 0.93;
+}
+.login-btn-gradient:hover, .login-btn-gradient:focus {
+  transform: translateY(-2px) scale(1.014);
+  box-shadow: 0 10px 30px 0 rgba(98,142,203,0.22);
+}
+.login-btn-gradient i {
+  margin-right: 7px;
 }
 </style>

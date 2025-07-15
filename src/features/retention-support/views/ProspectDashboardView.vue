@@ -1,101 +1,194 @@
 <template>
   <main>
-    <!-- 헤더 -->
+    <!-- 헤더 및 상단 버튼 -->
     <HeaderWithTabs
         :headerItems="[
-          { label: '대시 보드', to: '/retention/prospect-dash', active: true },
-        ]"
+            { label: '대시보드', to: '/retention/prospect-dash', active: true },
+            { label: '근속 전망', to: '/retention/prospect-employees', active: false },
+            { label: '전망 회차', to: '/retention/prospect-rounds', active: false },
+            ]"
         :submitButtons="[{ label: '엑셀 다운로드', icon: 'fa-download', event: 'download', variant: 'white' }]"
         :showTabs="false"
         @download="handleDownload"
     />
 
-    <!-- 필터 -->
-    <EmployeeFilter :filters="filterOptions" v-model="filterValues" @search="handleSearch" />
+    <!-- 필터 영역 -->
+    <EmployeeFilter
+        v-if="filterOptions.length > 0"
+        :filters="filterOptions"
+        v-model="filterValues"
+        :preserveKeys="['roundId']"
+        @search="handleSearch"
+    />
 
-    <!-- 통계 차트 -->
-    <section class="chart-row">
-      <DoughnutChart
-          :labels="donutChartData.labels"
-          :data="donutChartData.data"
-          :colors="donutChartData.colors"
-      />
-      <LineChart
-          :labels="lineChartData.labels"
-          :datasets="lineChartData.datasets"
-      />
+    <section class="content">
+      <div class="narrow">
+        <StabilityDonut :distribution="overallDistribution"/>
+      </div>
+      <div class="wide">
+        <DeptStabilityBar :data="departmentDistribution"/>
+      </div>
+      <div class="narrow">
+        <MetricCardGroup
+            :employeeCount="employeeCount"
+            :averageScore="averageScore"
+            :stableRate="stableRate"
+            :riskRate="riskRate"/>
+      </div>
+      <div class="wide">
+        <MonthlyRetentionTrend :data="monthlyStats"/>
+      </div>
+
     </section>
+
   </main>
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import {ref, onMounted} from 'vue';
 import HeaderWithTabs from '@/components/common/HeaderWithTabs.vue';
 import EmployeeFilter from '@/components/common/Filter.vue';
-import DoughnutChart from '@/features/retention-support/components/DonutChart.vue';
-import LineChart from '@/features/retention-support/components/LineChart.vue';
+
+import StabilityDonut from '@/features/retention-support/components/StabilityDonut.vue';
+import DeptStabilityBar from '@/features/retention-support/components/DeptStabilityBar.vue';
+import MetricCardGroup from '@/features/retention-support/components/MetricCardGroup.vue';
+import MonthlyRetentionTrend from '@/features/retention-support/components/MonthlyRetentionTrend.vue';
 
 import {
-  getAverageRetentionScore,
+  getDepartments,
+  getPositions,
+} from '@/features/works/api.js';
+
+import {
+  getRetentionRounds,
+  getRetentionOverview,
   getOverallStabilityDistribution,
   getDepartmentStabilityDistribution,
-  downloadRetentionPredictionExcel
+  getMonthlyRetentionTimeseries,
+  downloadRetentionPredictionExcel,
 } from '@/features/retention-support/api.js';
-import { getDepartments, getPositions } from '@/features/works/api.js';
+import {useToast} from 'vue-toastification';
 
-// 상태
+const toast = useToast();
+// ────────── 상태 ──────────
 const filterValues = ref({});
 const filterOptions = ref([]);
-const departmentTree = ref([]);
-const positionList = ref([]);
 
-const donutChartData = ref({ labels: [], data: [], colors: [] });
-const lineChartData = ref({ labels: [], datasets: [] });
+const averageScore = ref(0);
+const employeeCount = ref(0);
+const stableRate = ref(0);
+const riskRate = ref(0);
 
-const chartRefs = {
-  donut: null,
-  monthly: null,
-};
+const overallDistribution = ref({});
+const departmentDistribution = ref([]);
+const monthlyStats = ref([]);
 
-// 필터 초기화
-function initFilters() {
+// ────────── 초기 진입 ──────────
+onMounted(async () => {
+  await initFilterOptions();
+  if (filterValues.value.roundId != null) {
+    await handleSearch(filterValues.value);
+  }
+});
+
+// ────────── 필터 초기화 ──────────
+async function initFilterOptions() {
+  const roundRes = await getRetentionRounds({size: 100});
+  const rounds = roundRes?.content ?? [];
+
+  const roundOptions = rounds.map(r => ({
+    label: `${r.roundNo} 회차 (${r.year}-${String(r.month).padStart(2, '0')})`,
+    value: r.roundId,
+  }));
+
+  const latestRoundId = rounds[0]?.roundId ?? null;
+
+  const deptRes = await getDepartments();
+  const deptTree = deptRes.data?.departmentInfoDTOList ?? [];
+
+  const positions = await getPositions();
+
   filterOptions.value = [
+    {
+      key: 'roundId',
+      label: '회차',
+      icon: 'fa-rotate',
+      type: 'select',
+      options: roundOptions,
+    },
     {
       key: 'deptId',
       label: '부서',
       icon: 'fa-building',
       type: 'tree',
-      options: departmentTree.value,
+      options: deptTree,
     },
     {
       key: 'positionId',
       label: '직위',
       icon: 'fa-user-tie',
       type: 'select',
-      options: ['전체', ...positionList.value.map(p => p.name)],
-    },
-    {
-      key: 'empNo',
-      label: '사번',
-      icon: 'fa-id-badge',
-      type: 'input',
-      placeholder: '사번 입력',
-    },
-    {
-      key: 'date',
-      label: '조회일',
-      icon: 'fa-calendar-day',
-      type: 'date-range',
+      options: ['전체', ...positions.map(pos => pos.name)],
     },
   ];
+
+  filterValues.value = {
+    roundId: latestRoundId,
+    deptId: null,
+    positionId: null,
+  };
 }
 
-function normalizeFilterParams(values) {
-  const normalized = { ...values };
+// ────────── 검색 핸들러 ──────────
+async function handleSearch(values) {
+  const params = normalizeParams(values);
+  const deptDistParams = { ...params, deptId: null }; // 부서 ID 제거
 
+  try {
+    const overview = await getRetentionOverview(params);
+
+    averageScore.value = overview?.averageScore ?? 0;
+    employeeCount.value = overview?.totalEmpCount ?? 0;
+    stableRate.value = overview?.stabilitySafeRatio ?? 0;
+    riskRate.value = overview?.stabilityRiskRatio ?? 0;
+
+    overallDistribution.value = await getOverallStabilityDistribution(params);
+    departmentDistribution.value = await getDepartmentStabilityDistribution(deptDistParams);
+    monthlyStats.value = await getMonthlyRetentionTimeseries(params);
+  } catch (e) {
+    toast.error('통계 정보를 불러오는 데 실패했습니다.');
+  }
+}
+
+// ────────── 엑셀 다운로드 ──────────
+async function handleDownload() {
+  try {
+    toast.success('엑셀 다운로드가 시작되었습니다.');
+    const params = normalizeParams(filterValues.value);
+    const blob = await downloadRetentionPredictionExcel(params);
+
+    const url = window.URL.createObjectURL(new Blob([blob]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `retention-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    toast.error('엑셀 다운로드 중 오류가 발생했습니다.');
+  }
+}
+
+// ────────── 유틸 ──────────
+function normalizeParams(values) {
+  const normalized = {...values};
+
+  // positionId: "전체" → null
   if (normalized.positionId && normalized.positionId !== '전체') {
-    const match = positionList.value.find(p => p.name === normalized.positionId);
-    normalized.positionId = match?.positionId ?? null;
+    const selected = filterOptions.value.find(opt => opt.key === 'positionId');
+    const matched = selected?.options?.find(p => p === normalized.positionId);
+    normalized.positionId = matched ?? null;
   } else {
     normalized.positionId = null;
   }
@@ -104,103 +197,24 @@ function normalizeFilterParams(values) {
     normalized.deptId = Number(normalized.deptId);
   }
 
-  if (normalized.date?.[0]) normalized.startDate = normalized.date[0];
-  if (normalized.date?.[1]) normalized.endDate = normalized.date[1];
-  delete normalized.date;
-
   return normalized;
 }
-
-// 차트 렌더링
-async function renderCharts() {
-  try {
-    const params = normalizeFilterParams(filterValues.value);
-    const rootStyle = getComputedStyle(document.documentElement);
-    const blue200 = rootStyle.getPropertyValue('--blue-200').trim();
-    const blue400 = rootStyle.getPropertyValue('--blue-400').trim();
-    const blue500 = rootStyle.getPropertyValue('--blue-500').trim();
-
-    const avg = await getAverageRetentionScore(params);
-    const stability = await getOverallStabilityDistribution(params);
-    const deptDistribution = await getDepartmentStabilityDistribution(params);
-
-    donutChartData.value = {
-      labels: ['매우 안정', '안정', '불안정', '매우 불안정'],
-      data: [
-        stability.veryStableCount,
-        stability.stableCount,
-        stability.unstableCount,
-        stability.veryUnstableCount,
-      ],
-      colors: [blue500, blue400, blue200, '#ddd'],
-    };
-
-    lineChartData.value = {
-      labels: deptDistribution.map(d => d.departmentName),
-      datasets: [
-        {
-          label: '안정성 평균',
-          type: 'bar',
-          color: blue400,
-          data: deptDistribution.map(d => d.averageScore),
-          yAxisID: 'y',
-        },
-      ],
-    };
-  } catch (e) {
-    console.warn('차트 렌더링 실패', e);
-  }
-}
-
-async function handleSearch(values) {
-  filterValues.value = values;
-  await renderCharts();
-}
-
-// 엑셀 다운로드
-async function handleDownload() {
-  try {
-    const normalized = normalizeFilterParams(filterValues.value);
-    const blob = await downloadRetentionPredictionExcel(normalized);
-    const url = window.URL.createObjectURL(new Blob([blob]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `retention-prediction-${new Date().toISOString().slice(0, 10)}.xlsx`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error('엑셀 다운로드 실패', err);
-    alert('엑셀 다운로드 실패');
-  }
-}
-
-// 초기화
-onMounted(async () => {
-  const deptRes = await getDepartments();
-  departmentTree.value = deptRes.data?.departmentInfoDTOList || [];
-  positionList.value = await getPositions();
-  initFilters();
-  await renderCharts();
-
-  window.addEventListener('resize', () => {
-    if (chartRefs.donut) chartRefs.donut.resize();
-    if (chartRefs.monthly) chartRefs.monthly.resize();
-  });
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener('resize', handleResize);
-});
 </script>
 
 <style scoped>
-.chart-row {
-  padding: 0 40px;
+.content {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 32px;
-  margin-bottom: 32px;
+  grid-template-columns: 1fr 2fr; /* 왼쪽은 좁게, 오른쪽은 넓게 */
+  gap: 2rem;
+  padding: 0 40px;
 }
+
+.narrow {
+  grid-column: 1;
+}
+
+.wide {
+  grid-column: 2;
+}
+
 </style>

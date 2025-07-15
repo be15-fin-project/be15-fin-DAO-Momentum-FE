@@ -2,29 +2,54 @@
   <div class="card leave-info">
     <div class="side-section-title">
       <span class="material-icons" style="color:var(--warning);">beach_access</span>
-      잔여 연차
+      잔여 휴가
     </div>
-    <p><strong>남은 일수:</strong>
-      <span class="remaining-days">{{ remainingDays }}일</span>
+    <p><strong>잔여 연차: </strong>
+      <span class="remaining-days">{{ remainDayOff }}</span>
+    </p>
+    <p><strong>잔여 리프레시 휴가: </strong>
+      <span class="remaining-days">{{ remainRefresh }}</span>
     </p>
 
-    <div class="leave-subtitle">이번달 연차/외근 일정</div>
-    <ul class="leave-list">
-      <li v-for="(item, idx) in vacations" :key="idx">
-        {{ item.date }} - <span :style="item.colorStyle">{{ item.label }}</span>
-      </li>
-    </ul>
+<!--    <div class="leave-subtitle">이번달 휴가/출장 일정</div>-->
+<!--    <ul class="leave-list">-->
+<!--      <li v-for="(item, idx) in vacations" :key="idx">-->
+<!--        {{ item.date }} - <span :style="item.colorStyle">{{ item.label }}</span>-->
+<!--      </li>-->
+<!--    </ul>-->
   </div>
 </template>
 
 <script setup>
+import {onMounted, ref} from "vue";
+import {getRemainDayOff, getRemainRefresh} from "@/features/approvals/api.js";
+
+/* 잔여 휴가 수 */
+const remainDayOff = ref(null);
+const remainRefresh = ref(null);
+
 defineProps({
-  remainingDays: Number,
   vacations: {
     type: Array,
     default: () => []
   }
 })
+
+/* 잔여 연차를 가져오는 함수 */
+async function fetchRemainingVacation() {
+  try {
+    const dayOff = await getRemainDayOff();
+    const refresh = await getRemainRefresh();
+
+    remainDayOff.value = dayOff.data.data.remainingDayoffHours/8 + '일';
+    remainRefresh.value = refresh.data.data.remainingRefreshDays + '일';
+
+  } catch (err) {
+    console.error("잔여 연차 불러오기 실패:", err);
+  }
+}
+
+onMounted(fetchRemainingVacation);
 </script>
 
 <style scoped>

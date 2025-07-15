@@ -26,6 +26,9 @@
               :field="field"
               :model="form"
               :readonly="readonly"
+              :setFieldRef="setFieldRef"
+              :ref="field.key === 'reason' ? 'reasonInput' : null"
+              @file-change="handleFileChange"
           />
         </FormSection>
 
@@ -83,9 +86,27 @@
 import FormSection from '@/components/common/form/FormSection.vue';
 import FieldRenderer from '@/components/common/form/FieldRenderer.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
-import { watch, onMounted, ref } from 'vue';
+import { watch, onMounted, onUnmounted, ref } from 'vue';
 
 const initialized = ref(false);
+const fieldRefs = ref({})
+function setFieldRef(key, el) {
+  console.log('[ref 등록됨]', key, el)
+  if (el) fieldRefs.value[key] = el
+}
+defineExpose({ fieldRefs })
+function scrollToLikert(value) {
+  const match = props.sections
+      .flatMap(section => section.fields)
+      .find(field => field.type === 'likert' && (field.value === value || form[field.key] === value));
+
+  if (match && fieldRefs.value[match.key]) {
+    fieldRefs.value[match.key].$el?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center'
+    });
+  }
+}
 
 const props = defineProps({
   visible: Boolean,
@@ -108,29 +129,47 @@ const props = defineProps({
 });
 
 const form = defineModel('form');
-const emit = defineEmits(['close', 'reject', 'submit', 'update:visible']);
+const emit = defineEmits(['close', 'reject', 'submit', 'cancel', 'edit', 'update:visible', 'file-change']);
 
 function onClose() {
   emit('update:visible', false);
   emit('close');
 }
 
+function handleFileChange(file) {
+  console.log('SideModal: file-change event, file:', file);
+  emit('file-change', file); // 외부 부모 컴포넌트로 이벤트 전달
+}
+
 watch(
     () => props.sections,
     (newSections) => {
-      if (!initialized.value && newSections?.length && form) {
+      if (newSections?.length && form) {
         newSections.forEach((section) => {
           section.fields?.forEach((field) => {
-            if (!(field.key in form)) {
-              form[field.key] = field.value ?? '';
-            }
+            form[field.key] = field.value ?? '';
           });
         });
-        initialized.value = true;
       }
     },
     { immediate: true }
 );
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeydown);
+});
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeydown);
+});
+
+function handleKeydown(e) {
+  if (!props.visible) return;
+  const n = parseInt(e.key);
+  if (n >= 1 && n <= 7) {
+    scrollToLikert(n);
+  }
+}
+
 </script>
 
 <style scoped>
@@ -158,7 +197,7 @@ watch(
   position: fixed;
   top: 0;
   right: 0;
-  height: 100vh;
+  height: 100%;
   width: 40rem;
   max-width: 100%;
   background: var(--color-surface);

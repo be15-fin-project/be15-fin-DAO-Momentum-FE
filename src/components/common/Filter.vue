@@ -16,6 +16,7 @@
         class="filter-box"
         v-for="(filter, index) in filters"
         :key="index"
+        :class="[filter.class, `filter-${filter.key}`]"
     >
       <button class="filter-btn" @click.stop="toggleDropdown(index)">
         <i :class="['fas', filter.icon, 'icon']"></i>
@@ -86,7 +87,33 @@
             {{ typeof option === 'object' ? option.label : option }}
           </button>
         </template>
+        <template v-if="filter.type === 'yearmonth'">
+          <div class="yearmonth-picker">
+            <select
+                v-model="localValues[filter.key + '_year']"
+                class="filter-input"
+                @change="emitChange"
+            >
+              <option v-for="option in yearOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </option>
+            </select>
 
+            <select
+                v-model="localValues[filter.key + '_month']"
+                class="filter-input"
+                @change="emitChange"
+            >
+              <option
+                  v-for="option in monthOptions"
+                  :key="option.value"
+                  :value="option.value"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </div>
+        </template>
 
       </div>
     </div>
@@ -110,7 +137,11 @@ const props = defineProps({
   filters: Array,
   tabs: Array,
   modelValue: Object,
-});
+  preserveKeys: {
+    type: Array,
+    default: () => []
+  }
+})
 const emit = defineEmits(['update:modelValue', 'search']);
 
 const localValues = ref({});
@@ -122,6 +153,23 @@ watch(
     { immediate: true } // mount 시에도 바로 초기값 반영
 );
 const activeDropdown = ref(null);
+
+const currentYear = new Date().getFullYear();
+const yearOptions = [
+  { label: '전체', value: '' },
+  ...Array.from({ length: 10 }, (_, i) => {
+    const year = currentYear - i;
+    return { label: `${year}`, value: year };
+  })
+];
+const monthOptions = [
+  { label: '전체', value: '' },
+  ...Array.from({ length: 12 }, (_, i) => {
+    const month = String(i + 1).padStart(2, '0');
+    return { label: month, value: month };
+  })
+];
+
 
 function toggleDropdown(index) {
   activeDropdown.value = activeDropdown.value === index ? null : index;
@@ -187,12 +235,24 @@ function handleResetClick() {
     });
   }
 
-  // 초기화하면서 탭 값은 유지
-  localValues.value = { ...preservedTabValues };
+  // 필터 유지 값 처리 (이게 빠졌던 부분)
+  const preservedFilterValues = {};
+  props.preserveKeys.forEach(key => {
+    if (key in localValues.value) {
+      preservedFilterValues[key] = localValues.value[key];
+    }
+  });
+
+  // 초기화하면서 탭/필터 값은 유지
+  localValues.value = {
+    ...preservedTabValues,
+    ...preservedFilterValues
+  };
 
   emit('update:modelValue', { ...localValues.value });
   emit('search', { ...localValues.value });
 }
+
 
 
 onMounted(() => {
@@ -360,6 +420,17 @@ onUnmounted(() => {
     flex-direction: column;
     align-items: stretch;
   }
+}
+
+.yearmonth-picker {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+/* 회차 필터 드롭다운만 넓게 */
+.filter-roundId .dropdown {
+  min-width: 200px; /* 기본은 160px이었음 */
 }
 
 </style>

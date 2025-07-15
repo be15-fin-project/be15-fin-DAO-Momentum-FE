@@ -9,12 +9,17 @@ import {employeeRoutes} from "@/features/employee/router.js";
 import {useAuthStore} from "@/stores/auth.js";
 import {companyRoutes} from "@/features/company/router.js";
 import {myPageRoutes} from "@/features/mypage/router.js";
+import {announcementRoutes} from "@/features/announcement/router.js";
+import {settingsRoutes} from "@/features/settings/router.js";
 
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        //나중에 다른 기능과 관련된 routes들을 추가하면 된다.
         {
+            path: '/',
+            redirect: '/mypage/dashboard'
+        },
+        {        
             path: '/',
             component: LayoutDefault,
             children: [
@@ -24,7 +29,10 @@ const router = createRouter({
                 ...companyRoutes,
                 ...employeeRoutes,
                 ...myPageRoutes,
-                ...retentionRoutes
+                ...retentionRoutes,
+                ...myPageRoutes,
+                ...announcementRoutes,
+                ...settingsRoutes
             ]
         },
         ...commonRoutes
@@ -35,7 +43,7 @@ const router = createRouter({
 //권한 없어도 되는 페이지들
 router.beforeEach((to, from, next) => {
     const authStore = useAuthStore()
-    const publicPages = ['/login', '/register', '/password/reset']
+    const publicPages = ['/login', '/forgot-password', '/password/reset','/password/init']
 
     const requiresAuth = !publicPages.includes(to.path)
 

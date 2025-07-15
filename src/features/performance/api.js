@@ -5,6 +5,12 @@ import api from '@/api/axios.js';
 // KPI 대시보드 API
 // ==================================================
 
+// KPI 대시보드 내 KPI 내역 조회
+export async function getMyKpiDashboard(params) {
+    const res = await api.get('/kpi/dashboard', { params });
+    return res.data.data;
+}
+
 // KPI 통계 조회
 export async function getKpiStatistics(params) {
     const res = await api.get('/kpi/statistics', { params });
@@ -76,6 +82,12 @@ export async function createMyKpi(payload) {
 // KPI 진척도 최신화
 export async function updateKpiProgress(kpiId, payload) {
     const res = await api.patch(`/kpi/${kpiId}/progress`, payload);
+    return res.data;
+}
+
+// KPI 회수
+export async function withdrawKpi(kpiId) {
+    const res = await api.delete(`/kpi/${kpiId}/withdraw`);
     return res.data;
 }
 

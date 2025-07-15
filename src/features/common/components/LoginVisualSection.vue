@@ -10,39 +10,39 @@
     <div class="login-visual-inner">
       <div class="login-visual-logo">
         <div class="login-visual-logo-circle">
-          <i class="fas fa-users"></i>
+          <i class="fas fa-robot"></i>
         </div>
         <div>
           <div class="login-visual-title">
-            사람이 중심인<br />
-            <span class="login-highlight">스마트 인사관리</span>
+            테크놀로지(주)<br />
           </div>
           <div class="login-visual-desc">
-            효율적인 인사관리로<br />더 나은 미래를 만들어갑니다
+            빠르게 변화하는 IT 산업 속에서<br />
+            효율적인 인사운영을 실현합니다
           </div>
         </div>
       </div>
 
       <div class="login-features-list">
         <div class="login-feature-card">
-          <i class="fas fa-chart-line"></i>
+          <i class="fas fa-microchip"></i>
           <div>
-            <div class="login-feature-title">성과 평가</div>
-            <div class="login-feature-desc">KPI 관리 및 다면평가</div>
+            <div class="login-feature-title">AI 기반 IT 솔루션</div>
+            <div class="login-feature-desc">AI와 자동화를 활용한 맞춤형 시스템 개발</div>
           </div>
         </div>
         <div class="login-feature-card">
-          <i class="fas fa-clock"></i>
+          <i class="fas fa-network-wired"></i>
           <div>
-            <div class="login-feature-title">근태 관리</div>
-            <div class="login-feature-desc">출퇴근 및 휴가 관리</div>
+            <div class="login-feature-title">산업별 데이터 서비스</div>
+            <div class="login-feature-desc">제조, 유통, 공공 부문을 아우르는 데이터 전략</div>
           </div>
         </div>
         <div class="login-feature-card">
-          <i class="fas fa-file-signature"></i>
+          <i class="fas fa-users"></i>
           <div>
-            <div class="login-feature-title">전자 결재</div>
-            <div class="login-feature-desc">업무 효율성 극대화</div>
+            <div class="login-feature-title">사람 중심의 조직문화</div>
+            <div class="login-feature-desc">스마트 인사관리로 협업과 성과를 높이다</div>
           </div>
         </div>
       </div>

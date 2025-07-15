@@ -6,7 +6,7 @@
 
     <template v-if="field.type === 'scoreChart'">
       <ScoreBarChart
-          :scores="field.value"
+          v-model="field.value"
           :editable="!readonly && field.editable"
       />
     </template>
@@ -25,6 +25,7 @@
 
     <LikertScale
         v-else-if="field.type === 'likert'"
+        ref="likertEl"
         v-model="field.value"
         labelClass="text-lg text-blue-600 mb-2"
         :min="field.min ?? 1"
@@ -33,44 +34,49 @@
         :readonly="readonly || !field.editable"
     />
 
+
     <RadarChart
         v-if="field.type === 'radarChart'"
         :labels="field.value.labels"
         :values="field.value.scores"
         :editable="isEditMode"
+        :readonly="readonly"
+        :showTooltip="field.showTooltip ?? false"
     />
 
-    <template v-if="field.type === 'progressTimeline'">
-      <ProgressTimeline
-          v-if="!readonly && field.editable"
-          :kpiProgress="model[field.key]?.kpiProgress"
-          v-model:progress25="model[field.key].progress25"
-          v-model:progress50="model[field.key].progress50"
-          v-model:progress75="model[field.key].progress75"
-          v-model:progress100="model[field.key].progress100"
-          :editable="true"
-      />
-      <ProgressTimeline
-          v-else
-          :kpiProgress="field.value?.kpiProgress"
-          :progress25="field.value?.progress25"
-          :progress50="field.value?.progress50"
-          :progress75="field.value?.progress75"
-          :progress100="field.value?.progress100"
-          :editable="false"
-      />
-    </template>
+    <MemberPickerField
+        v-else-if="field.type === 'memberPicker'"
+        v-model="model[field.key]"
+        :field="field"
+        :readonly="readonly"
+    />
 
+    <RetentionScoreCard
+        v-else-if="field.type === 'retentionCard'"
+        :retentionScore="field.value.retentionScore"
+        :retentionGrade="field.value.retentionGrade"
+        :stabilityType="field.value.stabilityType"
+        :factorGrades="field.value.factorGrades"
+    />
 
+    <FormNotice
+        v-else-if="field.type === 'notice'"
+        :content="field.value"
+    />
+
+    <ProgressTimeline
+        v-if="field.type === 'progressTimeline'"
+        v-model="model[field.key]"
+        :kpiProgress="model.kpiProgress"
+        :editable="!readonly && field.editable"
+    />
 
     <!-- 읽기 전용 -->
     <div
-        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart'].includes(field.type)"
+        v-else-if="(readonly || !field.editable) && !['sliderGroup', 'likert', 'radarChart', 'progressTimeline', 'scoreChart', 'memberPicker', 'notice', 'retentionCard'].includes(field.type)"
         class="form-input readonly"
         v-html="field.type === 'html' ? field.value : (field.value ?? model[field.key] ?? '')"
     />
-
-
 
     <!-- 입력 가능 -->
     <template v-else>
@@ -82,7 +88,7 @@
           :placeholder="field.placeholder || field.label"
       />
       <template v-if="field.type === 'html'">
-        <div class="html-field" v-html="field.value" />
+        <div class="html-field" v-html="field.value"/>
       </template>
       <input
           v-else-if="field.type === 'number'"
@@ -100,38 +106,106 @@
           class="form-input"
           v-model="model[field.key]"
       />
+      <!-- file -->
+      <div v-else-if="field.type === 'file'" class="form-input file-upload">
+        <label for="file-input" class="file-label">
+          <input
+              id="file-input"
+              type="file"
+              @change="onFileChange"
+          />
+        </label>
+      </div>
       <textarea
           v-else-if="field.type === 'textarea'"
           class="form-textarea"
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
+          :ref="field.key === 'reason' ? 'reasonInput' : null"
       />
-      <select
+      <template v-else-if="field.type === 'checkbox-group'">
+        <div v-if="field.style === 'permission'" class="permission-group">
+          <div
+              v-for="opt in field.options"
+              :key="opt.value"
+              class="permission-card"
+              :class="opt.value.toLowerCase()"
+          >
+            <div class="card-header">
+              <div class="card-icon">
+                <i :class="getRoleIcon(opt.value) + ' icon'"></i>
+              </div>
+              <div class="card-info">
+                <h4 class="card-title">{{ opt.label }}</h4>
+                <p class="card-desc">{{ getRoleDescription(opt.value) }}</p>
+              </div>
+            </div>
+            <label class="toggle-switch">
+              <input
+                  type="checkbox"
+                  :value="opt.value"
+                  :checked="model[field.key]?.includes(opt.value)"
+                  :disabled="readonly || !field.editable"
+                  @change="onCheckboxChange($event, opt.value)"
+              />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </template>
+      <div
           v-else-if="field.type === 'select'"
-          class="form-select"
-          v-model="model[field.key]"
+          class="form-select custom-dropdown"
+          @click.stop="toggleDropdown(field.key)"
+          tabindex="0"
       >
-        <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
-          {{ opt.label }}
-        </option>
-      </select>
+        <div class="selected-option">
+          {{ selectedOptionLabel(field.key) }}
+          <i class="fas fa-chevron-down icon"></i>
+        </div>
+
+        <div v-if="openDropdown === field.key" class="dropdown">
+          <div
+              v-for="opt in field.options"
+              :key="opt.value"
+              :class="{ active: String(model[field.key]) === String(opt.value) }"
+              @click.stop="selectOption(field.key, opt.value)"
+              class="dropdown-item"
+          >
+            {{ opt.label }}
+          </div>
+        </div>
+      </div>
+      <DeptList
+          v-else-if="field.type === 'deptList'"
+          :list="field.list"
+          v-model="model[field.key]"
+      />
     </template>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import {computed, ref, onMounted, onBeforeUnmount} from 'vue';
 import SliderGroup from "@/components/common/form/SliderGroup.vue";
 import LikertScale from "@/components/common/form/LikertScale.vue";
 import RadarChart from "@/components/common/form/RadarChart.vue";
 import ProgressTimeline from "@/components/common/form/ProgressTimeline.vue";
 import ScoreBarChart from "@/components/common/form/ScoreBarChart.vue";
+import MemberPickerField from "@/components/common/form/MemberPickerField.vue";
+import DeptList from "@/components/common/form/DeptList.vue";
+import RetentionScoreCard from "@/components/common/form/RetentionScoreCard.vue";
+import FormNotice from "@/components/common/form/FormNotice.vue";
+const reasonInput = ref(null);
 
 const props = defineProps({
   field: Object,
   model: Object,
-  readonly: Boolean
+  readonly: Boolean,
+  setFieldRef: Function
 });
+
+const emit = defineEmits(['update:model', 'file-change']);
 
 // null, undefined, 빈 문자열일 때 대체 표시값
 const displayValue = computed(() => {
@@ -151,11 +225,104 @@ const onPositiveIntegerInput = (key) => {
   // model[key] = cleaned !== '' ? parseInt(cleaned, 10) : '';
 };
 
+const onFileChange = (e) => {
+  const file = e.target.files[0];
+  console.log('FieldRenderer: selected file:', file);
+  if (!file) return;
+  emit('file-change', { fieldKey: props.field.key, file });
+};
+
 const scoreWidth = computed(() => {
   const raw = props.field.value ?? props.model?.[props.field.key];
   const num = parseInt(raw);
   return isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
 });
+
+function getValueByPath(obj, path) {
+  return path.split('.').reduce((o, k) => o?.[k], obj);
+}
+function setValueByPath(obj, path, value) {
+  const keys = path.split('.');
+  const lastKey = keys.pop();
+  const target = keys.reduce((o, k) => o[k] ??= {}, obj);
+  target[lastKey] = value;
+}
+
+function getRoleIcon(role) {
+  switch (role) {
+    case 'MASTER':
+      return 'fas fa-crown';
+    case 'HR_MANAGER':
+      return 'fas fa-users';
+    case 'BOOKKEEPING':
+      return 'fas fa-calculator';
+    case 'MANAGER':
+      return 'fas fa-user-tie';
+    default:
+      return 'fas fa-user';
+  }
+}
+
+function getRoleDescription(role) {
+  const map = {
+    MASTER: '시스템 전체 권한 관리',
+    HR_MANAGER: '인사 정보 열람 및 관리',
+    BOOKKEEPING: '재무 출력 등록 및 조회',
+    MANAGER: '팀 관리 및 승인 권한',
+  };
+  return map[role] ?? '';
+}
+
+function onCheckboxChange(e, value) {
+  const arr = Array.isArray(model[field.key]) ? model[field.key] : [];
+
+  if (e.target.checked) {
+    if (!arr.includes(value)) arr.push(value);
+  } else {
+    const index = arr.indexOf(value);
+    if (index > -1) arr.splice(index, 1);
+  }
+
+  model[field.key] = [...arr]; // 새 배열 대입하여 반응성 보장
+  emit('update:model', { ...model });
+}
+const likertEl = ref(null);
+
+onMounted(() => {
+  if (props.field.type === 'likert' && props.setFieldRef) {
+    props.setFieldRef(props.field.key, likertEl.value);
+  }
+
+  if (props.field.key === 'reason' && props.setFieldRef) {
+    props.setFieldRef('reasonInput', reasonInput.value);
+  }
+});
+
+const openDropdown = ref(null);
+
+function toggleDropdown(key) {
+  openDropdown.value = openDropdown.value === key ? null : key;
+}
+
+function selectOption(key, value) {
+  props.model[key] = value;
+  openDropdown.value = null;
+}
+
+function selectedOptionLabel(key) {
+  const value = props.model[key];
+  const option = props.field.options?.find(opt => String(opt.value) === String(value));
+  return option?.label || '선택';
+}
+
+// 외부 클릭 시 닫기
+function handleClickOutside(e) {
+  if (!e.target.closest('.custom-dropdown')) {
+    openDropdown.value = null;
+  }
+}
+onMounted(() => document.addEventListener('click', handleClickOutside));
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside));
 </script>
 
 <style scoped>
@@ -213,6 +380,7 @@ const scoreWidth = computed(() => {
   color: var(--gray-400);
   font-style: italic;
 }
+
 .score-bar-wrapper {
   background: var(--color-muted-light);
   border-radius: var(--radius-ss);
@@ -237,6 +405,7 @@ const scoreWidth = computed(() => {
   position: relative;
   z-index: 2;
 }
+
 .html-field {
   padding: 8px 12px;
   background: #f9f9f9;
@@ -244,4 +413,162 @@ const scoreWidth = computed(() => {
   font-size: 14px;
 }
 
+.tree-trigger {
+  /* form-select 스타일을 그대로 물려받고… */
+  width: 100%; /* 칸 전체 너비 채우기 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  cursor: pointer;
+}
+
+.tree-dropdown {
+  width: 100%;
+}
+
+/* 체크박스 그룹 스타일 */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type='checkbox'] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.permission-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px; /* 카드 간 간격 */
+}
+
+.permission-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid var(--color-muted);
+  border-radius: 8px;
+  background-color: #fff;
+
+  width: calc(50% - 6px); /* 2열 배치, 좌우 간격 고려 */
+  box-sizing: border-box;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-icon {
+  font-size: 20px;
+  color: var(--purple-500);
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 42px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  display: none;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 24px;
+}
+
+.toggle-slider::before {
+  position: absolute;
+  content: "";
+  height: 18px; width: 18px;
+  left: 3px; bottom: 3px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--purple-500);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+}
+
+.custom-dropdown {
+  position: relative;
+  cursor: pointer;
+  padding: 14px 16px;
+  border: 2px solid var(--color-muted);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  background: var(--color-surface);
+  color: var(--color-text-main);
+}
+
+.custom-dropdown:focus,
+.custom-dropdown:focus-within {
+  outline: none;
+  border-color: var(--purple-50);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.selected-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--dropdown-shadow);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--color-text-sub);
+}
+
+.dropdown-item.active {
+  background-color: var(--blue-100);
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+.dropdown-item:hover {
+  background-color: var(--gray-100);
+}
 </style>

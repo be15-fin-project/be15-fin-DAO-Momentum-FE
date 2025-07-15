@@ -1,38 +1,192 @@
 <script setup>
+import { getFileUrl } from "@/features/common/api.js";
+import {ref, onMounted, watch} from "vue";
+import {generatePresignedUrl} from "@/features/announcement/api.js";
+import dayjs from "dayjs";
+import {useToast} from "vue-toastification";
+
+/* 부모에게 받아온 데이터 */
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: true },
   approveFileDTO: { type: Array, default: () => [] }
 });
 
-// 이미지 확장자 판별
-const isImage = (fileName) => {
-  return /\.(jpg|jpeg|png|gif|bmp|webp)$/i.test(fileName);
-};
+const toast = useToast();
+
+/* 에러 메세지 */
+const errors = ref({
+  reason: ''
+});
+
+/* 파일과 관련된 변수들 */
+const file = ref(null);
+const signedUrl = ref(null);
+const fileName = ref(null);
+const uploadedFile = ref(null);
+
+/* 파일 url 가져오기 */
+async function fetchProposalFile() {
+  if (!props.isReadOnly || props.approveFileDTO.length === 0) return;
+
+  file.value = props.approveFileDTO[0];
+  console.log(file.value.fileName)
+
+  try {
+    const resp = await getFileUrl({
+      key: file.value.s3Key,
+      fileName: file.value.name
+    });
+
+    signedUrl.value = resp.data.data.signedUrl;
+    fileName.value = resp.data.data.fileName;
+
+  } catch (err) {
+    console.error("파일 서명 URL 불러오기 실패:", err);
+    signedUrl.value = null;
+  }
+}
+
+/* 파일 다운하기  */
+async function handleFileClick() {
+  if (!signedUrl.value || !file.value) return;
+
+  try {
+    const response = await fetch(signedUrl.value);
+    const blob = await response.blob();
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = fileName.value;
+
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("파일 다운로드 실패:", err);
+    toast.error('파일 다운로드 중 오류가 발생했습니다.');
+  }
+}
+
+/* 파일 업로드 하기 */
+async function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  uploadedFile.value = file;
+
+  /* 업로드용 presigned url 요청 */
+  try {
+    const res = await generatePresignedUrl({
+      fileName: file.name,
+      contentType: file.type,
+      prefixType: 'approve'
+    });
+
+    const { presignedUrl, s3Key } = res.data.data;
+
+    /* S3 업로드 */
+    await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type
+      },
+      body: file
+    });
+
+    /* 첨부파일 정보 저장 */
+    props.formData.attachments = [{
+      name: file.name,
+      s3Key,
+      type: file.type.split('/')[1] || ''
+    }];
+
+  } catch (err) {
+    console.error("파일 업로드 실패:", err);
+    toast.error('파일 업로드 중 오류가 발생했습니다.');
+  }
+}
+
+/* 파일 삭제하기 */
+function removeFile() {
+  uploadedFile.value = null;
+  props.formData.file = null;
+}
+
+/* 시간과 관련된 validation */
+function validateReason() {
+  errors.value = {
+    reason: ''
+  };
+
+  const content = props.formData.content?.trim();
+
+  if (!content) {
+    errors.value.reason = '※ 품의서 내용 작성은 필수입니다.';
+    return false;
+  }
+
+  errors.value.reason = '';
+
+  return true;
+}
+
+watch(
+  [
+    () => props.formData.content
+  ], () => {
+    validateReason();}
+  , { immediate: true }
+);
+
+onMounted(() => {
+  fetchProposalFile();
+  validateReason();
+});
 </script>
 
 <template>
   <div class="form-section">
     <div class="form-grid">
-      <!-- 품의 내역 -->
+      <!-- 1. 첨부파일 -->
       <div class="form-group full-width">
-        <label class="form-label required">품의 내역</label>
-        <div class="readonly-box">
-          {{ formData.content || '내용 없음' }}
+        <label class="form-label">첨부파일</label>
+        <div class="readonly-box" v-if="file && signedUrl && isReadOnly">
+          <span class="file-link" @click="handleFileClick">
+            <i class="fas fa-download file-icon"></i>
+              {{ fileName }}
+          </span>
+        </div>
+        <div class="readonly-box" v-if="isReadOnly && !signedUrl && !file">첨부파일 없음</div>
+
+        <div v-if="!isReadOnly" class="upload-wrapper">
+          <label class="upload-box">
+            <i class="fas fa-upload file-icon"></i>
+            <span class="upload-text">
+              {{ uploadedFile ? uploadedFile.name : '파일을 선택하거나 클릭하세요' }}
+            </span>
+            <input type="file" @change="handleFileUpload" accept="*/*" hidden />
+          </label>
+
+          <div v-if="uploadedFile" class="file-preview">
+            <i class="fas fa-paperclip file-icon"></i>
+            {{ uploadedFile.name }}
+            <i class="fas fa-times remove-icon" @click="removeFile"></i>
+          </div>
         </div>
       </div>
 
-      <!-- 첨부파일 영역 -->
+      <!-- 2. 품의 내역 -->
       <div class="form-group full-width">
-        <label class="form-label">첨부파일</label>
-        <ul class="file-list readonly-box">
-          <li v-for="file in approveFileDTO" :key="file.id" class="file-item">
-            <a :href="file.url" download target="_blank">{{ file.originalFileName }}</a>
-            <div v-if="isImage(file.originalFileName)">
-              <img :src="file.url" class="image-preview" alt="preview" />
-            </div>
-          </li>
-        </ul>
+        <label class="form-label required">품의 내역<span v-if="!isReadOnly" class="asterisk"> *</span></label>
+        <div v-if="isReadOnly" class="readonly-box">
+          {{ formData.content || "내용 없음" }}
+        </div>
+        <textarea v-else v-model="formData.content" class="form-textarea" required/>
+        <p v-if="errors.reason && !isReadOnly" class="warning-text">{{ errors.reason }}</p>
       </div>
     </div>
   </div>
@@ -60,42 +214,96 @@ const isImage = (fileName) => {
 .form-label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--gray-700);
   margin-bottom: 8px;
 }
 
 .readonly-box {
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--gray-200);
   border-radius: 10px;
   font-size: 0.95rem;
-  color: #1f2937;
+  color: var(--gray-800);
   min-height: 54px;
   white-space: pre-wrap;
 }
 
-.file-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.file-link {
+  cursor: pointer;
 }
 
-.file-item {
-  margin-bottom: 12px;
+.file-icon {
+  margin-right: 5px;
+  color: var(--blue-100);
 }
 
-.file-item a {
-  font-size: 0.95rem;
-  color: #2563eb;
-  text-decoration: underline;
-  margin-right: 8px;
+.upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.image-preview {
+.upload-box {
+  border: 2px dashed var(--gray-200);
+  border-radius: 10px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.3s ease, background-color 0.2s ease;
+  background-color: #f9fafb;
+}
+
+.upload-box i {
+  font-size: 1.5rem;
+  color: var(--blue-100);
+  margin-bottom: 8px;
   display: block;
-  max-width: 300px;
-  margin-top: 8px;
-  border-radius: 6px;
-  border: 1px solid #e5e7eb;
+}
+
+.upload-text {
+  font-size: 0.95rem;
+  color: var(--gray-600);
+}
+
+.file-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  color: var(--gray-800);
+}
+
+.form-textarea {
+  padding: 14px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: 10px;
+  font-size: 0.95rem;
+  background: var(--color-surface);
+  color: var(--gray-800);
+  font-family: inherit;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 500px;
+}
+
+.asterisk {
+  color: var(--error);
+  margin-left: 4px;
+}
+
+.warning-text {
+  margin-top: 5px;
+  color: var(--error-500);
+  font-size: 0.9rem;
+  grid-column: 1 / -1;
 }
 </style>

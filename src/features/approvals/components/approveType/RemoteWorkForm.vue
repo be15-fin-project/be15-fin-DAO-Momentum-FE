@@ -1,18 +1,52 @@
 <script setup>
-import { computed } from 'vue';
+import {computed, onMounted, ref, watch} from 'vue';
 
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: false }
 });
 
-const isInvalidDateRange = computed(() => {
-  return (
+/* 유효성 검사 메세지 */
+const errors = ref({
+  startDate: '',
+  endDate: '',
+});
+
+/* 유효성 검사 함수 */
+function validateForm() {
+  errors.value = {
+    startDate: '',
+    endDate: '',
+  };
+
+  if (!props.formData.startDate) {
+    errors.value.startDate = '※ 시작일은 필수입니다.';
+  }
+
+  if (!props.formData.endDate) {
+    errors.value.endDate = '※ 종료일은 필수입니다.';
+  }
+
+  if (
     props.formData.startDate &&
     props.formData.endDate &&
     props.formData.endDate < props.formData.startDate
-  );
-});
+  ) {
+    errors.value.endDate = '종료일은 시작일보다 빠를 수 없습니다.';
+  }
+
+  return Object.values(errors.value).every((e) => !e);
+}
+
+watch(
+  () => [props.formData.startDate, props.formData.endDate, props.formData.reason],
+  () => {
+    validateForm();
+  },
+  { immediate: true }
+);
+
+onMounted(validateForm);
 </script>
 
 <template>
@@ -21,7 +55,7 @@ const isInvalidDateRange = computed(() => {
       <!-- 재택 근무 기간 -->
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label required">시작일</label>
+          <label class="form-label required">시작일<span v-if="!isReadOnly" class="asterisk"> *</span></label>
           <div v-if="isReadOnly" class="readonly-box">
             {{ formData.startDate || '입력 없음' }}
           </div>
@@ -32,10 +66,11 @@ const isInvalidDateRange = computed(() => {
             class="form-input"
             required
           />
+          <p v-if="errors.startDate" class="warning-text">{{ errors.startDate }}</p>
         </div>
 
         <div class="form-group">
-          <label class="form-label required">종료일</label>
+          <label class="form-label required">종료일<span v-if="!isReadOnly" class="asterisk"> *</span></label>
           <div v-if="isReadOnly" class="readonly-box">
             {{ formData.endDate || '입력 없음' }}
           </div>
@@ -46,13 +81,9 @@ const isInvalidDateRange = computed(() => {
             class="form-input"
             required
           />
+          <p v-if="errors.endDate" class="warning-text">{{ errors.endDate }}</p>
         </div>
       </div>
-
-      <!-- 날짜 유효성 메시지 -->
-      <p v-if="isInvalidDateRange && !isReadOnly" class="warning-text">
-        ※ 종료일은 시작일보다 빠를 수 없습니다.
-      </p>
 
       <!-- 사유 -->
       <div class="form-group full-width">
@@ -99,18 +130,18 @@ const isInvalidDateRange = computed(() => {
 .form-label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: #374151;
+  color: var(--gray-700);
   margin-bottom: 8px;
 }
 
 .form-input,
 .form-textarea {
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--gray-200);
   border-radius: 10px;
   font-size: 0.95rem;
-  background: white;
-  color: #1f2937;
+  background: var(--color-surface);
+  color: var(--gray-800);
   font-family: inherit;
 }
 
@@ -122,25 +153,29 @@ const isInvalidDateRange = computed(() => {
 .form-input:focus,
 .form-textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: var(--purple-50);
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
   transform: translateY(-1px);
 }
 
 .warning-text {
-  color: #dc2626;
+  margin-top: 5px;
+  color: var(--error-500);
   font-size: 0.9rem;
-  margin-top: -12px;
-  margin-bottom: 12px;
   grid-column: 1 / -1;
+}
+
+.asterisk {
+  color: var(--error);
+  margin-left: 4px;
 }
 
 .readonly-box {
   padding: 14px 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--gray-200);
   border-radius: 10px;
   font-size: 0.95rem;
-  color: #1f2937;
+  color: var(--gray-800);
   white-space: pre-wrap;
   min-height: 44px;
 }

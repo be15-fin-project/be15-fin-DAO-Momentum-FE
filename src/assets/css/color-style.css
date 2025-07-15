@@ -8,13 +8,15 @@
     --blue-300: #2563eb;
     --blue-400: #628ecb;      /* 진한 강조 컬러 */
     --blue-450: #3b82f6;      /* 버튼/아이콘 등 기본 강조 */
-    --blue-500: #395886;      /* 메인 컬러 */
+    --blue-500: #4a72a6;      /* 메인 컬러 */
     --main-color: #395886;
 
     /* Secondary Colors */
+    --purple-10: #ede9fe; /* 아주 연한 보라색 (배경용) */
     --purple-50: #7f9cf5;
     --purple-100: #6366f1;
     --purple-500: #4338ca;
+    --purple-800: #6b21a8;
     --green-100: #16a34a;
     --green-200: #15803d;
     --green-250: #10b981;
@@ -27,6 +29,7 @@
     --gray-300: #d1d5db;
     --gray-400: #9ca3af;
     --gray-500: #6b7280;      /* 본문 보조 텍스트 */
+    --gray-550: #444;
     --gray-600: #4b5563;
     --gray-700: #374151;      /* 제목 */
     --gray-800: #1F2937;
@@ -108,6 +111,8 @@
     --table-shadow: 0 6px 30px -10px rgba(36,48,71,0.08);
     --chart-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     --tab-shadow: 0 5px 0 rgba(0, 0, 0, 0.05);
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --hover-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 
     /* ───────────── Gradients ───────────── */
     --bg-gradient: linear-gradient(105deg, #e9f1fe 0%, #f8fafc 100%);
@@ -116,7 +121,7 @@
     --gradient-icon: linear-gradient(to right, var(--purple-50), var(--purple-100));
     --gradient-overlay: linear-gradient(135deg, var(--color-overlay), var(--color-overlay-dark));
     --gradient-score-bar: linear-gradient(to right, var(--purple-50), var(--purple-100));
-    --approve-gradient: linear-gradient(to right, #10b981, #059669);
+    --approve-gradient: linear-gradient(to right, var(--green-250), #059669);
     --reject-gradient: linear-gradient(to right, var(--error-500), #dc2626);
     --edit-gradient: linear-gradient(to right, #6366f1, #7c3aed); /* indigo to violet */
 

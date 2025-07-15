@@ -1,5 +1,5 @@
 // useAttendance.js
-import {reactive, ref} from "vue";
+import {computed, reactive, ref} from "vue";
 import {fetchCompanyInfo} from "@/features/company/api.js";
 import {getMyTodaysAttendance} from "@/features/works/api.js";
 import {useToast} from "vue-toastification";
@@ -18,6 +18,10 @@ export function useAttendance() {
     const toast = useToast()
 
     const isLoading = ref(false)
+
+    const workAlreadyEnded = computed(() => {
+        return !!todaysWork.value?.endPushedAt
+    })
 
     const clockInfo = reactive({
         now: null,
@@ -40,7 +44,6 @@ export function useAttendance() {
     async function fetchTodayAttendance() {
         try {
             const resp = await getMyTodaysAttendance()
-            console.log(resp)
             todaysWork.value = resp.attendance
             isAttended.value = !!todaysWork.value
             hasAmHalfDayoff.value = !!resp.amHalfDayoff
@@ -48,8 +51,8 @@ export function useAttendance() {
             hasDayoff.value = !!resp.dayoff
             hasVacation.value = !!resp.vacation
             hasApprovedWork.value = !!resp.approvedWork
-            isWeekend.value = resp.isWeekend
-            isHoliday.value = resp.isHoliday
+            isWeekend.value = resp.weekend
+            isHoliday.value = resp.holiday
         } catch (e) {
             console.error('출근 상태 조회 실패', e)
         }
@@ -117,6 +120,12 @@ export function useAttendance() {
 
             return
         }
+        if (workAlreadyEnded.value) {
+            toast.error("이미 퇴근 등록된 근무일입니다.")
+            isLoading.value = false;
+
+            return
+        }
         startClockUpdater()
         await updateClockInfo(new Date())
         openAttendanceModal()
@@ -176,6 +185,7 @@ export function useAttendance() {
         isLoading,
         showAttendanceModal,
         clockInfo,
+        workAlreadyEnded,
         handleCreateAttendance,
         closeAttendanceModal,
         fetchTodayAttendance,
