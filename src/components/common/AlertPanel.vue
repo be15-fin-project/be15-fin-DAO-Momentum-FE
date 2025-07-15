@@ -30,6 +30,7 @@
       <div class="alert-section" v-for="(alert, idx) in alerts" :key="idx" @click="goTo(alert.url, alert.notificationId)">
         <div class="section-title">
           <div class="notification-dot" v-if="alert.isRead === 'N'"></div>
+          <span>알림</span>
         </div>
         <div class="alert-item">
           <div class="alert-icon blue">
@@ -190,7 +191,7 @@ async function goTo(url, id) {
   display: none;
 }
 .alert-section {
-  padding: 0.25rem 1rem 0.75rem;
+  padding: 1rem;
   border-bottom: 1px solid #e5e7eb;
 }
 .section-title {
@@ -215,15 +216,12 @@ async function goTo(url, id) {
   gap: 0.75rem;
   padding: 0.75rem;
   border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
+  border-radius: 0.5rem;
   background-color: #ffffff;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-  cursor: pointer;
+  transition: background-color 0.2s ease;
 }
 .alert-item:hover {
-  background-color: #f3f4f6;
-  transform: translateY(-1px); /* 살짝 뜨는 효과 */
+  background-color: #f9fafb;
 }
 .alert-icon {
   width: 2rem;
@@ -258,8 +256,6 @@ async function goTo(url, id) {
 .alert-content p {
   font-size: 0.875rem;
   color: #4b5563;
-  line-height: 1.4; /* 가독성을 위한 줄간격 */
-  margin-top: 0.25rem;
 }
 .alert-meta {
   font-size: 0.75rem;
