@@ -14,6 +14,7 @@ const props = defineProps({
   values: Array,
   editable: Boolean,
   readonly: Boolean,
+    showTooltip: { type: Boolean, default: false }
 });
 
 const chartRef = ref();
@@ -85,8 +86,15 @@ function createChart(data) {
           }
         }
       },
+      interaction: {
+        mode: 'nearest',
+        intersect: false
+      },
       plugins: {
-        legend: { display: false }
+        legend: { display: false },
+        tooltip: {
+          enabled: props.showTooltip
+        }
       }
     }
   });
@@ -100,5 +108,8 @@ function createChart(data) {
   height: 300px;
   position: relative;
   margin : 2rem 0;
+}
+canvas {
+  pointer-events: auto;
 }
 </style>

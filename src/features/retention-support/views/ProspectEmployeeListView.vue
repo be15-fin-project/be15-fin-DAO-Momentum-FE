@@ -232,6 +232,7 @@ const openDetail = async (row) => {
             label: '',
             type: 'radarChart',
             editable: false,
+            showTooltip: true,
             value: {
               labels: ['직무', '보상', '관계', '성장', '워라밸', '근속연수'],
               scores: [
