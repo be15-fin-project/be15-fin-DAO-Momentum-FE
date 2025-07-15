@@ -13,6 +13,9 @@ const route = useRoute();
 const authStore = useAuthStore();
 const toast = useToast();
 
+const isSubmitting = ref(false);
+const isAccepting = ref(false);
+
 /* 모달을 위한 변수 */
 const showDeleteConfirmModal = ref(false);
 
@@ -103,7 +106,7 @@ async function handleDelete() {
 
     switch (errorCode) {
       case '30026':
-        toast.error('결재가 시작되어 수정, 회수할 수 없습니다.');
+        toast.error('결재가 시작되어 회수할 수 없습니다.');
         break;
       default:
         toast.error('삭제 중 오류가 발생했습니다.');
@@ -134,6 +137,7 @@ watchEffect(() => {
 /* 승인/반려를 처리하는 api */
 async function handleApprove(isApprove, reason) {
   try {
+    isAccepting.value = true;
     loading.value = true
 
     const payload = {
@@ -149,6 +153,7 @@ async function handleApprove(isApprove, reason) {
     console.error('승인/반려 실패:', err)
   } finally {
     loading.value = false
+    isAccepting.value = false;
   }
 }
 
@@ -219,6 +224,7 @@ onMounted(fetchApproval)
           @reject="(reason) => handleApprove(false, reason)"
           @request-delete="showDeleteConfirmModal = true"
           @edit="handleEdit()"
+          @submit-loading="isSubmitting = $event"
         />
         <ApprovalSideSection
           :approveLineGroupDTO="approval.approveLineGroupDTO"
@@ -246,6 +252,16 @@ onMounted(fetchApproval)
   >
     <p>정말 회수하시겠습니까?</p>
   </CommonModal>
+
+  <div v-if="isSubmitting" class="overlay">
+    <div class="spinner"></div>
+    <p>결재 문서를 제출 중입니다...</p>
+  </div>
+
+  <div v-if="isAccepting" class="overlay">
+    <div class="spinner"></div>
+    <p>결재 진행 중 입니다.</p>
+  </div>
 </template>
 
 <style scoped>
@@ -367,5 +383,35 @@ onMounted(fetchApproval)
 .status-rejected {
   background-color: var(--label-rejected);
   color: var(--text-on-label-rejected);
+}
+
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #ccc;
+  border-top-color: var(--blue-400);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 </style>

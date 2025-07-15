@@ -11,10 +11,12 @@ import ReceiptForm from "@/features/approvals/components/approveType/ReceiptForm
 import ApproveReasonList from "@/features/approvals/components/ApproveReasonList.vue";
 import {submitApproval} from "@/features/approvals/api.js";
 import {useToast} from "vue-toastification";
-import {useRouter} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
+import BaseButton from "@/components/common/BaseButton.vue";
 
 const router = useRouter();
 const toast = useToast();
+const route = useRoute();
 
 const cancelReasonError = ref('');
 
@@ -25,6 +27,13 @@ const rejectError = ref('');
 /* 결재 취소 요청 */
 const showCancelForm = ref(false);
 const showCancelButton = ref(true);
+
+/* 결재 문서 관련 타입 */
+const receivedTypes = approveDTO.receivedType?.split(',') ?? [];
+
+const isWriter = receivedTypes.includes('WRITER'); // 문서를 쓴 사람
+const isApprover = receivedTypes.includes('APPROVAL'); // 결재자
+const isSentView = computed(() => route.query.tab === 'sent')
 
 const cancelForm = ref({
   approveTitle: '결재 취소 요청',
@@ -50,15 +59,17 @@ const {
   isReadOnly: { type: Boolean, default: true },
 });
 
-/* 대기 상태이면서 내가 결재자인 문서인 경우 */
-const canAction = computed(() => {
-  return approveDTO.statusType === 'PENDING' && approveDTO.receivedType === 'APPROVAL';
-})
+/* 보낸 문서 여부 (작성자면 무조건 보낸 문서함) */
+const isSent = computed(() => isWriter)
 
-/* 사원이 직접 작성한 메일인지 확인 */
-const isSent = computed(() => {
-  return approveDTO.receivedType === 'WRITER';
-})
+/* 승인/반려 가능 */
+const canApprove = computed(
+  () => isApprover && approveDTO.statusType === 'PENDING' && !isSentView.value
+)
+
+// 수정/회수/취소 가능
+const canEditOrWithdrawOrCancel = computed(() => isWriter)
+
 
 /* form에 따라서 매핑 하기 */
 const formMap = {
@@ -76,7 +87,7 @@ const selectedFormComponent = computed(() => {
   return formMap[approveDTO.approveType] || null;
 });
 
-const emit = defineEmits(['approve', 'reject', 'request-delete', 'edit']);
+const emit = defineEmits(['approve', 'reject', 'request-delete', 'edit', 'submit-loading']);
 
 /* 결재 문서 반려 하기 */
 function handleReject() {
@@ -105,6 +116,7 @@ async function submitCancelApproval() {
   }
 
   cancelReasonError.value = ''; // 성공 시 초기화
+  emit('submit-loading', true);
 
   const request = {
     parentApproveId: approveDTO.approveId,
@@ -212,7 +224,7 @@ onMounted(() => {
 
       <!-- 5. 승인, 반려 하기 -->
       <div
-        v-if="canAction && isReadOnly"
+        v-if="canApprove && isReadOnly"
         class="approve-action-wrapper"
       >
         <textarea
@@ -223,30 +235,29 @@ onMounted(() => {
         <p v-if="rejectError" class="error-message">{{ rejectError }}</p>
 
         <div class="form-buttons">
-          <button
+          <BaseButton
             type="button"
             class="btn-action btn-submit"
-            @click="$emit('approve', reason)"
             data-v-fb076351 data-v-f51fb21f
+            @click="$emit('approve', reason)"
           >
             승인
-          </button>
-
-          <button
+          </BaseButton>
+          <BaseButton
             type="button"
             class="btn-action btn-reject"
-            @click="handleReject"
             data-v-fb076351 data-v-f51fb21f
+            @click="handleReject"
           >
             반려
-          </button>
+          </BaseButton>
         </div>
       </div>
 
       <!-- 6. 수정, 회수, 취소 버튼 (수정과 회수는 대기 문서인 경우, 취소는 승인/반려 문서인 경우) -->
-      <div v-else-if="isSent" class="approve-action-wrapper">
+      <div v-else-if="isWriter && isSentView" class="approve-action-wrapper">
         <div class="form-buttons">
-          <button
+          <BaseButton
             v-if="approveDTO.statusType === 'PENDING' "
             type="button"
             class="btn-action btn-edit"
@@ -254,8 +265,8 @@ onMounted(() => {
             data-v-fb076351 data-v-f51fb21f
           >
             수정
-          </button>
-          <button
+          </BaseButton>
+          <BaseButton
             v-if="approveDTO.statusType === 'PENDING'"
             type="button"
             class="btn-action btn-reject"
@@ -263,8 +274,8 @@ onMounted(() => {
             data-v-fb076351 data-v-f51fb21f
           >
             회수
-          </button>
-          <button
+          </BaseButton>
+          <BaseButton
             v-if="(approveDTO.statusType === 'ACCEPTED' || approveDTO.statusType === 'REJECTED') && showCancelButton"
             type="button"
             class="btn-action btn-cancel"
@@ -272,7 +283,7 @@ onMounted(() => {
             data-v-fb076351 data-v-f51fb21f
           >
             결재 취소
-          </button>
+          </BaseButton>
         </div>
       </div>
 
@@ -294,14 +305,14 @@ onMounted(() => {
         </div>
 
         <div class="approve-action-wrapper">
-          <button
+          <BaseButton
             type="button"
             class="btn-action btn-edit"
             @click="submitCancelApproval"
             data-v-fb076351 data-v-f51fb21f
           >
             취소 결재 제출
-          </button>
+          </BaseButton>
         </div>
       </div>
     </div>

@@ -33,7 +33,8 @@ oneWeekAgo.setDate(today.getDate() - 14);
 /* 부모에게서 받아온 값*/
 const props = defineProps({
   formData: { type: Object, required: true },
-  isReadOnly: { type: Boolean, default: false }
+  isReadOnly: { type: Boolean, default: false },
+  isEditing: { type: Boolean, default: false }
 })
 
 /* 선택된 근무 항목의 라벨 */
@@ -110,15 +111,37 @@ async function fetchMyWorks() {
 
     workList.value = works;
 
+    // 1. route에 workId 쿼리 파라미터가 있을 경우 
     const passedWorkId = route.query.workId;
-    const found = works.find(w => String(w.workId) === String(passedWorkId));
+    const foundByQuery = works.find(w => String(w.workId) === String(passedWorkId));
 
-    if (found) {
-      selectedWorkId.value = found.workId;
-      updateBeforeTimes(found);
-      fixedDate.value = found.startAt.split('T')[0];
-    } else if (works.length > 0) {
-      selectedWorkId.value = works[0].workId;
+    if (foundByQuery) {
+      selectedWorkId.value = foundByQuery.workId;
+      updateBeforeTimes(foundByQuery);
+      fixedDate.value = foundByQuery.startAt.split('T')[0];
+    }
+
+    // 2. 수정 모드일 경우: beforeStartAt과 beforeEndAt이 일치하는 work 찾기
+    if (!selectedWorkId.value && props.formData.beforeStartAt) {
+      const matched = works.find(w =>
+        w.startAt === props.formData.beforeStartAt &&
+        w.endAt === props.formData.beforeEndAt
+      );
+
+      if (matched) {
+        selectedWorkId.value = matched.workId;
+        fixedDate.value = matched.startAt.split('T')[0];
+      }
+
+      if (props.formData.afterStartAt) {
+        const [date, time] = props.formData.afterStartAt.split('T');
+        fixedDate.value = date;
+        startTime.value = time;
+      }
+
+      if (props.formData.afterEndAt) {
+        endTime.value = props.formData.afterEndAt.split('T')[1];
+      }
     }
 
   } catch (e) {
@@ -188,7 +211,7 @@ onBeforeUnmount(() => {
         <div class="form-group">
           <label class="form-label required">기존 퇴근 일시<span v-if="!isReadOnly"  class="asterisk"> *</span></label>
           <div class="readonly-box">
-            {{ formData.afterEndAt.replace('T', ' ') || '입력 없음' }}
+            {{ formData.beforeEndAt.replace('T', ' ') || '입력 없음' }}
           </div>
         </div>
       </div>

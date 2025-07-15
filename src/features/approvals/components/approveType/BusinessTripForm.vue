@@ -381,7 +381,7 @@ select.form-input {
 
 .form-textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 250px;
 }
 
 .form-input:focus,

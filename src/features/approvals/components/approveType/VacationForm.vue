@@ -154,7 +154,6 @@ async function fetchRemainVacation() {
     const dayOff = await getRemainDayOff();
     const refresh = await getRemainRefresh();
 
-    console.log(dayOff.data.data);
     remainDayOff.value = dayOff.data.data.remainingDayoffHours/8 + '일';
     remainRefresh.value = refresh.data.data.remainingRefreshDays +'일';
 
@@ -169,7 +168,6 @@ async function fetchVacationFile() {
 
   /* 문서는 하나이기 때문에 하나만 가져오게 설정함 */
   file.value = props.approveFileDTO[0];
-  console.log(file.value.fileName)
 
   try {
     const resp = await getFileUrl({
@@ -205,7 +203,6 @@ async function handleFileClick() {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error("파일 다운로드 실패:", err);
     toast.error('파일 다운로드 중 오류가 발생했습니다.');
   }
 }
@@ -274,6 +271,13 @@ const selectedVacationLabel = computed(() => {
 onMounted(() => {
   fetchVacationFile();
   fetchRemainVacation();
+
+  if (props.formData.vacationType && !props.formData.vacationTypeId) {
+    const matched = vacationTypeOptions.find(opt => opt.enum === props.formData.vacationType);
+    if (matched) {
+      props.formData.vacationTypeId = matched.value;
+    }
+  }
 });
 </script>
 
@@ -366,7 +370,7 @@ onMounted(() => {
               {{ fileName }}
           </span>
         </div>
-        <div class="readonly-box" v-if="isReadOnly">첨부파일 없음</div>
+        <div class="readonly-box" v-else-if="isReadOnly">첨부파일 없음</div>
 
         <div v-if="!isReadOnly" class="upload-wrapper">
           <label class="upload-box">
