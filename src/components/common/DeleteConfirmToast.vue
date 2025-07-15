@@ -1,6 +1,6 @@
 <!-- components/toast/DeleteConfirmToast.vue -->
 <script setup>
-const props = defineProps(['toastId', 'resolve']);
+const props = defineProps(['toastId', 'resolve', 'message']);
 import { useToast } from 'vue-toastification';
 const toast = useToast();
 
@@ -12,7 +12,7 @@ const confirm = (result) => {
 
 <template>
   <div class="toast-content">
-    <p class="toast-message">정말 삭제하시겠습니까?</p>
+    <p class="toast-message">{{ props.message || '정말 삭제하시겠습니까?' }}</p>
     <button class="toast-confirm-btn" @click="confirm(true)">
       <i class="fas fa-check"></i>
     </button>

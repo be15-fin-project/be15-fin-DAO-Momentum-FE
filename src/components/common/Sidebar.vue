@@ -383,7 +383,8 @@ const submitAttendance = async () => {
     toast.success('출퇴근 등록 완료')
     closeAttendanceModal()
   } catch (e) {
-    toast.error('출퇴근 처리 실패')
+    const message = e?.response?.data?.message;
+    toast.error(message || '출퇴근 처리 실패')
   } finally {
     isLoading.value = false
   }
