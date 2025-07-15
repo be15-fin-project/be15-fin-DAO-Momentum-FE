@@ -117,8 +117,6 @@ async function fetchMyWorks() {
       selectedWorkId.value = found.workId;
       updateBeforeTimes(found);
       fixedDate.value = found.startAt.split('T')[0];
-    } else if (works.length > 0) {
-      selectedWorkId.value = works[0].workId;
     }
 
   } catch (e) {
@@ -188,7 +186,7 @@ onBeforeUnmount(() => {
         <div class="form-group">
           <label class="form-label required">기존 퇴근 일시<span v-if="!isReadOnly"  class="asterisk"> *</span></label>
           <div class="readonly-box">
-            {{ formData.afterEndAt.replace('T', ' ') || '입력 없음' }}
+            {{ formData.beforeEndAt.replace('T', ' ') || '입력 없음' }}
           </div>
         </div>
       </div>
