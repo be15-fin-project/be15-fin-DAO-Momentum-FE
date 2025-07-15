@@ -21,10 +21,10 @@ export const useNotificationStore = defineStore('notification', () => {
             onClick: async () => {
                 if (notification.isRead === 'N') {
                     notification.isRead = 'Y'
-                    await markAsRead(notification.id)   // toast 알림 클릭 시 읽음 처리 하고 싶었으나 DB 저장보다는 sse 알림 발송이 우선되어야 정합성에 문제가 없다고 판단하여 포기
+                    await markAsRead(notification.id)
                 }
                 if (notification.url) {
-                    window.location.href = notification.url
+                    router.push(notification.url)
                 }
             }
         })
@@ -43,7 +43,7 @@ export const useNotificationStore = defineStore('notification', () => {
         try {
             await notificationApi.patch(`/api/notifications/${id}/read`)
 
-            const target = notifications.value.find(n.notificationId === id)
+            const target = notifications.value.find(n => n.notificationId === id)
             if (target) target.isRead = 'Y'
         } catch (err) {
             console.error(`[알림 ${id} 읽음 처리 실패]`, err)
