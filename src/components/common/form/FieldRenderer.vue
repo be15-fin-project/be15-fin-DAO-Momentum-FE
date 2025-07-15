@@ -25,6 +25,7 @@
 
     <LikertScale
         v-else-if="field.type === 'likert'"
+        ref="likertEl"
         v-model="field.value"
         labelClass="text-lg text-blue-600 mb-2"
         :min="field.min ?? 1"
@@ -33,11 +34,14 @@
         :readonly="readonly || !field.editable"
     />
 
+
     <RadarChart
         v-if="field.type === 'radarChart'"
         :labels="field.value.labels"
         :values="field.value.scores"
         :editable="isEditMode"
+        :readonly="readonly"
+        :showTooltip="field.showTooltip ?? false"
     />
 
     <MemberPickerField
@@ -117,6 +121,7 @@
           class="form-textarea"
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
+          :ref="field.key === 'reason' ? 'reasonInput' : null"
       />
       <template v-else-if="field.type === 'checkbox-group'">
         <div v-if="field.style === 'permission'" class="permission-group">
@@ -167,7 +172,7 @@
 </template>
 
 <script setup>
-import {computed} from 'vue';
+import {computed, ref, onMounted } from 'vue';
 import SliderGroup from "@/components/common/form/SliderGroup.vue";
 import LikertScale from "@/components/common/form/LikertScale.vue";
 import RadarChart from "@/components/common/form/RadarChart.vue";
@@ -177,11 +182,13 @@ import MemberPickerField from "@/components/common/form/MemberPickerField.vue";
 import DeptList from "@/components/common/form/DeptList.vue";
 import RetentionScoreCard from "@/components/common/form/RetentionScoreCard.vue";
 import FormNotice from "@/components/common/form/FormNotice.vue";
+const reasonInput = ref(null);
 
 const props = defineProps({
   field: Object,
   model: Object,
-  readonly: Boolean
+  readonly: Boolean,
+  setFieldRef: Function
 });
 
 const emit = defineEmits(['update:model', 'file-change']);
@@ -265,6 +272,17 @@ function onCheckboxChange(e, value) {
   model[field.key] = [...arr]; // 새 배열 대입하여 반응성 보장
   emit('update:model', { ...model });
 }
+const likertEl = ref(null);
+
+onMounted(() => {
+  if (props.field.type === 'likert' && props.setFieldRef) {
+    props.setFieldRef(props.field.key, likertEl.value);
+  }
+
+  if (props.field.key === 'reason' && props.setFieldRef) {
+    props.setFieldRef('reasonInput', reasonInput.value);
+  }
+});
 
 </script>
 

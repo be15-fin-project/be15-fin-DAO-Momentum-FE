@@ -86,7 +86,9 @@ const monthlyStats = ref([]);
 // ────────── 초기 진입 ──────────
 onMounted(async () => {
   await initFilterOptions();
-  await handleSearch(filterValues.value);
+  if (filterValues.value.roundId != null) {
+    await handleSearch(filterValues.value);
+  }
 });
 
 // ────────── 필터 초기화 ──────────
@@ -140,6 +142,7 @@ async function initFilterOptions() {
 // ────────── 검색 핸들러 ──────────
 async function handleSearch(values) {
   const params = normalizeParams(values);
+  const deptDistParams = { ...params, deptId: null }; // 부서 ID 제거
 
   try {
     const overview = await getRetentionOverview(params);
@@ -150,7 +153,7 @@ async function handleSearch(values) {
     riskRate.value = overview?.stabilityRiskRatio ?? 0;
 
     overallDistribution.value = await getOverallStabilityDistribution(params);
-    departmentDistribution.value = await getDepartmentStabilityDistribution(params);
+    departmentDistribution.value = await getDepartmentStabilityDistribution(deptDistParams);
     monthlyStats.value = await getMonthlyRetentionTimeseries(params);
   } catch (e) {
     toast.error('통계 정보를 불러오는 데 실패했습니다.');
