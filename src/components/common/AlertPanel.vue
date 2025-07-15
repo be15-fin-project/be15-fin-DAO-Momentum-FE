@@ -136,7 +136,13 @@ async function goTo(url, id) {
   background-color: #ffffff;
   z-index: 9999;
   box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+  transition: left 0.4s ease;
 }
+/* 사이드바가 접혔을 때 알림 패널도 왼쪽으로 이동 */
+.sidebar.collapsed .alert-modal {
+  left: 4.8rem;
+}
+
 .alert-header {
   border-bottom: 1px solid #e5e7eb;
   padding: 1rem;
