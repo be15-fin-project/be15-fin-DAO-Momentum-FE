@@ -56,11 +56,13 @@
 <script setup>
 import {computed, ref} from 'vue'
 import {useNotificationStore} from "@/stores/notification.js";
+import {useRouter} from "vue-router";
 
 defineProps({ visible: Boolean })
 defineEmits(['close'])
 
 const store = useNotificationStore()
+const router = useRouter()
 const selectedTab = ref('new')
 const unreadCount = computed(() => store.unreadCount)
 const readCount = computed(() => store.readCount)
@@ -84,9 +86,17 @@ function markAllRead() {
 function getTitle(type) {
   switch (type) {
     case 'APPROVAL_REQUEST':
-      return '결재 요청'
+      return '결재 요청';
+    case 'APPROVAL_COMPLETED':
+      return '결재 완료';
+    case 'APPROVAL_REJECTED':
+      return '결재 반려';
+    case 'EVALUATION_START':
+      return '평가 시작';
+    case 'EVALUATION_END':
+      return '평가 종료';
     default:
-      return '알림'
+      return '알림';
   }
 }
 
@@ -105,7 +115,10 @@ async function goTo(url, id) {
   } catch (e) {
     console.error(`[알림 ${id} 읽음 처리 실패]`, e)
   } finally {
-    if (url) window.location.href = url
+    if (url) {
+      router.push(url)
+    }
+    emit('close') // 패널 닫기
   }
 }
 </script>
