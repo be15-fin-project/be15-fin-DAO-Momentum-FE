@@ -556,6 +556,10 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   overflow-y: auto;
 }
 
+.dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
 .dropdown-item {
   padding: 12px 16px;
   font-size: 0.95rem;
