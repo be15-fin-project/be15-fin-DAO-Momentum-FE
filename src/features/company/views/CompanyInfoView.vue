@@ -142,7 +142,7 @@ onMounted(async () => {
 .header-title {
   font-size: 2.1rem;
   font-weight: 700;
-  color: #334155;
+  color: var(--font-main);
   margin: 0 0 0.2rem 0;
 }
 
