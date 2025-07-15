@@ -13,7 +13,7 @@ const route = useRoute();
 const authStore = useAuthStore();
 const toast = useToast();
 
-const isSubmitting = ref(false);
+const isSubmitting = computed(() => loading.value);
 
 /* 모달을 위한 변수 */
 const showDeleteConfirmModal = ref(false);
@@ -252,7 +252,11 @@ onMounted(fetchApproval)
 
   <div v-if="isSubmitting" class="overlay">
     <div class="spinner"></div>
+<<<<<<< HEAD
     <p>결재 문서를 제출 중입니다...</p>
+=======
+    <p>결재 진행 중 입니다.</p>
+>>>>>>> af2f7aa ([feat] 결재 진행 중일 때 로딩 뜨게 하기)
   </div>
 </template>
 
