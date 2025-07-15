@@ -86,7 +86,9 @@ const monthlyStats = ref([]);
 // ────────── 초기 진입 ──────────
 onMounted(async () => {
   await initFilterOptions();
-  await handleSearch(filterValues.value);
+  if (filterValues.value.roundId != null) {
+    await handleSearch(filterValues.value);
+  }
 });
 
 // ────────── 필터 초기화 ──────────

@@ -40,6 +40,8 @@
         :labels="field.value.labels"
         :values="field.value.scores"
         :editable="isEditMode"
+        :readonly="readonly"
+        :showTooltip="field.showTooltip ?? false"
     />
 
     <MemberPickerField
