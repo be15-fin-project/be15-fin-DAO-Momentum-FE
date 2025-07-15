@@ -60,7 +60,7 @@ import {useNotificationStore} from "@/stores/notification.js";
 import {useRouter} from "vue-router";
 
 defineProps({ visible: Boolean })
-defineEmits(['close'])
+const emit = defineEmits(['close'])
 
 const store = useNotificationStore()
 const router = useRouter()
