@@ -153,15 +153,29 @@
           </div>
         </div>
       </template>
-      <select
+      <div
           v-else-if="field.type === 'select'"
-          class="form-select"
-          v-model="model[field.key]"
+          class="form-select custom-dropdown"
+          @click.stop="toggleDropdown(field.key)"
+          tabindex="0"
       >
-        <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
-          {{ opt.label }}
-        </option>
-      </select>
+        <div class="selected-option">
+          {{ selectedOptionLabel(field.key) }}
+          <i class="fas fa-chevron-down icon"></i>
+        </div>
+
+        <div v-if="openDropdown === field.key" class="dropdown">
+          <div
+              v-for="opt in field.options"
+              :key="opt.value"
+              :class="{ active: String(model[field.key]) === String(opt.value) }"
+              @click.stop="selectOption(field.key, opt.value)"
+              class="dropdown-item"
+          >
+            {{ opt.label }}
+          </div>
+        </div>
+      </div>
       <DeptList
           v-else-if="field.type === 'deptList'"
           :list="field.list"
@@ -172,7 +186,7 @@
 </template>
 
 <script setup>
-import {computed, ref, onMounted } from 'vue';
+import {computed, ref, onMounted, onBeforeUnmount} from 'vue';
 import SliderGroup from "@/components/common/form/SliderGroup.vue";
 import LikertScale from "@/components/common/form/LikertScale.vue";
 import RadarChart from "@/components/common/form/RadarChart.vue";
@@ -284,6 +298,31 @@ onMounted(() => {
   }
 });
 
+const openDropdown = ref(null);
+
+function toggleDropdown(key) {
+  openDropdown.value = openDropdown.value === key ? null : key;
+}
+
+function selectOption(key, value) {
+  props.model[key] = value;
+  openDropdown.value = null;
+}
+
+function selectedOptionLabel(key) {
+  const value = props.model[key];
+  const option = props.field.options?.find(opt => String(opt.value) === String(value));
+  return option?.label || '선택';
+}
+
+// 외부 클릭 시 닫기
+function handleClickOutside(e) {
+  if (!e.target.closest('.custom-dropdown')) {
+    openDropdown.value = null;
+  }
+}
+onMounted(() => document.addEventListener('click', handleClickOutside));
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside));
 </script>
 
 <style scoped>
@@ -476,5 +515,60 @@ onMounted(() => {
 
 .toggle-switch input:checked + .toggle-slider::before {
   transform: translateX(18px);
+}
+
+.custom-dropdown {
+  position: relative;
+  cursor: pointer;
+  padding: 14px 16px;
+  border: 2px solid var(--color-muted);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  background: var(--color-surface);
+  color: var(--color-text-main);
+}
+
+.custom-dropdown:focus,
+.custom-dropdown:focus-within {
+  outline: none;
+  border-color: var(--purple-50);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.selected-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--dropdown-shadow);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--color-text-sub);
+}
+
+.dropdown-item.active {
+  background-color: var(--blue-100);
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+.dropdown-item:hover {
+  background-color: var(--gray-100);
 }
 </style>
