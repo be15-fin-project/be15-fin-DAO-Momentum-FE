@@ -101,8 +101,10 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { createAnnouncement, generatePresignedUrl } from "@/features/announcement/api.js"
+import {useToast} from "vue-toastification";
 
 const router = useRouter()
+const toast = useToast()
 
 const form = ref({
   title: '',
@@ -163,7 +165,7 @@ const uploadFiles = async (files) => {
       })
     } catch (err) {
       console.error('파일 업로드 실패:', file.name, err)
-      alert(`"${file.name}" 파일 업로드에 실패했습니다. 전체 등록이 중단됩니다.`)
+      toast.error(`"${file.name}" 파일 업로드에 실패했습니다. 전체 등록이 중단됩니다.`)
     }
   }
 }
@@ -182,7 +184,7 @@ const formatSize = (bytes) => {
 const handleSubmit = async () => {
   if (isSubmitting.value) return
   if (uploadedFiles.value.some(f => !f.s3Key)) {
-    alert('모든 파일이 정상적으로 업로드되지 않았습니다.')
+    toast.error('모든 파일이 정상적으로 업로드되지 않았습니다.')
     return
   }
 
@@ -200,11 +202,11 @@ const handleSubmit = async () => {
     })
 
     const createdId = res.data.data.announcementId
-    alert('공지사항이 등록되었습니다.')
+    toast.success('공지사항이 등록되었습니다.')
     router.push(`/announcement/${createdId}`)
   } catch (err) {
     console.error('공지사항 등록 실패:', err)
-    alert('공지사항 등록에 실패했습니다.')
+    toast.error('공지사항 등록에 실패했습니다.')
   } finally {
     isSubmitting.value = false
   }
