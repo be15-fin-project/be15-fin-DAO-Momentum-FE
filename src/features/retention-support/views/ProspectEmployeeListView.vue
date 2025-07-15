@@ -203,11 +203,9 @@ const openDetail = async (row) => {
 
     // 안정성 유형이 detail 응답에 없다면 테이블 row에서 가져오기
     const stabilityType = detail.stabilityType ?? row.stabilityType;
-    const retentionGrade = detail.retentionGrade ?? row.retentionGrade;
-    const retentionScore = detail.retentionScore ?? row.retentionScore;
+    const retentionScore = detail.retentionScore ?? row.retentionScore ?? 0;
     console.log('상세 열기:', {
       retentionScore,
-      retentionGrade,
       stabilityType,
     });
 
@@ -257,7 +255,6 @@ const openDetail = async (row) => {
             editable: false,
             value: {
               retentionScore,
-              retentionGrade,
               stabilityType,
               factorGrades: {
                 job: detail.jobGrade,
