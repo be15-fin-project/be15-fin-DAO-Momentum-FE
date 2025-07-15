@@ -82,17 +82,18 @@ const fetchSummary = async (values) => {
   };
 
   try {
-    console.log(params);
     const resp = await getAppoints(params);
-    console.log(resp);
 
     appoints.value = resp.appoints || [];
     const current = resp.pagination?.currentPage || 1;
     const total = resp.pagination?.totalPage > 0 ? resp.pagination.totalPage : 1;
     pagination.value = {currentPage: current, totalPage: total};
-  } catch (err) {
+  } catch (e) {
     appoints.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
+
+    const message = e?.response?.data?.message;
+    toast.error(message || '인사 발령 내역 조회 실패')
   }
 }
 
@@ -267,7 +268,8 @@ const handleRegisterSubmit = async (req) => {
     handleSearch(); // 목록 새로고침
     toast.success("발령 등록 성공")
   } catch (e) {
-    toast.error('발령 등록 실패');
+    const message = e?.response?.data?.message;
+    toast.error(message || '발령 등록 실패')
   }
 };
 </script>

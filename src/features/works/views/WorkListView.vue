@@ -138,9 +138,12 @@ const fetchSummary = async (values) => {
     const current = resp.pagination?.currentPage || 1;
     const total = resp.pagination?.totalPage > 0 ? resp.pagination.totalPage : 1;
     pagination.value = {currentPage: current, totalPage: total};
-  } catch (err) {
+  } catch (e) {
     works.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
+
+    const message = e?.response?.data?.message;
+    toast.error(message || '근태 내역 조회 실패')
   }
 }
 
@@ -204,8 +207,10 @@ const openDetailsModal = async (work) => {
 
   try {
     workDetails.value = await getWorkDetails(workId);
-  } catch (error) {
+  } catch (e) {
     workDetails.value = null;
+    const message = e?.response?.data?.message;
+    toast.error(message || '출퇴근 상세 내용 조회 실패')
   } finally {
     loadingDetails.value = false;
   }

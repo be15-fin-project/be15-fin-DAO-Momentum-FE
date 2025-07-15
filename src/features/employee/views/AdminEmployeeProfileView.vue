@@ -10,6 +10,7 @@ import {getEmployeeDetails, updateEmpInfo, updateEmpRecords} from "@/features/em
 import {useRoute, useRouter} from "vue-router";
 import HistoryInfoEditable from "@/features/employee/components/profile/HistoryInfoEditable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
+import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -84,8 +85,9 @@ const getEmpInfo = async () => {
     const response = await getEmployeeDetails(empId);
     employeeDetails.value = response.employeeDetails;
     employeeRecords.value = response.employeeRecords;
-  }catch(error){
-    console.log("에러 ",error)
+  } catch (e) {
+    const message = e?.response?.data?.message;
+    toast.error(message || '사원 정보 조회 실패')
   }
 
 }
@@ -96,8 +98,9 @@ const handleRegisterSubmit = async(req) => {
     toast.success('개인정보를 수정했습니다!')
     modalVisible.value = false;
     await getEmpInfo();
-  } catch(e) {
-    toast.error('문제가 발생했습니다.')
+  } catch (e) {
+    const message = e?.response?.data?.message;
+    toast.error(message || '개인정보 수정 실패')
   }
 }
 
@@ -160,13 +163,36 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
     toast.success('이력 정보를 수정했습니다!');
     await getEmpInfo();
   } catch (e) {
-    toast.error('문제가 발생했습니다.');
+    const message = e?.response?.data?.message;
+    toast.error(message || '이력 정보 수정 실패')
   }
 };
 
+const isEditing = ref(false)
+
 const handleHistoryCancel = async () => {
+  const result = await new Promise((resolve) => {
+    toast(
+        {
+          component: DeleteConfirmToast,
+          props: {
+            resolve,
+            message: "수정을 취소하시겠습니까?"
+          },
+        },
+        {
+          timeout: false,
+          closeOnClick: false,
+          showCloseButtonOnHover: false,
+        }
+    );
+  });
+
+  if (result) {
+    isEditing.value = false
   await getEmpInfo()
   toast.info('수정이 취소되었습니다.')
+  }
 }
 
 watch(
@@ -245,7 +271,7 @@ function handleClick(event) {
 
           <!-- History Info Tab -->
           <div class="tab-content" id="history-tab" v-else>
-            <HistoryInfoEditable :records="employeeRecords" @submit="handleHistorySubmit" @cancel="handleHistoryCancel"/>
+            <HistoryInfoEditable v-model:isEditing="isEditing" :records="employeeRecords" @submit="handleHistorySubmit" @cancel="handleHistoryCancel"/>
           </div>
         </div>
       </div>
