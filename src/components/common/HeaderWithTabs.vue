@@ -50,8 +50,6 @@
 </template>
 
 <script setup>
-import { ref, defineEmits, defineProps, watch } from 'vue';
-
 const props = defineProps({
   headerItems: {
     type: Array,
