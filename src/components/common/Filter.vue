@@ -16,6 +16,7 @@
         class="filter-box"
         v-for="(filter, index) in filters"
         :key="index"
+        :class="[filter.class, `filter-${filter.key}`]"
     >
       <button class="filter-btn" @click.stop="toggleDropdown(index)">
         <i :class="['fas', filter.icon, 'icon']"></i>
@@ -427,5 +428,9 @@ onUnmounted(() => {
   padding: 8px 12px;
 }
 
+/* 회차 필터 드롭다운만 넓게 */
+.filter-roundId .dropdown {
+  min-width: 200px; /* 기본은 160px이었음 */
+}
 
 </style>
