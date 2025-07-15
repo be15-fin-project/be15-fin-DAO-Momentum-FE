@@ -19,7 +19,8 @@ const isDropdownOpen = ref(false);
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: true },
-  approveFileDTO: { type: Array, default: () => [] }
+  approveFileDTO: { type: Array, default: () => [] },
+  uploadedFiles: { type: Array, default: () => [] }
 });
 
 /* 출장 유형 옵션 */
@@ -198,6 +199,7 @@ async function handleFileUpload(event) {
 function removeFile() {
   uploadedFile.value = null;
   props.formData.file = null;
+  props.formData.attachments = [];
 }
 
 /* 바깥 영역 클릭 시 드롭다운이 사라지게 하기 */
@@ -211,6 +213,12 @@ onMounted(() => {
   validateBusinessTripForm();
   if (props.formData.cost == null) { // 비용 기본값은 0원으로 설정
     props.formData.cost = 0;
+  }
+
+  if (!props.isReadOnly && props.uploadedFiles.length > 0) {
+    uploadedFile.value = {
+      name: props.uploadedFiles[0].name
+    };
   }
 })
 
@@ -308,7 +316,7 @@ onBeforeUnmount(() => {
       <div class="form-group full-width">
         <label class="form-label">첨부파일</label>
         <div class="readonly-box" v-if="file && signedUrl&&isReadOnly">
-<span class="file-link" @click.stop.prevent="handleFileClick">
+          <span class="file-link" @click.stop.prevent="handleFileClick">
             <i class="fas fa-download file-icon"></i>
               {{ fileName }}
           </span>
