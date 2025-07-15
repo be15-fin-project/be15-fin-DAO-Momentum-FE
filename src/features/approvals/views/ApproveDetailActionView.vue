@@ -14,6 +14,7 @@ const authStore = useAuthStore();
 const toast = useToast();
 
 const isSubmitting = ref(false);
+const isAccepting = ref(false);
 
 /* 모달을 위한 변수 */
 const showDeleteConfirmModal = ref(false);
@@ -136,6 +137,7 @@ watchEffect(() => {
 /* 승인/반려를 처리하는 api */
 async function handleApprove(isApprove, reason) {
   try {
+    isAccepting.value = true;
     loading.value = true
 
     const payload = {
@@ -151,6 +153,7 @@ async function handleApprove(isApprove, reason) {
     console.error('승인/반려 실패:', err)
   } finally {
     loading.value = false
+    isAccepting.value = false;
   }
 }
 
@@ -253,6 +256,11 @@ onMounted(fetchApproval)
   <div v-if="isSubmitting" class="overlay">
     <div class="spinner"></div>
     <p>결재 문서를 제출 중입니다...</p>
+  </div>
+
+  <div v-if="isAccepting" class="overlay">
+    <div class="spinner"></div>
+    <p>결재 진행 중 입니다.</p>
   </div>
 </template>
 
