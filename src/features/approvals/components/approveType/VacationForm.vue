@@ -17,7 +17,8 @@ const toast = useToast();
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: false },
-  approveFileDTO: { type: Array, default: () => [] }
+  approveFileDTO: { type: Array, default: () => [] },
+  uploadedFiles: { type: Array, default: () => [] }
 });
 
 /* 휴가 종류 매핑하기 위한 부분 */
@@ -250,6 +251,7 @@ async function handleFileUpload(event) {
 function removeFile() {
   uploadedFile.value = null;
   props.formData.file = null;
+  props.formData.attachments = [];
 }
 
 /* 드롭 다운 관련 요소 */
@@ -277,6 +279,12 @@ onMounted(() => {
     if (matched) {
       props.formData.vacationTypeId = matched.value;
     }
+  }
+
+  if (!props.isReadOnly && props.uploadedFiles.length > 0) {
+    uploadedFile.value = {
+      name: props.uploadedFiles[0].name
+    };
   }
 });
 </script>

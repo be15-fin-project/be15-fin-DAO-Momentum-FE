@@ -9,7 +9,8 @@ import {useToast} from "vue-toastification";
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: true },
-  approveFileDTO: { type: Array, default: () => [] }
+  approveFileDTO: { type: Array, default: () => [] },
+  uploadedFiles: { type: Array, default: () => [] }
 });
 
 const toast = useToast();
@@ -114,6 +115,7 @@ async function handleFileUpload(event) {
 function removeFile() {
   uploadedFile.value = null;
   props.formData.file = null;
+  props.formData.attachments = [];
 }
 
 /* 시간과 관련된 validation */
@@ -145,6 +147,12 @@ watch(
 onMounted(() => {
   fetchProposalFile();
   validateReason();
+
+  if (!props.isReadOnly && props.uploadedFiles.length > 0) {
+    uploadedFile.value = {
+      name: props.uploadedFiles[0].name
+    };
+  }
 });
 </script>
 

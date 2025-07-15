@@ -224,7 +224,7 @@ const menuItems = [
       {
         label: '전체 결재 내역',
         hrefs: ['/approvals'],
-        requireRole: ['MASTER', 'HR_MANAGER'],
+        requireRole: ['MASTER'],
         activeMatch: 'startsWith'
       },
       {
