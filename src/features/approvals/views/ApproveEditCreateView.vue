@@ -137,11 +137,7 @@ onMounted(() => {
 
       formDetail.value = formDetailFromState;
 
-      if (approveDTO.approveType === 'RECEIPT') {
-        uploadedFiles.value = formDetailFromState.attachments || [];
-      } else {
-        uploadedFiles.value = approveFileDTO || [];
-      }
+      uploadedFiles.value = approveFileDTO || [];
 
       if (selectedApprovalLine.value.length === 0) {
         selectedApprovalLine.value = (approveLineGroupDTO || []).map((group, idx) => ({

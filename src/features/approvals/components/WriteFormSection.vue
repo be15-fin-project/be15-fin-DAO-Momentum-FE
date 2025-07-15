@@ -167,6 +167,8 @@ onBeforeUnmount(() => {
             v-if="selectedFormComponent"
             v-model:form-data="localFormData"
             :is-read-only="false"
+            :uploaded-files="props.uploadedFiles"
+            @update:uploaded-files="val => emit('update:uploadedFiles', val)"
           />
         </div>
       </section>
