@@ -157,34 +157,38 @@ async function downloadTemplate() {
     link.download = fileName
     link.click()
   } catch (e) {
-    const headers = [
-      "이름",
-      "이메일 주소",
-      "부서명",
-      "직위명",
-      "성별",
-      "주소",
-      "연락처",
-      "입사일",
-      "재직 상태",
-      "생년월일",
-      "부여 연차 시간",
-      "부여 리프레시 휴가 일수"
-    ]
+    try {
+      const headers = [
+        "이름",
+        "이메일 주소",
+        "부서명",
+        "직위명",
+        "성별",
+        "주소",
+        "연락처",
+        "입사일",
+        "재직 상태",
+        "생년월일",
+        "부여 연차 시간",
+        "부여 리프레시 휴가 일수"
+      ]
 
-    // 따옴표 포함된 CSV 문자열 만들기
-    const quotedHeaders = headers.map(h => `"${h.replace(/"/g, '""')}"`)
-    const csvContent = quotedHeaders.join(',') + '\n'
+      // 따옴표 포함된 CSV 문자열 만들기
+      const quotedHeaders = headers.map(h => `"${h.replace(/"/g, '""')}"`)
+      const csvContent = quotedHeaders.join(',') + '\n'
 
-    // UTF-8 BOM 포함 (엑셀 호환용)
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' })
+      // UTF-8 BOM 포함 (엑셀 호환용)
+      const blob = new Blob(["\uFEFF" + csvContent], {type: 'text/csv;charset=utf-8;'})
 
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.setAttribute('download', 'employees_template.csv')
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.setAttribute('download', 'employees_template.csv')
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (e) {
+      toast.error("CSV 템플릿 다운로드 실패")
+    }
   }
 }
 
