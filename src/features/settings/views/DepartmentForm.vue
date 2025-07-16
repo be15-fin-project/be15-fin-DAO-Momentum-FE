@@ -5,9 +5,8 @@ import DepartmentInfoCard from "@/features/company/components/DepartmentInfoCard
 import {fetchDepartmentInfo, fetchDepartments} from "@/features/company/api.js";
 import SideModal from "@/components/common/SideModal.vue";
 import {useToast} from "vue-toastification";
-import {deleteDepartment, deleteHoliday, postDepartment, putDepartment} from "@/features/settings/api.js";
+import {deleteDepartment, postDepartment, putDepartment} from "@/features/settings/api.js";
 import MemberList from "@/features/company/components/MemberList.vue";
-import CommonModal from "@/components/common/CommonModal.vue";
 import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
 
 const toast = useToast()
@@ -247,33 +246,22 @@ onMounted(async () => {
         :showEdit="true"
         :showSubmit="false"
     />
-    <CommonModal
-        :visible="deptDeleteModalVisible"
-        :confirmVisible="true"
-        @cancel="deptDeleteModalVisible = false"
-        @confirm="handleDelete"
-        :confirmText="'삭제'"
-        :cancelText="'취소'"
-    >
-      <template #default>
-        <p><strong>이 부서를 삭제하시겠습니까?</strong></p>
-        <p style="margin-top: 8px; font-size: 0.9rem;">
-          삭제된 부서는 복구할 수 없습니다.
-        </p>
-      </template>
-    </CommonModal>
 
   </div>
 </template>
 
 <style scoped>
 .dept-card{
+  display:flex;
+  flex-direction: column;
   height:100%;
+  margin-left:40px;
+  margin-right:40px;
 }
 
 .main-grid {
   display: grid;
-  grid-template-columns: 350px 1fr 350px;
+  grid-template-columns: 1fr 2fr 1fr;
   gap: 24px;
   height:100%;
 }

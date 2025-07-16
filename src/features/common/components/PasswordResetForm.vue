@@ -11,9 +11,7 @@ const emit = defineEmits(['completed'])
 
 const password = ref('')
 const confirmPassword = ref('')
-const resetSuccess = ref(false)
 const authStore = useAuthStore()
-const router = useRouter()
 
 const passwordsMatch = computed(() => {
   return password.value !== '' && password.value === confirmPassword.value
@@ -23,12 +21,6 @@ const confirmPasswordBorderColor = computed(() => {
   if (confirmPassword.value === '') return '#d7dce5'
   return passwordsMatch.value ? '#10b981' : '#ef4444'
 })
-
-watch(() => props.token, (token) => {
-  if (typeof token === 'string') {
-    authStore.setResetToken(token)
-  }
-}, { immediate: true })
 
 const handleSubmit = async () => {
   if (!passwordsMatch.value) return
@@ -41,6 +33,7 @@ const handleSubmit = async () => {
     emit('completed', { success: true, message: '비밀번호가 변경되었습니다.' })
     authStore.clearAuth()
   } catch (error) {
+    console.log(error)
     const message = error.response?.data?.message || '알 수 없는 오류'
     emit('completed', { success: false, message })
   }

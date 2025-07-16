@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, reactive, ref, watch} from 'vue'
+import {computed, reactive, watch} from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import SectionHeader from '@/features/mypage/components/profile/SectionHeader.vue'
 
@@ -7,12 +7,20 @@ const props = defineProps({
   records: {
     type: Array,
     default: () => []
-  }
+  },
+  isEditing: Boolean
 });
 
-const emit = defineEmits(['submit', 'cancel'])
+const isEditing = computed({
+  get() {
+    return props.isEditing
+  },
+  set(value) {
+    emit('update:isEditing', value)
+  }
+})
 
-const isEditing = ref(false)
+const emit = defineEmits(['submit', 'cancel', 'update:isEditing'])
 
 const sections = [
   {
@@ -79,7 +87,6 @@ const handleSave = () => {
 
 const handleCancel = () => {
   emit('cancel')
-  isEditing.value = false
 }
 
 watch(
@@ -143,7 +150,7 @@ watch(
           <BaseButton
               icon="fas fa-edit"
               variant="edit"
-              @click="isEditing = true"
+              @click="emit('update:isEditing', true)"
           >이력 정보 수정</BaseButton>
         </template>
 

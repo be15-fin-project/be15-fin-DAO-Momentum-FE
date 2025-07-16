@@ -156,6 +156,7 @@
       <div
           v-else-if="field.type === 'select'"
           class="form-select custom-dropdown"
+          :class="{ active: openDropdown === field.key }"
           @click.stop="toggleDropdown(field.key)"
           tabindex="0"
       >
@@ -555,6 +556,10 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
   overflow-y: auto;
 }
 
+.dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
 .dropdown-item {
   padding: 12px 16px;
   font-size: 0.95rem;
@@ -570,5 +575,10 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 
 .dropdown-item:hover {
   background-color: var(--gray-100);
+}
+
+.custom-dropdown.active {
+  position: relative;
+  z-index: 9999;
 }
 </style>

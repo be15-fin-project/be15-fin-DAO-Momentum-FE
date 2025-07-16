@@ -103,8 +103,6 @@ onMounted(async () => {
 
 .body-content{
   height:100%;
-  padding-left:40px;
-  padding-right:40px;
 }
 
 @keyframes fadeIn {

@@ -108,9 +108,12 @@ const fetchSummary = async (values) => {
     const current = resp.pagination?.currentPage || 1;
     const total = resp.pagination?.totalPage > 0 ? resp.pagination.totalPage : 1;
     pagination.value = {currentPage: current, totalPage: total};
-  } catch (err) {
+  } catch (e) {
     employees.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
+
+    const message = e?.response?.data?.message;
+    toast.error(message || '사원 목록 조회 실패')
   }
 }
 
@@ -334,7 +337,8 @@ const handleRegisterSubmit = async (req) => {
     toast.success('사원 등록 완료');
     handleSearch(); // 목록 새로고침
   } catch (e) {
-    toast.error('사원 등록 실패');
+    const message = e?.response?.data?.message;
+    toast.error(message || '사원 등록 실패')
   } finally {
     isSubmitting.value = false;
   }

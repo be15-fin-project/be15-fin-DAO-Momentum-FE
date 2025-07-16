@@ -2,6 +2,7 @@ import LoginView from "@/features/common/views/LoginView.vue";
 import ForgotPasswordView from "@/features/common/views/ForgotPasswordView.vue";
 import ResetPasswordView from "@/features/common/views/ResetPasswordView.vue";
 import InitialPasswordView from "@/features/common/views/InitialPasswordView.vue";
+import FeatureCardView from "@/features/common/views/FeatureCardView.vue";
 
 export const commonRoutes = [
     {
@@ -21,5 +22,9 @@ export const commonRoutes = [
         path:'/password/init',
         name:'InitialPasswordView',
         component: InitialPasswordView
+    },{
+        path:'/feat',
+        name:'FeatureCardView',
+        component: FeatureCardView
     }
 ];

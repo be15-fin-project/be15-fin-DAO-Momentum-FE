@@ -1,8 +1,5 @@
 <template>
-    <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
-    <div class="main-content">
+    <div class="org-content">
       <div class="container">
         <!-- 헤더 -->
         <section class="header-section">
@@ -86,7 +83,7 @@ onMounted(async () => {
 
 <style scoped>
 
-.main-content {
+.org-content {
   width:100%;
   padding-left:40px;
   padding-right:40px;
@@ -136,7 +133,7 @@ onMounted(async () => {
 
 @media (min-width: 1024px) {
   .main-grid {
-    grid-template-columns: 350px 1fr 350px;
+    grid-template-columns: 1fr 2fr 1fr;
   }
 }
 

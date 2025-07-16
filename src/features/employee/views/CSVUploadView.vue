@@ -131,8 +131,9 @@ async function uploadCSV() {
     toast.success('CSV 파일이 성공적으로 업로드되었습니다!')
     removeFile()
     router.push('/employees')
-  } catch (err) {
-    toast.error('업로드 중 오류가 발생했습니다.')
+  } catch (e) {
+    const message = e?.response?.data?.message;
+    toast.error(message || '업로드 중 오류가 발생했습니다.')
   } finally {
     uploading.value = false
   }
@@ -156,8 +157,8 @@ async function downloadTemplate() {
     link.download = fileName
     link.click()
   } catch (e) {
-    toast.error('CSV 템플릿 다운로드에 실패했습니다.')
-    console.error(e)
+    const message = e?.response?.data?.message;
+    toast.error(message || 'CSV 템플릿 다운로드에 실패했습니다.')
   }
 }
 

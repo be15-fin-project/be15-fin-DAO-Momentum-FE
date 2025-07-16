@@ -113,9 +113,12 @@ const fetchSummary = async (values) => {
     const current = resp.pagination?.currentPage || 1;
     const total = resp.pagination?.totalPage > 0 ? resp.pagination.totalPage : 1;
     pagination.value = {currentPage: current, totalPage: total};
-  } catch {
+  } catch (e) {
     contracts.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
+
+    const message = e?.response?.data?.message;
+    toast.error(message || '계약서 목록 조회 실패')
   }
 };
 
@@ -216,7 +219,6 @@ const closeModal = () => {
 const downloadFile = async (row) => {
   const s3Key = row.s3Key;
   const fileName = row.fileName;
-  console.log(row)
 
   try {
     const response = await getFileUrl({key: s3Key, fileName: fileName});
@@ -242,9 +244,9 @@ const downloadFile = async (row) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
-  } catch (err) {
-    toast.error('다운로드 중 오류 발생');
-    console.error(err);
+  } catch (e) {
+    const message = e?.response?.data?.message;
+    toast.error(message || '다운로드 중 오류 발생')
   }
 };
 
@@ -270,7 +272,8 @@ const handleDeleteContract = async (row) => {
     toast.success('계약서가 삭제되었습니다.');
     handleSearch();
   } catch (e) {
-    toast.error('삭제 실패: ' + (e.message || e));
+    const message = e?.response?.data?.message;
+    toast.error(message || '계약서 삭제 실패')
   }
 };
 
@@ -325,9 +328,9 @@ const handleFileChange = async ({fieldKey, file}) => {
     }
 
     toast.success('파일 업로드 성공');
-  } catch (error) {
-    toast.error('파일 업로드 중 오류가 발생했습니다.');
-    toast.error('handleFileChange 예외 발생:');
+  } catch (e) {
+    const message = e?.response?.data?.message;
+    toast.error(message || '파일 업로드 중 오류가 발생했습니다.')
   }
 };
 
@@ -338,7 +341,8 @@ const handleRegisterSubmit = async () => {
     handleSearch();
     toast.success('계약서가 등록되었습니다.');
   } catch (e) {
-    toast.error('등록 실패: ' + (e.message || e));
+    const message = e?.response?.data?.message;
+    toast.error(message || '계약서 등록 실패')
   }
 };
 
