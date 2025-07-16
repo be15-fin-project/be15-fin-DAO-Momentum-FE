@@ -4,8 +4,12 @@
     <div class="sidebar-header">
       <div class="sidebar-brand">
         <div class="sidebar-logo">
-          <button class="side-btn" @click="handleCreateAttendance" :disabled="isLoading">
-            <i :class="[isAttended ? 'fas fa-hourglass-end' : 'fas fa-hourglass-start', 'shake-icon']"></i>
+          <button
+              class="side-btn"
+              @click="handleCreateAttendance"
+              :disabled="attendanceStatus === 'DONE' || isLoading"
+          >
+            <i :class="attendanceIconClass"></i>
           </button>
         </div>
         <div class="profile-content">
@@ -118,7 +122,7 @@
 
 <script setup>
 /* ======================== 공통 모듈 ======================== */
-import {ref, reactive, onMounted, onUnmounted} from 'vue'
+import {onMounted, onUnmounted, reactive, ref} from 'vue'
 import {useRoute} from 'vue-router'
 import {storeToRefs} from 'pinia'
 import router from '@/router'
@@ -131,7 +135,7 @@ import AttendanceModal from '@/features/works/components/AttendanceModal.vue'
 /* ======================== 스토어 & API ======================== */
 import {useAuthStore} from '@/stores/auth.js'
 import {logoutUser} from '@/features/common/api.js'
-import {startWork, endWork} from '@/features/works/api.js'
+import {endWork, startWork} from '@/features/works/api.js'
 import {getEvaluationRoundStatus} from '@/features/performance/api.js'
 import {useAttendance} from '@/features/works/composable/useAttendance.js'
 import {fetchCompanyInfo} from "@/features/company/api.js";
@@ -175,12 +179,16 @@ const {
   isLoading,
   showAttendanceModal,
   clockInfo,
+  attendanceStatus,
+  attendanceIconClass,
   handleCreateAttendance,
   closeAttendanceModal,
   fetchTodayAttendance,
   stopClockUpdater,
   getStartTime
 } = useAttendance()
+
+
 
 /* ======================== 메뉴 정의 (FA 아이콘 직접 입력) ======================== */
 const menuItems = [
@@ -447,10 +455,9 @@ onUnmounted(() => {
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
-  transition:
-      width 0.4s ease,
-      transform 0.6s ease,
-      padding 0.3s ease;
+  transition: width 0.4s ease,
+  transform 0.6s ease,
+  padding 0.3s ease;
 }
 
 /* ================= 헤더 ================= */
@@ -477,6 +484,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   margin-right: 1rem;
+  position: relative;
 }
 
 .profile-content,
@@ -504,6 +512,7 @@ onUnmounted(() => {
 .notification-icon {
   font-size: 18px;
 }
+
 /* ================= 토글 버튼 ================= */
 .sidebar-toggle,
 .side-btn {
@@ -516,6 +525,13 @@ onUnmounted(() => {
 
 .side-btn {
   font-size: 20px;
+  display: flex;         /* ★ 버튼 내에서 아이콘도 중앙 정렬 */
+  align-items: center;
+  justify-content: center;
+  width: 100%;           /* 부모의 너비에 맞춤 */
+  height: 100%;          /* 부모의 높이에 맞춤 */
+  padding: 0;
+
 }
 
 .top-icons {
@@ -523,6 +539,21 @@ onUnmounted(() => {
   align-items: center;
   margin-left: 4.5rem;
 }
+
+.pulse-icon {
+  animation: pulse 0.9s ease-in-out infinite;
+  display: inline-block;
+  transform-origin: center;
+}
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+}
+
 
 /* ================= 내비게이션 ================= */
 .sidebar-nav {
@@ -650,11 +681,21 @@ onUnmounted(() => {
 }
 
 @keyframes shake {
-  0% { transform: rotate(0deg); }
-  25% { transform: rotate(5deg); }
-  50% { transform: rotate(0deg); }
-  75% { transform: rotate(-5deg); }
-  100% { transform: rotate(0deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(5deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  75% {
+    transform: rotate(-5deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 .shake-icon {
