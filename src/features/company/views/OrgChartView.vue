@@ -1,7 +1,4 @@
 <template>
-    <div id="sidebar-container"></div>
-
-    <!-- Main Content -->
     <div class="main-content">
       <div class="container">
         <!-- 헤더 -->
@@ -136,7 +133,7 @@ onMounted(async () => {
 
 @media (min-width: 1024px) {
   .main-grid {
-    grid-template-columns: 350px 1fr 350px;
+    grid-template-columns: 1fr 2fr 1fr;
   }
 }
 

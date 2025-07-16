@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, reactive, ref, watch} from "vue";
+import {onMounted, ref} from "vue";
 import {putCompany} from "@/features/settings/api.js";
 import {fetchCompanyInfo} from "@/features/company/api.js";
 import {useToast} from "vue-toastification";
@@ -152,6 +152,8 @@ onMounted(async () => {
   box-shadow: 0 8px 32px rgba(56, 104, 185, 0.10);
   transition: box-shadow 0.3s;
   animation: fadeIn 0.7s cubic-bezier(0.33,1,0.68,1);
+  margin-left:40px;
+  margin-right:40px;
 }
 
 .form-container {

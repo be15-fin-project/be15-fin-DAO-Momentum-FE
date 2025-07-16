@@ -1,11 +1,11 @@
 <script setup>
 import OrgTree from "@/features/company/components/OrgTree.vue";
-import { onMounted, reactive, ref, watch} from "vue";
+import { onMounted, ref, watch} from "vue";
 import {fetchDepartmentInfo, fetchDepartments} from "@/features/company/api.js";
 import {useToast} from "vue-toastification";
 import MemberList from "@/features/company/components/MemberList.vue";
 import RoleOptionCard from "@/features/settings/components/RoleOptionCard.vue";
-import {getEmpRoles, getRoles, putEmpRoles} from "@/features/settings/api.js";
+import {getEmpRoles, putEmpRoles} from "@/features/settings/api.js";
 
 const toast = useToast()
 
@@ -106,7 +106,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class = "dept-card">
+  <div class = "role-card">
     <div class="main-grid">
       <!-- Organization Tree -->
       <OrgTree :dtoList = "departmentInfoDTOList" @selectDept = "selectDepartment" />
@@ -122,13 +122,15 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.dept-card{
+.role-card{
   height:100%;
+  margin-left:40px;
+  margin-right:40px;
 }
 
 .main-grid {
   display: grid;
-  grid-template-columns: 500px 1fr 500px;
+  grid-template-columns: 1fr 2fr 1fr;
   gap: 24px;
   height:100%;
 }
