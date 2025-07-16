@@ -75,9 +75,7 @@ const clickEvent = (empId) => {
 }
 
 .members-content {
-  overflow-y: auto;
-  height: calc(100% - 80px);
-  padding-right: 8px;
+  height: 100%
 }
 
 .member-contact i {
