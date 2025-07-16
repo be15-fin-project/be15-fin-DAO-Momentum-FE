@@ -181,11 +181,15 @@ async function downloadTemplate() {
       const blob = new Blob(["\uFEFF" + csvContent], {type: 'text/csv;charset=utf-8;'})
 
       const link = document.createElement('a')
-      link.href = URL.createObjectURL(blob)
+      const url = URL.createObjectURL(blob)
+      link.href = url
       link.setAttribute('download', 'employees_template.csv')
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
+
+      // 메모리 누수 방지용 URL 해제
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
     } catch (e) {
       toast.error("CSV 템플릿 다운로드 실패")
     }
