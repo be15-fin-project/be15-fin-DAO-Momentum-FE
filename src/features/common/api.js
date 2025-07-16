@@ -20,6 +20,10 @@ export function resetPassword(data) {
     return api.post('/employees/reset-password',data);
 }
 
+export function checkToken(){
+    return api.post('/employees/resetToken');
+}
+
 /*
 * s3에 저장된 파일을 가져오는 api
 * */
