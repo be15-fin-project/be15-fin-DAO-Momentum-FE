@@ -1,5 +1,5 @@
 <template>
-    <div class="main-content">
+    <div class="org-content">
       <div class="container">
         <!-- 헤더 -->
         <section class="header-section">
@@ -83,7 +83,7 @@ onMounted(async () => {
 
 <style scoped>
 
-.main-content {
+.org-content {
   width:100%;
   padding-left:40px;
   padding-right:40px;

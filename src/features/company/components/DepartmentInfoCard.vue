@@ -24,8 +24,10 @@ defineProps({
           <h2 class="card-title">부서 정보</h2>
         </div>
         <div v-if="editable">
-          <button class="btn edit"><i class="fas fa-edit" @click="$emit('edit')"></i></button>
-          <button class="btn delete"><i class="fas fa-trash" @click="$emit('delete')"></i></button>
+          <button class="btn edit" @click="$emit('edit')">
+            <i class="fas fa-edit" ></i></button>
+          <button class="btn delete" @click="$emit('delete')">
+            <i class="fas fa-trash" ></i></button>
         </div>
       </header>
       <div class="dept-info-grid">
