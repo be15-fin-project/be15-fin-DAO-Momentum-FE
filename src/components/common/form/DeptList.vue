@@ -4,7 +4,10 @@ import { ref, watch, computed, onMounted, onBeforeUnmount } from "vue";
 
 const props = defineProps({
   modelValue: [String, Number],
-  list: Array
+  list: Array,
+  showNull: { type: Boolean, default: true },
+  nullLabel: { type: String, default: '부서 없음' },
+  defaultLabel: { type: String, default: '부서 선택' },
 });
 const emit = defineEmits(['update:modelValue']);
 
@@ -29,11 +32,14 @@ function TreeToMap(data) {
   // "상위 부서 없음" 항목 추가
   const noneId = null;
   treeMap[noneId] = {
-    text: '부서 없음',
+    text: props.nullLabel,
     children: [],
     state: { opened: false }
   };
-  rootIds.push(noneId);
+
+  if (props.showNull) {
+    rootIds.push(noneId);
+  }
 
   function traverse(node, parent = null) {
     const id = String(node.deptId);
@@ -66,7 +72,7 @@ watch(() => props.list, (newVal) => {
 }, { immediate: true });
 
 const selectedLabel = computed(() => {
-  if (props.modelValue === null) return '부서 없음';
+  if (props.modelValue === null) return props.nullLabel;
   const id = String(props.modelValue);
   return treeNodes.value[id]?.text || '';
 });
@@ -86,7 +92,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
 <template>
   <div class="dropdown-wrapper" ref="dropdownRef">
     <div class="dropdown-input" @click="toggleDropdown">
-      {{ selectedLabel || '부서 선택' }}
+      {{ selectedLabel || defaultLabel }}
       <i class="fas fa-chevron-down" :class="{ open: isOpen }"></i>
     </div>
 

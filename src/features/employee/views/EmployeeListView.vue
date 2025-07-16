@@ -7,11 +7,13 @@ import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createEmployee, getEmployees} from "@/features/employee/api.js";
-import {useRouter} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {useToast} from "vue-toastification";
 import dayjs from "dayjs";
+import {toastError} from "@/util/toastError.js";
 
 const toast = useToast();
+const route = useRoute()
 const router = useRouter();
 
 const isSubmitting = ref(false);
@@ -100,9 +102,7 @@ const fetchSummary = async (values) => {
   };
 
   try {
-    console.log(params);
     const resp = await getEmployees(params);
-    console.log(resp);
 
     employees.value = resp.employees || [];
     const current = resp.pagination?.currentPage || 1;
@@ -112,8 +112,7 @@ const fetchSummary = async (values) => {
     employees.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
 
-    const message = e?.response?.data?.message;
-    toast.error(message || '사원 목록 조회 실패')
+    toast.error('사원 목록 조회 실패')
   }
 }
 
@@ -141,16 +140,23 @@ roleOptions.value = [
 ];
 
 onMounted(async () => {
+  filterValues.value = {}
+  if (route.query.order) {
+    filterValues.value.order = route.query.order
+  }
+
   const depts = await getDepartments()
   const raw = depts.data?.departmentInfoDTOList || [];
   departmentTree.value = raw;
   deptOptions.value = raw;
 
   const positions = await getPositions();
-  positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({label: p.name, value: p.positionId}))];
+  positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({
+    label: p.name,
+    value: p.positionId
+  }))];
   positionOptions.value = [...positions.map(p => ({label: p.name, value: p.positionId}))];
   handleSearch();
-  filterValues.value = {};
 });
 
 watch(currentPage, () => fetchSummary(filterValues.value));
@@ -166,7 +172,7 @@ const req = reactive({
   name: '',
   birthDate: null,
   email: '',
-  contact: '',
+  contact: null,
   address: '',
   deptId: null,
   positionId: null,
@@ -182,7 +188,7 @@ const resetReq = () => {
   req.name = '';
   req.birthDate = null;
   req.email = '';
-  req.contact = '';
+  req.contact = null;
   req.address = '';
   req.deptId = null;
   req.positionId = null;
@@ -227,19 +233,43 @@ const modalSections = computed(() => [
     icon: 'fa-briefcase',
     layout: 'two-column',
     fields: [
-      { key: 'deptId', label: '부서', type: 'deptList', editable: true, list: deptOptions.value || [] },
-      { key: 'positionId', label: '직위', type: 'select', editable: true, required: true, options: positionOptions.value || [] },
+      {
+        key: 'deptId',
+        label: '부서',
+        type: 'deptList',
+        editable: true,
+        required: true,
+        list: deptOptions.value || [],
+        showNull: false,
+        nullLabel: '',
+        defaultLabel: '선택'
+      },
+      {
+        key: 'positionId',
+        label: '직위',
+        type: 'select',
+        editable: true,
+        required: true,
+        options: positionOptions.value || []
+      },
       {
         key: 'status', label: '재직 상태', type: 'select', editable: true, required: true,
         options: [
-          { label: '재직', value: 'EMPLOYED' },
-          { label: '휴직', value: 'ON_LEAVE' },
-          { label: '퇴사', value: 'RESIGNED' }
+          {label: '재직', value: 'EMPLOYED'},
+          {label: '휴직', value: 'ON_LEAVE'},
+          {label: '퇴사', value: 'RESIGNED'}
         ]
       },
-      { key: 'joinDate', label: '입사일', type: 'date', editable: true, required: true },
-      { key: 'remainingDayoffHours', label: '부여 연차 시간 (예: 15일 -> 120)', type: 'number', editable: true, required: true, placeholder: '120' },
-      { key: 'remainingRefreshDays', label: '부여 리프레시 휴가 일수', type: 'number', editable: true, required: true },
+      {key: 'joinDate', label: '입사일', type: 'date', editable: true, required: true},
+      {
+        key: 'remainingDayoffHours',
+        label: '부여 연차 시간 (예: 15일 -> 120)',
+        type: 'number',
+        editable: true,
+        required: true,
+        placeholder: '120'
+      },
+      {key: 'remainingRefreshDays', label: '부여 리프레시 휴가 일수', type: 'number', editable: true, required: true},
     ]
   },
   // {
@@ -332,13 +362,17 @@ const handleRegisterSubmit = async (req) => {
 
   isSubmitting.value = true;
   try {
+    if (!req.deptId) {
+      toast.error('부서를 선택해주세요.')
+      return
+    }
     const resp = await createEmployee(req);
     closeModal();
     toast.success('사원 등록 완료');
+    filterValues.value = {order: "DESC"}
     handleSearch(); // 목록 새로고침
   } catch (e) {
-    const message = e?.response?.data?.message;
-    toast.error(message || '사원 등록 실패')
+    toastError(e, '사원 등록 실패')
   } finally {
     isSubmitting.value = false;
   }

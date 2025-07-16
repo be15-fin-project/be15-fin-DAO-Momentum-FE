@@ -13,6 +13,7 @@ import {
   getWorks,
   getWorkTypes
 } from "@/features/works/api.js";
+import {toastError} from "@/util/toastError.js";
 
 const currentPage = ref(1);
 const pagination = ref({currentPage: 1, totalPage: 1});
@@ -130,9 +131,7 @@ const fetchSummary = async (values) => {
   };
 
   try {
-    console.log(params);
     const resp = await getWorks(params);
-    console.log(resp);
 
     works.value = resp.works || [];
     const current = resp.pagination?.currentPage || 1;
@@ -142,8 +141,7 @@ const fetchSummary = async (values) => {
     works.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
 
-    const message = e?.response?.data?.message;
-    toast.error(message || '근태 내역 조회 실패')
+    toast.error('근태 내역 조회 실패')
   }
 }
 
@@ -209,8 +207,7 @@ const openDetailsModal = async (work) => {
     workDetails.value = await getWorkDetails(workId);
   } catch (e) {
     workDetails.value = null;
-    const message = e?.response?.data?.message;
-    toast.error(message || '출퇴근 상세 내용 조회 실패')
+    toast.error('출퇴근 상세 내용 조회 실패')
   } finally {
     loadingDetails.value = false;
   }

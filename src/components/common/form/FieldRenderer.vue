@@ -180,6 +180,9 @@
       <DeptList
           v-else-if="field.type === 'deptList'"
           :list="field.list"
+          :showNull="field.showNull ?? true"
+          :nullLabel="field.nullLabel ?? '부서 없음'"
+          :defaultLabel="field.defaultLabel ?? '부서 선택'"
           v-model="model[field.key]"
       />
     </template>

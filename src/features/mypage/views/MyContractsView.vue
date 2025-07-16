@@ -73,9 +73,7 @@ const fetchSummary = async (values) => {
   } catch (e) {
     contracts.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
-
-    const message = e?.response?.data?.message;
-    toast.error(message || '계약서 목록 조회 실패')
+    toast.error('계약서 목록 조회 실패')
   }
 };
 
