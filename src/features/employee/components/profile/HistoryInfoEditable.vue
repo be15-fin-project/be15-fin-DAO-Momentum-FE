@@ -169,7 +169,7 @@ watch(
         </thead>
         <tbody>
         <tr v-for="(item, index) in formData[section.key]" :key="index">
-          <td v-for="field in section.fields" :key="field">
+          <td v-for="field in section.fields" :key="field" :class="!isEditing ? 'table-value' : ''">
             <template v-if="isEditing">
               <input
                   v-model="item[field]"
