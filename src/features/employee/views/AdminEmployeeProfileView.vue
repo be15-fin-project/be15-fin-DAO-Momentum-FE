@@ -11,6 +11,7 @@ import {useRoute, useRouter} from "vue-router";
 import HistoryInfoEditable from "@/features/employee/components/profile/HistoryInfoEditable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
+import {toastError} from "@/util/toastError.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -86,8 +87,7 @@ const getEmpInfo = async () => {
     employeeDetails.value = response.employeeDetails;
     employeeRecords.value = response.employeeRecords;
   } catch (e) {
-    const message = e?.response?.data?.message;
-    toast.error(message || '사원 정보 조회 실패')
+    toast.error('사원 정보 조회 실패')
   }
 
 }
@@ -99,8 +99,7 @@ const handleRegisterSubmit = async(req) => {
     modalVisible.value = false;
     await getEmpInfo();
   } catch (e) {
-    const message = e?.response?.data?.message;
-    toast.error(message || '개인정보 수정 실패')
+    toastError(e, '개인정보 수정 실패')
   }
 }
 
@@ -163,8 +162,7 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
     toast.success('이력 정보를 수정했습니다!');
     await getEmpInfo();
   } catch (e) {
-    const message = e?.response?.data?.message;
-    toast.error(message || '이력 정보 수정 실패')
+    toastError(e, '이력 정보 수정 실패')
   }
 };
 

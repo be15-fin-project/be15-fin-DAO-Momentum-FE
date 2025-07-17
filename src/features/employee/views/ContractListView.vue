@@ -117,8 +117,7 @@ const fetchSummary = async (values) => {
     contracts.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
 
-    const message = e?.response?.data?.message;
-    toast.error(message || '계약서 목록 조회 실패')
+    toast.error('계약서 목록 조회 실패')
   }
 };
 
@@ -180,7 +179,7 @@ function getModalSections(type) {
   if (salaryEditable) {
     fields.push({
       key: 'salary',
-      label: '연봉',
+      label: '연봉 (원)',
       type: 'input',
       editable: true,
       required: true,

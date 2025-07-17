@@ -9,6 +9,7 @@ import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createAppoint, getAppoints, getEmployeeDetails} from "@/features/employee/api.js";
 import {useToast} from "vue-toastification";
 import dayjs from "dayjs";
+import {toastError} from "@/util/toastError.js";
 
 const toast = useToast();
 const currentPage = ref(1);
@@ -92,8 +93,7 @@ const fetchSummary = async (values) => {
     appoints.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
 
-    const message = e?.response?.data?.message;
-    toast.error(message || '인사 발령 내역 조회 실패')
+    toast.error('인사 발령 내역 조회 실패')
   }
 }
 
@@ -128,7 +128,7 @@ const req = reactive({
   type: null,
   positionId: null,
   deptId: null,
-  appointDate: dayjs().format('YYYY-MM-DD')
+  // appointDate: dayjs().format('YYYY-MM-DD') // 발령일 선택 제공 시 필요
 });
 
 const initializeRequest = () => {
@@ -136,7 +136,7 @@ const initializeRequest = () => {
   req.type = null;
   req.positionId = null;
   req.deptId = null;
-  req.appointDate = dayjs().format('YYYY-MM-DD');
+  // req.appointDate = dayjs().format('YYYY-MM-DD'); // 발령일 선택 제공 시 필요
 }
 
 watch(
@@ -220,6 +220,9 @@ function getDeptField() {
     editable: true,
     required: true,
     list: deptOptions.value,
+    showNull: false,
+    nullLabel: '',
+    defaultLabel: '선택',
     value: req.deptId
   };
 }
@@ -248,7 +251,7 @@ const modalSections = computed(() => [
         },
         getPositionField(),
         getDeptField(),
-        {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true}
+        // {key: 'appointDate', label: '발령일', type: 'date', editable: true, required: true} // 발령일 선택 제공 시 필요
       ]
     }
   ]
@@ -268,8 +271,7 @@ const handleRegisterSubmit = async (req) => {
     handleSearch(); // 목록 새로고침
     toast.success("발령 등록 성공")
   } catch (e) {
-    const message = e?.response?.data?.message;
-    toast.error(message || '발령 등록 실패')
+    toastError(e, '발령 등록 실패')
   }
 };
 </script>
