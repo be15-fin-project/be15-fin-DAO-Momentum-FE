@@ -215,7 +215,6 @@ watch(
 
 .info-table th,
 .info-table td {
-  border: 1px solid #e5e7eb;
   padding: 10px;
   text-align: left;
 }

@@ -43,7 +43,7 @@ const req = reactive({
 
 const modalSections = computed(() => {
   return [{
-  title: '개인정보 수정',
+  title: '개인 정보 수정',
   icon: 'fa-info-circle',
   layout: 'one-column',
   fields:[
@@ -175,7 +175,7 @@ onMounted(async () => {
     <SideModal
         :visible="modalVisible"
         @close="modalVisible=false"
-        title="개인정보 수정"
+        title="개인 정보 수정"
         icon="fas fa-id-card"
         v-model:form="req"
         :sections = "modalSections"
