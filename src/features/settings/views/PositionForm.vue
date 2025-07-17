@@ -5,6 +5,7 @@ import {deletePosition, getPositions, postPosition, putPosition} from "@/feature
 import {useToast} from "vue-toastification";
 import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
 import SideModal from "@/components/common/SideModal.vue";
+import NoticeItem from "@/features/employee/components/NoticeItem.vue";
 
 const toast = useToast();
 
@@ -145,10 +146,11 @@ onMounted(async () => {
   <div class="header">
     <!-- Additional Info -->
     <div class = "header-info">
-        <i class="fas fa-info-circle card-icon"></i>
-        <h3 class="font-semibold text-blue-900 mb-2">숫자가 작을수록 높은 직위 입니다.</h3>
-        <div>
-        </div>
+      <NoticeItem
+      icon="fa-info-circle"
+      text="숫자가 작을수록 높은 직위입니다."
+      color="blue"
+      />
     </div>
     <div class="header-buttons">
       <button class="create-button" @click="createModalVisible=true">
@@ -201,6 +203,10 @@ onMounted(async () => {
   gap: 10px;
   flex-direction: row;
   justify-items: center;
+}
+
+.create-button i {
+  margin-right: 8px;
 }
 
 .card-icon {
