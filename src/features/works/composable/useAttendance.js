@@ -133,7 +133,8 @@ export function useAttendance() {
         }
 
         const pulse = attendanceStatus.value === 'NEED_START'
-        return [baseClass, {'pulse-icon': pulse }]
+        const shake = attendanceStatus.value === 'NEED_END'
+        return [baseClass, {'pulse-icon': pulse }, {'shake-icon': shake}]
     })
 
     const handleCreateAttendance = async () => {
