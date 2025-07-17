@@ -16,7 +16,7 @@
       </div>
 
     <div>
-      <SectionHeader :icon-class="'fas fa-award'" :title="'수상이력'"/>
+      <SectionHeader :icon-class="'fas fa-award'" :title="'수상 이력'"/>
       <InfoTable
           :headers="dataMap.AWARD.headers"
           :rows="dataMap.AWARD.rows"
