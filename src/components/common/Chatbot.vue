@@ -20,7 +20,7 @@ const selectedType = computed(() => chatbotStore.selectedType);
 const roleMap = {
   MASTER: '최고 관리자',
   HR_MANAGER: '인사 관리자',
-  MANAGER: '팀장',
+  MANAGER: '부서 관리자',
   BOOKKEEPING: '경리 관리자'
 };
 

@@ -28,7 +28,7 @@ const field = {
     { id: 1, label: '최고 관리자' },
     { id: 2, label: '인사 관리자' },
     { id: 3, label: '경리 관리자' },
-    { id: 4, label: '팀장' },
+    { id: 4, label: '부서 관리자' },
   ]
 }
 
