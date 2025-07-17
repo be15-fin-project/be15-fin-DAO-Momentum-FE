@@ -19,7 +19,7 @@ const props = defineProps({
 <style scoped>
 .notice-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   padding: 12px;
   border-left-width: 4px;
   border-left-style: solid;
