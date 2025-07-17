@@ -130,13 +130,13 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
             record.endDate = item['졸업일'];
             break;
           case 'CERTIFICATE':
-            record.organization = item['발급기관'];
+            record.organization = item['발급 기관'];
             record.name = item['자격증명'];
             record.startDate = item['취득일'];
             record.endDate = null;
             break;
           case 'AWARD':
-            record.organization = item['수상기관'];
+            record.organization = item['수상 기관'];
             record.name = item['수상명'];
             record.startDate = item['수상일'];
             record.endDate = null;
