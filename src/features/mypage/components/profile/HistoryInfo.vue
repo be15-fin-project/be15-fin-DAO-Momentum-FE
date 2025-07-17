@@ -41,19 +41,19 @@ import {onMounted, reactive} from "vue";
 //enum('EDUCATION','CERTIFICATE','AWARD','CAREER')
 const dataMap = reactive({
   EDUCATION: {
-    headers: ['학교명','학과','기간'],
+    headers: ['학교명','학과명','기간'],
     rows: []
   },
   CERTIFICATE: {
-    headers: ['자격증명', '발급 기관', '취득 시기'],
+    headers: ['자격증명', '발급 기관', '취득일'],
     rows: []
   },
   AWARD: {
-    headers: ['수상명', '수상 기관', '수상 시기'],
+    headers: ['수상명', '수상 기관', '수상일'],
     rows: []
   },
   CAREER: {
-    headers: ['근무지', '기간'],
+    headers: ['직장명', '기간'],
     rows: []
   }
 })
@@ -98,8 +98,8 @@ onMounted(() => {
         break
       case 'CAREER':
         dataMap.CAREER.rows.push([
+          item.organization,
           item.startDate+' ~ '+item.endDate,
-          item.organization
         ])
         break
     }
