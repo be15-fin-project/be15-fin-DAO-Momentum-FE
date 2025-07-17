@@ -18,7 +18,7 @@ const messages = computed(() => chatbotStore.messages);
 const selectedType = computed(() => chatbotStore.selectedType);
 
 const roleMap = {
-  MASTER: '마스터 관리자',
+  MASTER: '최고 관리자',
   HR_MANAGER: '인사 관리자',
   MANAGER: '팀장',
   BOOKKEEPING: '경리 관리자'
@@ -55,7 +55,7 @@ const selectType = (type) => {
 
   setTimeout(() => {
     const botMessage = type === 'system'
-        ? `사내 시스템 이용에 대한 질문을 도와드릴게요. \n\n※ 일부 메뉴는 직책(예: 마스터 관리자, 인사 관리자 등)에 따라 접근 및 기능 사용에 제한이 있을 수 있습니다.`
+        ? `사내 시스템 이용에 대한 질문을 도와드릴게요. \n\n※ 일부 메뉴는 직책(예: 최고 관리자, 인사 관리자 등)에 따라 접근 및 기능 사용에 제한이 있을 수 있습니다.`
         : `사내 데이터 기반 질의 응답을 시작합니다. \n\n아래 항목에 대해서만 질문이 가능합니다:\n\n- 사원 정보\n- 내 부서 구성원 정보\n- 나의 출퇴근 통계\n- 나의 휴가 일정\n- 부서 동료의 예정된 1달 간 휴가\n- 나의 1달 간 출장\n- 진행 중인 KPI 현황\n- 회사 정보\n- 다가오는 휴일`;
 
     chatbotStore.messages.push({ from: 'bot', text: botMessage });

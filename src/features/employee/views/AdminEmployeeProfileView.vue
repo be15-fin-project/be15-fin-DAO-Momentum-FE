@@ -95,11 +95,11 @@ const getEmpInfo = async () => {
 const handleRegisterSubmit = async(req) => {
   try{
     await updateEmpInfo(req, empId);
-    toast.success('개인정보를 수정했습니다!')
+    toast.success('개인 정보를 수정했습니다.')
     modalVisible.value = false;
     await getEmpInfo();
   } catch (e) {
-    toastError(e, '개인정보 수정 실패')
+    toastError(e, '개인 정보 수정에 실패했습니다.')
   }
 }
 
@@ -159,10 +159,10 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
     }
     await updateEmpRecords({ insertItems, idsToDelete }, empId);
 
-    toast.success('이력 정보를 수정했습니다!');
+    toast.success('인사 정보를 수정했습니다.');
     await getEmpInfo();
   } catch (e) {
-    toastError(e, '이력 정보 수정 실패')
+    toastError(e, '인사 정보 수정 실패')
   }
 };
 
@@ -251,14 +251,14 @@ function handleClick(event) {
               :class="{ 'tab-active': currentTab === 'basic' }"
               @click="currentTab = 'basic'"
           >
-            <i class="fas fa-user-circle"></i>기본정보
+            <i class="fas fa-user-circle"></i>기본 정보
           </button>
           <button
               class="tab-button"
               :class="{ 'tab-active': currentTab === 'history' }"
               @click="currentTab = 'history'"
           >
-            <i class="fas fa-history"></i>이력정보
+            <i class="fas fa-history"></i>인사 정보
           </button>
           </div>
 

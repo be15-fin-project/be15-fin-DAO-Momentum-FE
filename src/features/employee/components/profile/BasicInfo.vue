@@ -3,18 +3,18 @@
       <div>
         <div>
           <div class = "first-header">
-            <SectionHeader :icon-class="'fas fa-id-card'" :title="'개인정보'"/>
+            <SectionHeader :icon-class="'fas fa-id-card'" :title="'개인 정보'"/>
             <BaseButton :icon="'fas fa-edit'" :variant="'edit'" @click="openModal">정보 수정</BaseButton>
           </div>
           <InfoTable :headers = "personalInfo.headers" :rows="personalInfo.rows" />
         </div>
       </div>
       <div>
-        <SectionHeader :icon-class="'fas fa-address-book'" :title="'연락정보'"/>
+        <SectionHeader :icon-class="'fas fa-address-book'" :title="'연락 정보'"/>
         <InfoTable :headers="contactInfo.headers" :rows="contactInfo.rows" />
       </div>
       <div>
-        <SectionHeader :icon-class="'fas fa-building'" :title="'회사정보'"/>
+        <SectionHeader :icon-class="'fas fa-building'" :title="'회사 정보'"/>
         <div class="company-cards">
           <CompanyCard
               icon="fas fa-calendar-alt"
@@ -59,7 +59,7 @@ const personalInfo = computed(() => ({
 }))
 
 const contactInfo = computed(() => ({
-  headers: ['연락방법', '정보'],
+  headers: ['연락 방법', '정보'],
   rows:[
     ['이메일',props.info.email],
     ['전화번호', props.info.contact],

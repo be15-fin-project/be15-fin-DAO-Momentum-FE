@@ -149,14 +149,14 @@ onMounted(async () => {
               :class="{ 'tab-active': currentTab === 'basic' }"
               @click="currentTab = 'basic'"
           >
-            <i class="fas fa-user-circle"></i>기본정보
+            <i class="fas fa-user-circle"></i>기본 정보
           </button>
           <button
               class="tab-button"
               :class="{ 'tab-active': currentTab === 'history' }"
               @click="currentTab = 'history'"
           >
-            <i class="fas fa-history"></i>이력정보
+            <i class="fas fa-history"></i>인사 정보
           </button>
           </div>
 
