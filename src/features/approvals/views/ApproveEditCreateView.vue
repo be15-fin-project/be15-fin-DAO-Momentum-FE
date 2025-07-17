@@ -181,7 +181,7 @@ onMounted(() => {
 
     <div class="header-buttons">
       <button class="blue-btn" @click="goBack">
-        <i class="fas fa-arrow-left"></i> 문서함
+        <i class="fas fa-arrow-left"></i>{{ isEditMode ? '이전으로' : '문서함' }}
       </button>
     </div>
   </div>
