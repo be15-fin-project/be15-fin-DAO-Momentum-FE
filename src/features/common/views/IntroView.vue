@@ -11,22 +11,35 @@
             <div class="hero-logo">
               <img src="@/assets/icons/logo_light.png" alt="로고"/>
             </div>
-            <p class="hero-subtitle">
-              DAO (Dev Artists Organization)
+            <p class="hero-name">
+              Momentum
             </p>
             <H3 class="hero-title">
-              Momentum
+              인사 관리 플랫폼에서 근속 예측까지
             </H3>
-            <h1 class="hero-subtitle holographic-text">
-              사람의 움직임과 변화를 신호로 포착하고,
-              이를 앞서 감지하기 위해 설계된
-              데이터 기반 인사 관리 시스템
-            </h1>
+            <p class="hero-subtitle">
+                구성원의 작은 변화 신호를 읽어내어 근속 가능성을 예측하는 통합 HR 솔루션
+            </p>
+            <div class="button-wrap">
+              <div class="inline-blocked">
+                <a class="btn button-login">
+                  <i class="fas fa-sign-in-alt"/> 로그인</a>
+              </div>
+            </div>
           </div>
-          <div class="glass card neon-glow">
-            <div class="brand-title">Momentum</div>
-            <div class="brand-sub">머무는 힘은, 이해에서 시작된다</div>
-          </div>
+<!--          <div class="glass card neon-glow">-->
+<!--            <div class="card-grid">-->
+<!--              <div class="brand-sub">-->
+<!--                Momentum 워크스페이스 만들기-->
+<!--              </div>-->
+<!--              <div class="brand-sub">-->
+<!--                우리 조직만의 HR 관리 환경을 구성해보세요-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="icon-grid">-->
+<!--              <i class="fas fa-sign-in-alt"/>-->
+<!--            </div>-->
+<!--          </div>-->
         </div>
       </section>
 
@@ -193,6 +206,22 @@ export default {
   max-width: 1200px;
 }
 
+.hero-content {
+  animation: fadeInUp 1.2s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 .hero-logo {
   margin-bottom: 1.2rem;
   display: flex;
@@ -206,30 +235,83 @@ export default {
   object-fit: contain;
 }
 
+.hero-name {
+  font-size: 2.7rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
 .hero-title {
   font-size: 3.6rem;
   font-weight: bold;
   margin-bottom: 1.8rem;
 }
 
-.hero-name {
-  font-size: 3.2rem;
-  font-weight: bold;
-  margin-bottom: 1.8rem;
-}
-
 .hero-subtitle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   font-size: 1.5rem;
   margin-bottom: 2.4rem;
   color: #cbd5e1;
+  gap: 1rem;
+}
+
+.button-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  padding-top: 3rem;
+}
+
+.inline-blocked {
+  display: inline-block;
+}
+
+.btn {
+  font-size: 20px;
+  padding-left: 50px;
+  padding-right: 50px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  letter-spacing: 0px;
+}
+
+.button-login {
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  padding: 1.2rem 4rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+  transition: all 0.3s ease;
+}
+
+.button-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.6);
 }
 
 .card {
+  display: flex;
+  align-items: center;
   padding: 2.4rem;
   border-radius: 1.8rem;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-grid {
+  padding: 1rem 5rem;
+  border-radius: 1.8rem;
+}
+
+.icon-grid {
+  display: flex;
+  margin: auto;
+  font-size: 60px;
 }
 
 .brand-title {
