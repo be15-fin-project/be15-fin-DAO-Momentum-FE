@@ -78,7 +78,7 @@ function handleRowAction({action, row}) {
 const handleCreateSubmit = async(req) => {
   try{
     await postPosition(req);
-    toast.success('직위 추가에 성공했습니다.');
+    toast.success('직위 생성에 성공했습니다.');
     await getPositionList();
     createModalVisible.value = false;
     Object.assign(createReq, initialReq);
@@ -155,7 +155,7 @@ onMounted(async () => {
     <div class="header-buttons">
       <button class="create-button" @click="createModalVisible=true">
         <i class="fas fa-plus"></i>
-        <span>직위 추가</span>
+        <span>직위 생성</span>
       </button>
     </div>
   </div>
@@ -166,7 +166,7 @@ onMounted(async () => {
   <SideModal
       :visible="createModalVisible"
       @close="createModalVisible=false"
-      title="직위 추가"
+      title="직위 생성"
       icon="fas fa-info-circle card-icon"
       v-model:form="createReq"
       :sections = "createModalSections"

@@ -158,7 +158,7 @@ onMounted(async () => {
   <SideModal
       :visible="holidayCreateModalVisible"
       @close="holidayCreateModalVisible=false"
-      title="부서 생성"
+      title="휴일 생성"
       icon="fas fa-info-circle card-icon"
       v-model:form="postReq"
       :sections = "createModalSections"

@@ -48,7 +48,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="form-card">
+  <div class="form-card fadeIn">
     <form class="form-container" @submit.prevent="submitCompany">
       <div class="form-grid form-grid-two">
         <div class="form-field">
@@ -203,5 +203,10 @@ onMounted(async () => {
   .form-grid-two {
     grid-template-columns: 1fr;
   }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(22px);}
+  to { opacity: 1; transform: translateY(0);}
 }
 </style>
