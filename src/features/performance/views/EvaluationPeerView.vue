@@ -44,7 +44,7 @@
 
     <SideModal
         :visible="isOpen"
-        :title="'평가 상세 정보'"
+        :title="'사원 간 평가 상세 정보'"
         icon="fa-chart-line"
         :sections="formSections"
         :showSubmit="false"
