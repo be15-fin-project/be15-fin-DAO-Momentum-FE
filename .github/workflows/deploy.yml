@@ -26,6 +26,12 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Set API Base URL
+        run: |
+             echo "VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }}" >> .env.production
+             echo "VITE_NOTIFICATION_API_BASE_URL=${{ secrets.VITE_NOTIFICATION_API_BASE_URL }}" >> .env.production
+             echo "VITE_CHATBOT_API_BASE_URL=${{ secrets.VITE_CHATBOT_API_BASE_URL }}" >> .env.production
+
       - name: Build
         run: npm run build
 
