@@ -1,5 +1,4 @@
 <template>
-  <main class="main">
     <div class="main-section">
       <div class="main-header">
         <div class="header-area">
@@ -94,7 +93,6 @@
         </div>
       </div>
     </div>
-  </main>
 </template>
 
 <script setup>
@@ -206,16 +204,15 @@ const handleClickOutside = (e) => {
 </script>
 
 <style scoped>
-.main {
-  padding: 0;
-}
 
 .main-section {
   width: 100%;
 }
 
 .main-header {
-  padding: 32px;
+  padding-left: 32px;
+  padding-right:32px;
+  padding-bottom: 32px;
   display: flex;
   justify-content: space-between;
   align-items: center;
