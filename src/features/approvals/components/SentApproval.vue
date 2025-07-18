@@ -256,7 +256,7 @@ async function fetchSentApprovals() {
     pagination.value.totalPage = res.data.data.pagination.totalPage;
 
   } catch (e) {
-    toast.errors('결재 내역 불어오기에 실패했습니다.');
+    toast.error('결재 내역 불어오기에 실패했습니다.');
   }
 }
 

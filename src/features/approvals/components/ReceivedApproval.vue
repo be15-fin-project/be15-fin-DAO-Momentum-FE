@@ -309,7 +309,7 @@ onMounted(async () => {
     const deptRes = await getDepartments();
     departmentTree.value =  deptRes.data?.departmentInfoDTOList || [];
   } catch (err) {
-    toast.errors('부서 불러오기에 실패했습니다.');
+    toast.error('부서 불러오기에 실패했습니다.');
   }
 
   filterValues.value = {};
