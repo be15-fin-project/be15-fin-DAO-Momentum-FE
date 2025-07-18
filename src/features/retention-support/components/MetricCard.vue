@@ -29,7 +29,7 @@ defineProps({
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--card-shadow);
-  padding: 3rem 4rem;
+  padding: 3rem 2rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .metric-card:hover {
