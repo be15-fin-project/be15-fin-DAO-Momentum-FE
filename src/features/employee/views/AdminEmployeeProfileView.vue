@@ -217,7 +217,7 @@ function handleClick(event) {
 <template>
   <section>
       <HeaderWithTabs :headerItems="[
-        { label: '사원 프로필 조회', event: 'click', active: true },
+        { label: '사원 프로필 조회', to: route.path, event: 'click', active: true },
     ]"
                       :submitButtons="[{ label: '뒤로 가기', icon: 'fa-arrow-left', event:'click', value: 'back', variant: 'white' }]"
                       :showTabs="false"
