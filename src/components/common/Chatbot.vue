@@ -180,6 +180,7 @@ const scrollToBottom = () => {
                 :class="msg.from === 'user' ? 'chat-bubble-user' : 'chat-bubble-bot'"
                 @click="handleMessageClick(msg)"
                 :style="msg.isLink ? 'cursor: pointer; color: var(--purple-700); text-decoration: underline;' : ''"
+                class="chat-bubble-test"
             >
               {{ msg.text }}
             </div>
@@ -353,6 +354,10 @@ const scrollToBottom = () => {
   border-radius: 16px;
   max-width: 75%;
   word-break: break-word;
+}
+
+.chat-bubble-test {
+  white-space: pre-wrap;
 }
 
 .chat-avatar {
