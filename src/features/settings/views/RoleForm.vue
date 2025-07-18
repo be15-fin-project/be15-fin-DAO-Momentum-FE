@@ -50,7 +50,6 @@ const handleSelectMember = async(empId) => {
   formModel.value = {
     roles: response.data.data.userRolesIds
   };
-  console.log(formModel.value.roles)
 }
 
 //화면 구성 처리
@@ -71,7 +70,6 @@ const handleUpdateRoles = async() => {
       empId: selectedEmpId.value,
       userRoleIds:formModel.value.roles
     }
-    console.log(req);
     await putEmpRoles(req);
     toast.success('권한 수정에 성공했습니다.')
     selectedEmpId.value = null;
