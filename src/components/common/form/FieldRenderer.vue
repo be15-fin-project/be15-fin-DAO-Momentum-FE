@@ -231,7 +231,6 @@ const onPositiveIntegerInput = (key) => {
 
 const onFileChange = (e) => {
   const file = e.target.files[0];
-  console.log('FieldRenderer: selected file:', file);
   if (!file) return;
   emit('file-change', { fieldKey: props.field.key, file });
 };

@@ -54,7 +54,7 @@ export function useAttendance() {
             isWeekend.value = resp.weekend
             isHoliday.value = resp.holiday
         } catch (e) {
-            console.error('출근 상태 조회 실패', e)
+            toast.error('출근 상태 조회 실패')
         }
     }
 
