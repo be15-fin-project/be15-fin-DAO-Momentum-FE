@@ -9,7 +9,7 @@ import VacationForm from "@/features/approvals/components/approveType/VacationFo
 import ProposalForm from "@/features/approvals/components/approveType/ProposalForm.vue";
 import ReceiptForm from "@/features/approvals/components/approveType/ReceiptForm.vue";
 import ApproveReasonList from "@/features/approvals/components/ApproveReasonList.vue";
-import {submitApproval} from "@/features/approvals/api.js";
+import {submitApproval, updateApproval} from "@/features/approvals/api.js";
 import {useToast} from "vue-toastification";
 import {useRoute, useRouter} from "vue-router";
 import BaseButton from "@/components/common/BaseButton.vue";
@@ -23,6 +23,9 @@ const cancelReasonError = ref('');
 /* 승인/반려 사유 */
 const reason = ref('');
 const rejectError = ref('');
+
+const isEditing = ref(false);
+const localApproveTitle = ref(approveDTO.approveTitle);
 
 /* 결재 취소 요청 */
 const showCancelForm = ref(false);
@@ -70,7 +73,6 @@ const canApprove = computed(
 // 수정/회수/취소 가능
 const canEditOrWithdrawOrCancel = computed(() => isWriter)
 
-
 /* form에 따라서 매핑 하기 */
 const formMap = {
   WORKCORRECTION: WorkCorrectionForm,
@@ -106,6 +108,10 @@ watch(() => cancelForm.value.cancelReason, (newVal) => {
   } else {
     cancelReasonError.value = '';
   }
+});
+
+watch(() => approveDTO.approveTitle, (newVal) => {
+  localApproveTitle.value = newVal;
 });
 
 async function submitCancelApproval() {
@@ -152,6 +158,51 @@ async function submitCancelApproval() {
   }
 }
 
+async function updateCancelApproval() {
+  if (!formDetail.cancelReason?.trim()) {
+    toast.error('※ 취소 사유는 반드시 입력해야 합니다.');
+    return;
+  }
+
+  const request = {
+    approveTitle: localApproveTitle.value,
+    approveType: 'CANCEL',
+    formDetail: {
+      cancelReason: formDetail.cancelReason
+    },
+    attachments: approveFileDTO ?? [],
+    approveLineLists: (approveLineGroupDTO || []).map((group, index) => ({
+      statusId: 1,
+      approveLineOrder: index + 1,
+      isRequiredAll: group.approveLineDTO?.isRequiredAll ?? 'REQUIRED',
+      approveLineList: (group.approveLineListDTOs || []).map(approver => ({
+        empId: parseInt(approver.empId),
+        statusId: 1
+      }))
+    })),
+    refRequests: approveRefDTO.map(ref => ({
+      empId: parseInt(ref.empId),
+      isConfirmed: 'N'
+    }))
+  };
+
+  try {
+    await updateApproval(request, approveDTO.approveId);
+    toast.success('취소 결재 수정이 완료되었습니다.');
+    isEditing.value = false;
+  } catch (e) {
+    toast.error('수정에 실패했습니다.');
+  }
+}
+
+function handleEditClick() {
+  if (approveDTO.approveType === 'CANCEL') {
+    isEditing.value = true;
+  } else {
+    emit('edit');
+  }
+}
+
 onMounted(() => {
   if (!cancelForm.value.cancelReason.trim()) {
     cancelReasonError.value = '* 취소 사유는 반드시 입력해야 합니다.';
@@ -172,8 +223,8 @@ onMounted(() => {
             type="text"
             class="form-input enhanced"
             :class="{ readonly: isReadOnly }"
-            :value="approveDTO.approveTitle"
-            :readonly="isReadOnly"
+            v-model="localApproveTitle"
+            :readonly="approveDTO.approveType === 'CANCEL' ? !isEditing : isReadOnly"
             placeholder="제목을 입력하세요"
           />
         </div><br>
@@ -214,7 +265,7 @@ onMounted(() => {
             :approve-file-d-t-o="approveFileDTO"
             :parent-Approve-d-t-o="parentApproveDTO"
             :class="{ readonly: isReadOnly }"
-            :is-read-only="isReadOnly"
+            :is-read-only="approveDTO.approveType === 'CANCEL' ? !isEditing : true"
           />
         </div>
       </section>
@@ -258,16 +309,16 @@ onMounted(() => {
       <div v-else-if="isWriter && isSentView" class="approve-action-wrapper">
         <div class="form-buttons">
           <BaseButton
-            v-if="approveDTO.statusType === 'PENDING' "
+            v-if="approveDTO.statusType === 'PENDING' && !isEditing "
             type="button"
             class="btn-action btn-edit"
-            @click="$emit('edit')"
+            @click="handleEditClick"
             data-v-fb076351 data-v-f51fb21f
           >
             수정
           </BaseButton>
           <BaseButton
-            v-if="approveDTO.statusType === 'PENDING'"
+            v-if="approveDTO.statusType === 'PENDING' && !isEditing"
             type="button"
             class="btn-action btn-reject"
             @click="$emit('request-delete')"
@@ -283,6 +334,15 @@ onMounted(() => {
             data-v-fb076351 data-v-f51fb21f
           >
             결재 취소
+          </BaseButton>
+
+          <BaseButton
+            v-if="approveDTO.approveType === 'CANCEL' && isEditing"
+            type="button"
+            class="btn-action btn-edit"
+            @click="updateCancelApproval"
+          >
+            결재 제출
           </BaseButton>
         </div>
       </div>
