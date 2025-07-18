@@ -1,84 +1,87 @@
 <template>
-  <div v-show="visible">
-    <div class="modal-overlay active" @click="onClose"></div>
-    <div class="modal-container active">
-      <div class="modal-header">
-        <h2 v-if="title">
-          <i v-if="icon" :class="`header-icon fas ${icon}`"></i>
-          {{ title }}
-        </h2>
-        <button class="modal-close" @click="onClose">
-          <i class="fas fa-times"></i>
-        </button>
+  <div v-show="visible" class="modal-overlay"/>
+  <Transition name="slide-modal">
+    <div v-if="visible" class="modal-wrapper">
+      <div v-show="visible" class="modal-in-overlay" @click="onClose"></div>
+      <div class="modal-container">
+        <div class="modal-header">
+          <h2 v-if="title">
+            <i v-if="icon" :class="`header-icon fas ${icon}`"></i>
+            {{ title }}
+          </h2>
+          <button class="modal-close" @click="onClose">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="modal-content">
+          <FormSection
+              v-for="(section, idx) in sections"
+              :key="idx"
+              :title="section.title"
+              :icon="section.icon"
+              :layout="section.layout"
+          >
+            <FieldRenderer
+                v-for="(field, fIdx) in section.fields"
+                :key="fIdx"
+                :field="field"
+                :model="form"
+                :readonly="readonly"
+                :setFieldRef="setFieldRef"
+                :ref="field.key === 'reason' ? 'reasonInput' : null"
+                @file-change="handleFileChange"
+            />
+          </FormSection>
+
+
+        </div>
+
+        <div class="modal-footer" v-if="showFooter">
+          <BaseButton
+              v-if="showCancel"
+              variant="cancel"
+              icon="rotate-left"
+              :disabled="cancelDisabled"
+              @click="$emit('cancel')"
+          >
+            {{ cancelText }}
+          </BaseButton>
+          <BaseButton
+              v-if="showReject"
+              variant="reject"
+              icon="warning"
+              :disabled="rejectDisabled"
+              @click="$emit('reject')"
+          >
+            {{ rejectText }}
+          </BaseButton>
+
+          <BaseButton
+              v-if="showEdit"
+              variant="edit"
+              icon="pencil-alt"
+              @click="$emit('edit')"
+          >
+            {{ editText }}
+          </BaseButton>
+
+          <BaseButton
+              v-if="showSubmit"
+              variant="submit"
+              icon="paper-plane"
+              :disabled="submitDisabled"
+              @click="$emit('submit')"
+          >
+            {{ submitText }}
+          </BaseButton>
+
+        </div>
+
+
       </div>
-
-      <div class="modal-content">
-        <FormSection
-            v-for="(section, idx) in sections"
-            :key="idx"
-            :title="section.title"
-            :icon="section.icon"
-            :layout="section.layout"
-        >
-          <FieldRenderer
-              v-for="(field, fIdx) in section.fields"
-              :key="fIdx"
-              :field="field"
-              :model="form"
-              :readonly="readonly"
-              :setFieldRef="setFieldRef"
-              :ref="field.key === 'reason' ? 'reasonInput' : null"
-              @file-change="handleFileChange"
-          />
-        </FormSection>
-
-
-      </div>
-
-      <div class="modal-footer" v-if="showFooter">
-        <BaseButton
-            v-if="showCancel"
-            variant="cancel"
-            icon="rotate-left"
-            :disabled="cancelDisabled"
-            @click="$emit('cancel')"
-        >
-          {{ cancelText }}
-        </BaseButton>
-        <BaseButton
-            v-if="showReject"
-            variant="reject"
-            icon="warning"
-            :disabled="rejectDisabled"
-            @click="$emit('reject')"
-        >
-          {{ rejectText }}
-        </BaseButton>
-
-        <BaseButton
-            v-if="showEdit"
-            variant="edit"
-            icon="pencil-alt"
-            @click="$emit('edit')"
-        >
-          {{ editText }}
-        </BaseButton>
-
-        <BaseButton
-            v-if="showSubmit"
-            variant="submit"
-            icon="paper-plane"
-            :disabled="submitDisabled"
-            @click="$emit('submit')"
-        >
-          {{ submitText }}
-        </BaseButton>
-
-      </div>
-
-
     </div>
-  </div>
+  </Transition>
 </template>
 
 
@@ -86,15 +89,18 @@
 import FormSection from '@/components/common/form/FormSection.vue';
 import FieldRenderer from '@/components/common/form/FieldRenderer.vue';
 import BaseButton from '@/components/common/BaseButton.vue';
-import { watch, onMounted, onUnmounted, ref } from 'vue';
+import {watch, onMounted, onUnmounted, ref} from 'vue';
 
 const initialized = ref(false);
 const fieldRefs = ref({})
+
 function setFieldRef(key, el) {
   console.log('[ref 등록됨]', key, el)
   if (el) fieldRefs.value[key] = el
 }
-defineExpose({ fieldRefs })
+
+defineExpose({fieldRefs})
+
 function scrollToLikert(value) {
   const match = props.sections
       .flatMap(section => section.fields)
@@ -112,19 +118,19 @@ const props = defineProps({
   visible: Boolean,
   title: String,
   icon: String,
-  readonly: { type: Boolean, default: false },
-  showFooter: { type: Boolean, default: true },
-  showCancel: { type: Boolean, default: false },
-  showReject: { type: Boolean, default: false },
-  showEdit: { type: Boolean, default: false },
-  showSubmit: { type: Boolean, default: true },
-  cancelDisabled: { type: Boolean, default: false },
-  submitDisabled: { type: Boolean, default: false },
-  rejectDisabled: { type: Boolean, default: false },
-  cancelText: { type: String, default: '취소' },
-  rejectText: { type: String, default: '반려' },
-  editText: { type: String, default: '수정' },
-  submitText: { type: String, default: '저장' },
+  readonly: {type: Boolean, default: false},
+  showFooter: {type: Boolean, default: true},
+  showCancel: {type: Boolean, default: false},
+  showReject: {type: Boolean, default: false},
+  showEdit: {type: Boolean, default: false},
+  showSubmit: {type: Boolean, default: true},
+  cancelDisabled: {type: Boolean, default: false},
+  submitDisabled: {type: Boolean, default: false},
+  rejectDisabled: {type: Boolean, default: false},
+  cancelText: {type: String, default: '취소'},
+  rejectText: {type: String, default: '반려'},
+  editText: {type: String, default: '수정'},
+  submitText: {type: String, default: '저장'},
   sections: Array
 });
 
@@ -151,7 +157,7 @@ watch(
         });
       }
     },
-    { immediate: true }
+    {immediate: true}
 );
 
 onMounted(() => {
@@ -177,20 +183,25 @@ function handleKeydown(e) {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 100%;
-  background: var(--gradient-overlay);
+  width: 125vw;
+  height: 125vh;
+  background: rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(3px);
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.3s ease;
-  z-index: 2000;
+  z-index: 1998;
+  /* 절대 애니메이션 없음 */
+  transition: none !important;
 }
 
-.modal-overlay.active {
-  opacity: 1;
-  visibility: visible;
+/* 모달 전체 영역 */
+.modal-in-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 125vw;
+  height: 125vh;
+  z-index: 1999;
 }
+
 
 .modal-container {
   position: fixed;
@@ -201,17 +212,12 @@ function handleKeydown(e) {
   max-width: 100%;
   background: var(--color-surface);
   z-index: 2001;
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
   box-shadow: var(--shadow-modal);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
 }
 
-.modal-container.active {
-  transform: translateX(0);
-}
 
 .modal-header {
   background: var(--icon-gradient);
@@ -497,6 +503,34 @@ function handleKeydown(e) {
   background: var(--color-badge-bg);
   padding: 4px 10px;
   border-radius: var(--radius-xl);
+}
+
+.modal-wrapper {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 100vw;
+  height: 125vh;
+  z-index: 1999;
+  display: flex;
+}
+
+/* slide-modal 트랜지션 클래스는 modal-wrapper에 적용됨 */
+.slide-modal-enter-active,
+.slide-modal-leave-active {
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.slide-modal-enter-from,
+.slide-modal-leave-to {
+  transform: translateX(100%);
+  opacity: 0;
+}
+
+.slide-modal-enter-to,
+.slide-modal-leave-from {
+  transform: translateX(0%);
+  opacity: 1;
 }
 
 </style>
