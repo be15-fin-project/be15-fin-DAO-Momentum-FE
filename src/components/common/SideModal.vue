@@ -137,7 +137,6 @@ function onClose() {
 }
 
 function handleFileChange(file) {
-  console.log('SideModal: file-change event, file:', file);
   emit('file-change', file); // 외부 부모 컴포넌트로 이벤트 전달
 }
 
