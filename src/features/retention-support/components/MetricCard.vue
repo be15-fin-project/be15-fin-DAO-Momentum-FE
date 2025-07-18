@@ -49,12 +49,12 @@ defineProps({
   align-items: center;
 }
 .metric-label {
-  font-size: 23px;
+  font-size: 15px;
   color: var(--font-sub);
   margin-bottom: 4px;
 }
 .metric-value {
-  font-size: 38px;
+  font-size: 30px;
   font-weight: bold;
   color: var(--label-color);
 }

@@ -9,15 +9,20 @@
         <div class="hero-content">
           <div class="floating">
             <div class="hero-logo">
-              <img src="@/assets/icons/logo_light.png" alt="로고" />
+              <img src="@/assets/icons/logo_light.png" alt="로고"/>
             </div>
-            <h1 class="hero-title holographic-text">
-              하나의 플랫폼, 완전한 HR 생태계
+            <p class="hero-subtitle">
+              DAO (Dev Artists Organization)
+            </p>
+            <H3 class="hero-title">
+              Momentum
+            </H3>
+            <h1 class="hero-subtitle holographic-text">
+              사람의 움직임과 변화를 신호로 포착하고,
+              이를 앞서 감지하기 위해 설계된
+              데이터 기반 인사 관리 시스템
             </h1>
           </div>
-          <p class="hero-subtitle">
-            사람을 숫자가 아닌 '신호'로 이해하는 차세대 HR 플랫폼
-          </p>
           <div class="glass card neon-glow">
             <div class="brand-title">Momentum</div>
             <div class="brand-sub">머무는 힘은, 이해에서 시작된다</div>
@@ -133,9 +138,7 @@ export default {
   padding: 0;
   font-family: 'Inter', sans-serif;
   background: radial-gradient(ellipse at center,
-  #15161f 0%,       /* 중심: 아주 짙은 네이비 */
-  #1a1b2b 40%,      /* 중간: 약간 보라 섞인 남색 */
-  #202136 100%);    /* 바깥: 부드러운 어두운 남색 */
+  #15161f 0%, /* 중심: 아주 짙은 네이비 */ #1a1b2b 40%, /* 중간: 약간 보라 섞인 남색 */ #202136 100%); /* 바깥: 부드러운 어두운 남색 */
   color: #ffffff;
   font-size: 1.2rem;
 }
@@ -187,8 +190,9 @@ export default {
 .hero-content {
   position: relative;
   z-index: 2;
-  max-width: 1000px;
+  max-width: 1200px;
 }
+
 .hero-logo {
   margin-bottom: 1.2rem;
   display: flex;
@@ -204,6 +208,12 @@ export default {
 
 .hero-title {
   font-size: 3.6rem;
+  font-weight: bold;
+  margin-bottom: 1.8rem;
+}
+
+.hero-name {
+  font-size: 3.2rem;
   font-weight: bold;
   margin-bottom: 1.8rem;
 }
