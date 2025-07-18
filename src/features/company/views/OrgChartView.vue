@@ -71,10 +71,6 @@ const getDepartmentInfo = async () => {
   }
 }
 
-const clickEvent = (empId) =>{
-  console.log(empId);
-}
-
 onMounted(async () => {
   await getDepartments();
 })
