@@ -144,24 +144,18 @@ watch(() => props.dtoList, (newData) => {
 
 .breadcrumb {
   display: flex;
+  flex-wrap: wrap; /* 줄바꿈 허용 */
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
   padding: 8px 12px;
-  min-height:40px;
+  min-height: 40px;
   background: var(--blue-50);
   border-radius: 8px;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
+  word-break: break-word; /* 단어 줄바꿈 (선택적) */
 }
 
-.breadcrumb-item {
-  color: var(--font-sub);
-}
-
-.breadcrumb-item.active {
-  color: var(--blue-400);
-  font-weight: 600;
-}
 
 .breadcrumb-separator {
   color: var(--gray-500);
