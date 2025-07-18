@@ -8,7 +8,6 @@ import SideModal from "@/components/common/SideModal.vue";
 import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createAppoint, getAppoints, getEmployeeDetails} from "@/features/employee/api.js";
 import {useToast} from "vue-toastification";
-import dayjs from "dayjs";
 import {toastError} from "@/util/toastError.js";
 
 const toast = useToast();
@@ -51,6 +50,12 @@ const baseFilterOptions = computed(() => [
   {key: 'deptId', type: 'tree', label: '발령 부서', icon: 'fa-building', options: departmentTree.value},
   {key: 'positionId', type: 'select', label: '발령 직위', icon: 'fa-user-tie', options: positionFilterOptions.value},
   {key: 'appointDate', type: 'date-range', label: '발령일', icon: 'fa-calendar-day'},
+  {key: 'type', type: 'select', label: '발령 종류', icon: 'fa-filter', options: [
+      {value: null, label: '전체'},
+      {value: 'DEPARTMENT_TRANSFER', label: '소속 이동'},
+      {value: 'PROMOTION', label: '승진'}
+    ]
+  },
   {
     key: 'order',
     type: 'select',
@@ -70,6 +75,7 @@ const setParams = (v) => {
     positionId: v.positionId ?? null,
     searchStartDate: v.appointDate_start ?? null,
     searchEndDate: v.appointDate_end ?? null,
+    type: v.type ?? null,
     order: v.order ?? null
   };
 }
