@@ -21,7 +21,6 @@ function togglePassword() {
 }
 
 const handleSubmit = async () => {
-  console.log('로그인 시도:', email.value, password.value)
   isSubmitting.value = true
   try {
     const response = await loginUser({
