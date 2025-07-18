@@ -62,7 +62,7 @@ const errors = ref({
 });
 
 /* 비용 처리 유효성 검사 */
-function validateReceiptForm() {
+function validateForm() {
   errors.value = {
     receiptType: '',
     storeName: '',
@@ -109,7 +109,7 @@ watch(
     props.formData.attachments
   ],
   () => {
-    validateReceiptForm();
+    validateForm();
   },
   { immediate: true }
 );
@@ -134,7 +134,7 @@ async function fetchReceiptImage() {
       imageUrl.value = resp.data.data.signedUrl;
       fileName.value = resp.data.data.fileName;
     } catch (err) {
-      console.error('파일 이미지 URL 불러오기 실패:', err);
+      toast.error('파일 이미지 URL 불러오기에 실패했습니다.');
       imageUrl.value = null;
     }
   } else {
@@ -213,7 +213,6 @@ async function handleFileUpload(event) {
     props.formData.amount = data.amount || '';
 
   } catch (err) {
-    console.error("파일 업로드 실패:", err);
     toast.error('파일 업로드 중 오류가 발생했습니다.');
   } finally {
     isOcrLoading.value = false;
@@ -256,6 +255,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
+defineExpose({
+  validateForm
+});
 </script>
 
 <template>

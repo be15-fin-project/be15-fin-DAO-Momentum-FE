@@ -47,6 +47,10 @@ watch(
 );
 
 onMounted(validateForm);
+
+defineExpose({
+  validateForm
+});
 </script>
 
 <template>

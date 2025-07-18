@@ -2,8 +2,10 @@
 import { getMyWorks } from "@/features/works/api.js";
 import {computed, onBeforeUnmount, onMounted, ref, watch} from "vue";
 import { useRoute } from 'vue-router';
+import {useToast} from "vue-toastification";
 
 const route = useRoute();
+const toast = useToast();
 
 /* 일 목록 가져오는 변수 */
 const workList = ref([]);
@@ -87,7 +89,9 @@ function validateForm() {
     errors.value.reason = '※ 출퇴근 정정 사유를 입력해주세요.';
   }
 
-  return !errors.value.workId && !errors.value.time && !errors.value.reason;
+  const isValid = !errors.value.workId && !errors.value.time && !errors.value.reason;
+
+  return isValid ? true : '출퇴근 정정 입력을 확인해주세요.';
 }
 
 /* 드롭다운에서 바깥 영역을 클릭 시 닫힐 수 있게 설정 */
@@ -145,7 +149,7 @@ async function fetchMyWorks() {
     }
 
   } catch (e) {
-    console.error('근무 정보를 불러오는데 오류가 발생했습니다.', e)
+    toast.error('근무 정보를 불러오는데 실패했습니다.')
   }
 }
 
@@ -171,6 +175,10 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener("click", handleClickOutside);
+});
+
+defineExpose({
+  validateForm
 });
 </script>
 

@@ -3,8 +3,10 @@ import {ref, computed, onMounted, watch, onBeforeUnmount} from 'vue'
 import EmployeeModal from "@/features/approvals/components/EmployeeModal.vue";
 import {getEmployeeLeader} from "@/features/approvals/api.js";
 import {cssClasses as selectedApprovalLine} from "nouislider/src/nouislider.js";
+import {useToast} from "vue-toastification";
 
 const targetStepIndex = ref(null);
+const toast = useToast();
 
 /* 모달과 관련된 속성 */
 // 모달을 열기 or 닫기
@@ -200,7 +202,7 @@ watch(
           ];
         }
       } catch (e) {
-        console.error('결재자 정보 설정 실패:', e);
+        toast.error('결재자 정보 설정에 실패했습니다.')
       }
     }
   },

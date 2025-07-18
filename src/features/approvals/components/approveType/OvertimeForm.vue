@@ -23,6 +23,10 @@ const workTypeOptions = [
   { value: 'HOLIDAY', label: '휴일 근무' }
 ];
 
+defineExpose({
+  validateForm
+});
+
 // 시작 관련 로컬 state
 const startDate = computed({
   get: () => getDateOnly(props.formData.startAt),
@@ -113,7 +117,7 @@ function updateDateTime(field, date, hour, minute) {
 }
 
 /* 시간과 관련된 validation */
-function validateAndAutoSetBreakTime() {
+function validateForm() {
   errors.value = {
     startDate: '',
     endDate: '',
@@ -151,7 +155,7 @@ function validateAndAutoSetBreakTime() {
     breakMinutes = 0;
   } else if (totalMinutes >= 240 && totalMinutes < 270) {
     // 4시간 ~ 4시간 29분: 실근무가 4시간 이상인데 휴게 시간 부여 기준 안 됨 → 불가
-    errors.value.time = '※ 4시간 30분 이상 근무 부터 30분 휴게시간으로 초과근무가 인정됩니다..';
+    errors.value.time = '※ 4시간 30분 이상 근무 부터 30분 휴게시간으로 초과근무가 인정됩니다.';
     return false;
   } else if (totalMinutes >= 270 && totalMinutes < 480) {
     // 4시간 30분 ~ 8시간 미만
@@ -184,11 +188,11 @@ watch(
     () => props.formData.endAt,
     () => props.formData.reason
   ], () => {
-  validateAndAutoSetBreakTime();}
+  validateForm();}
   , { immediate: true }
 );
 
-onMounted(validateAndAutoSetBreakTime);
+onMounted(validateForm);
 </script>
 
 <template>
