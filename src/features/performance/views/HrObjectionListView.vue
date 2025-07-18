@@ -26,7 +26,7 @@
 
     <SideModal
         :visible="isOpen"
-        title="인사 평가 상세 정보"
+        title="이의 제기 상세 정보"
         icon="fa-star-half-stroke"
         :showSubmit="false"
         :showReject="isPending"

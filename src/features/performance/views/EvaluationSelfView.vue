@@ -42,7 +42,7 @@
 
     <SideModal
         :visible="isOpen"
-        title="조직 평가 상세 정보"
+        title="자가 진단 상세 정보"
         icon="fa-chart-line"
         :sections="formSections"
         :showSubmit="false"
