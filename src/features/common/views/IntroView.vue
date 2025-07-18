@@ -21,10 +21,10 @@
                 구성원의 작은 변화 신호를 읽어내어 근속 가능성을 예측하는 통합 HR 솔루션
             </p>
             <div class="button-wrap">
-              <div class="inline-blocked">
-                <a class="btn button-login">
-                  <i class="fas fa-sign-in-alt"/> 로그인</a>
-              </div>
+              <router-link to="/login" class="btn button-login">
+                <i class="fas fa-sign-in-alt"/> 로그인
+              </router-link>
+
             </div>
           </div>
 <!--          <div class="glass card neon-glow">-->
@@ -67,15 +67,9 @@
           </h2>
           <p class="cta-sub">Momentum과 함께 시작하세요</p>
           <div class="cta-buttons">
-            <button class="cta-button">
-              <i class="fas fa-phone"></i> 무료 상담 신청
-            </button>
-            <button class="cta-button">
-              <i class="fas fa-play"></i> 데모 체험 요청
-            </button>
-            <button class="cta-button">
-              <i class="fas fa-calculator"></i> ROI 계산기 사용
-            </button>
+            <router-link to="/login" class="cta-button">
+              <i class="fas fa-sign-in-alt"></i> 로그인
+            </router-link>
           </div>
         </div>
       </section>
@@ -104,7 +98,7 @@ export default {
           icon: 'fas fa-clock',
           title: '지능형 근태시스템',
           description: 'IP 기반 출퇴근 제한과 패턴 분석으로 <br>정확하고 스마트한 근태 관리를 제공합니다',
-          points: ['IP 기반 출퇴근 제한', '자동 근태 집계', '이상 패턴 감지'],
+          points: ['출퇴근 기능 제공', '자동 근태 집계', '이상 패턴 감지'],
           vizType: 'pattern',
         },
         {
@@ -265,20 +259,14 @@ export default {
   padding-top: 3rem;
 }
 
-.inline-blocked {
-  display: inline-block;
-}
-
 .btn {
   font-size: 20px;
-  padding-left: 50px;
-  padding-right: 50px;
-  padding-top: 10px;
-  padding-bottom: 10px;
+  padding: 10px 50px;
   letter-spacing: 0px;
 }
 
 .button-login {
+  display: inline-flex;
   background: linear-gradient(135deg, #7c3aed, #6366f1);
   padding: 1.2rem 4rem;
   font-size: 1.5rem;
@@ -286,6 +274,8 @@ export default {
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
   transition: all 0.3s ease;
+  color: var(--color-surface);
+  gap: 0.6rem;
 }
 
 .button-login:hover {
@@ -396,7 +386,7 @@ export default {
 
 .cta-card {
   max-width: 840px;
-  padding: 3.6rem;
+  padding: 3.6rem 4.5rem;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 1.8rem;
   text-align: center;
@@ -424,8 +414,11 @@ export default {
 }
 
 .cta-button {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
   background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  color: var(--color-surface);
   border: none;
   border-radius: 2.4rem;
   padding: 0.9rem 1.8rem;
