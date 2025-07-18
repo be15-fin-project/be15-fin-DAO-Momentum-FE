@@ -53,7 +53,7 @@ const errors = ref({
 });
 
 /* 에러 유효성 검증 하기 */
-function validateBusinessTripForm() {
+function validateForm() {
   errors.value = {
     type: '',
     place: '',
@@ -108,7 +108,7 @@ watch(
     props.formData.cost
   ],
   () => {
-    validateBusinessTripForm();
+    validateForm();
   },
   { immediate: true }
 );
@@ -129,7 +129,7 @@ async function fetchBusinessTripFile() {
     fileName.value = resp.data.data.fileName;
 
   } catch (err) {
-    console.error("파일 서명 URL 불러오기 실패:", err);
+    toast.error("파일 서명 URL 불러오기 실패");
     signedUrl.value = null;
   }
 }
@@ -151,7 +151,6 @@ async function handleFileClick() {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error("파일 다운로드 실패:", err);
     toast.error('파일 다운로드 중 오류가 발생했습니다.');
   }
 }
@@ -190,7 +189,6 @@ async function handleFileUpload(event) {
     }];
 
   } catch (err) {
-    console.error("파일 업로드 실패:", err);
     toast.error("파일 업로드 중 오류가 발생했습니다.");
   }
 }
@@ -207,10 +205,15 @@ function handleClickOutside() {
   isDropdownOpen.value = false;
 }
 
+defineExpose({
+  validateForm
+});
+
+
 onMounted(() => {
   fetchBusinessTripFile();
   document.addEventListener('click', handleClickOutside);
-  validateBusinessTripForm();
+  validateForm();
   if (props.formData.cost == null) { // 비용 기본값은 0원으로 설정
     props.formData.cost = 0;
   }

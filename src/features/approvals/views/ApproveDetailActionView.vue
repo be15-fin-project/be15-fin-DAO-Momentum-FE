@@ -72,7 +72,7 @@ async function fetchApproval() {
         approval.value = newRes.data.data;
     }
   } catch (e) {
-    console.error("상세 조회 실패:", e)
+    toast.error('상세 조회에 실패했습니다.');
     fetchError.value = true;
   }
 }
@@ -100,7 +100,7 @@ async function handleDelete() {
     await deleteApproval(route.params.documentId);
     goBack();
   } catch (e) {
-    console.error('삭제 실패:', e);
+    toast.error('삭제에 실패했습니다.');
 
     const errorCode = e?.response?.data?.errorCode;
 
@@ -150,7 +150,7 @@ async function handleApprove(isApprove, reason) {
     await fetchApproval();
 
   } catch (err) {
-    console.error('승인/반려 실패:', err)
+    toast.error('승인/반려에 실패했습니다.');
   } finally {
     loading.value = false
     isAccepting.value = false;

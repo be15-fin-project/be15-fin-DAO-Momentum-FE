@@ -8,6 +8,7 @@ import {getReceivedApprovals} from "@/features/approvals/api.js";
 import NotExistApproval from "@/features/approvals/components/NotExistApproval.vue";
 import {getDepartments} from "@/features/works/api.js";
 import { useRouter } from 'vue-router'
+import {toastError} from "@/util/toastError.js";
 
 /* 경로 이동을 의한 부분 */
 const router = useRouter();
@@ -283,7 +284,7 @@ async function fetchReceivedApprovals() {
     approvals.value = res.data.data.approveDTO;
     pagination.value.totalPage = res.data.data.pagination.totalPage;
   } catch (e) {
-    console.error('결재 내역 불러오기 실패:', e)
+    toast.error('결재 내역 불러오기에 실패했습니다.');
   }
 }
 
@@ -308,7 +309,7 @@ onMounted(async () => {
     const deptRes = await getDepartments();
     departmentTree.value =  deptRes.data?.departmentInfoDTOList || [];
   } catch (err) {
-    console.error('부서 불러오기 실패:', err);
+    toast.errors('부서 불러오기에 실패했습니다.');
   }
 
   filterValues.value = {};

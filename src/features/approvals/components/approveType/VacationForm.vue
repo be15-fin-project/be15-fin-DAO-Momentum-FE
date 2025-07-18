@@ -159,7 +159,7 @@ async function fetchRemainVacation() {
     remainRefresh.value = refresh.data.data.remainingRefreshDays +'일';
 
   } catch (err) {
-    console.error("잔여 휴가 불러오기 실패:", err);
+    toast.error("잔여 휴가 수 조회에 실패했습니다.")
   }
 }
 
@@ -180,7 +180,7 @@ async function fetchVacationFile() {
     fileName.value = resp.data.data.fileName;
 
   } catch (err) {
-    console.error("파일 서명 URL 불러오기 실패:", err);
+    toast.error("파일 URL 불러오기에 실패했습니다.")
     signedUrl.value = null;
   }
 }
@@ -242,7 +242,6 @@ async function handleFileUpload(event) {
     }];
 
   } catch (err) {
-    console.error("파일 업로드 실패:", err);
     toast.error('파일 업로드 중 오류가 발생했습니다.');
   }
 }
@@ -287,6 +286,34 @@ onMounted(() => {
     };
   }
 });
+
+function validateForm() {
+  // 초기화
+  vacationTypeError.value = !props.formData.vacationTypeId ? '※ 휴가 유형을 선택해주세요.' : '';
+  startDateError.value = !props.formData.startDate ? '※ 시작일을 입력해주세요.' : '';
+  endDateError.value = !props.formData.endDate ? '※ 종료일을 입력해주세요.' : '';
+
+  if (props.formData.startDate && props.formData.endDate &&
+    props.formData.endDate < props.formData.startDate) {
+    endDateError.value = '※ 종료일은 시작일보다 빠를 수 없습니다.';
+  }
+
+  // 연차나 리프레시 초과 검사
+  if (exceedVacationLimit.value) {
+    return false;
+  }
+
+  // 필수 항목 누락 검사
+  const hasError =
+    vacationTypeError.value || startDateError.value || endDateError.value;
+
+  return !hasError;
+}
+
+defineExpose({
+  validateForm
+});
+
 </script>
 
 <template>

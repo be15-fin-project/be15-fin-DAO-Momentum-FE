@@ -148,7 +148,7 @@ async function submitCancelApproval() {
       isConfirmed: 'N'
     }))
   };
-  console.log(request);
+
   try {
     await submitApproval(request);
     toast.success('취소 결재가 제출되었습니다.');

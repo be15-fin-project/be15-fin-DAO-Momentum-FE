@@ -1,5 +1,5 @@
 <script setup>
-import {computed, onBeforeUnmount, onMounted, ref, watch} from 'vue'
+import {computed, markRaw, onBeforeUnmount, onMounted, ref, watch} from 'vue'
 import OvertimeForm from '@/features/approvals/components/approveType/OvertimeForm.vue'
 import WorkCorrectionForm from '@/features/approvals/components/approveType/WorkCorrectionForm.vue'
 import RemoteWorkForm from '@/features/approvals/components/approveType/RemoteWorkForm.vue'
@@ -108,6 +108,12 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
+const formRef = ref(null);
+
+defineExpose({
+  validate: () => formRef.value?.validateForm?.()
+});
 </script>
 
 <template>
@@ -165,6 +171,7 @@ onBeforeUnmount(() => {
           <component
             :is="selectedFormComponent"
             v-if="selectedFormComponent"
+            ref="formRef"
             v-model:form-data="localFormData"
             :is-read-only="false"
             :uploaded-files="props.uploadedFiles"
