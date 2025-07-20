@@ -16,14 +16,12 @@ const selectedDeptId = ref(null)
 const members = ref([])
 
 const handleDeptSelect = async (deptId) => {
-  console.log('[handleDeptSelect 호출]', deptId); // 여기 안 뜨면 문제
   selectedDeptId.value = deptId;
   try {
     const res = await fetchDepartmentInfo(deptId);
-    console.log('[부서 정보 응답]', res.data);
     members.value = res.data.data.departmentMemberDTOList || [];
   } catch (e) {
-    console.error('부서 정보 조회 실패:', e);
+    toast.error('부서 정보 조회 실패');
     members.value = [];
   }
 };
@@ -33,7 +31,6 @@ const handleMemberSelect = (empId) => {
   emit('update:modelValue', empId)
 }
 
-console.log('[초기 mount] field:', props.field); // field에 initialDeptId, treeData 잘 넘어왔는지
 watch(() => props.modelValue, async (empId) => {
   const deptId = props.field.initialDeptId;
 

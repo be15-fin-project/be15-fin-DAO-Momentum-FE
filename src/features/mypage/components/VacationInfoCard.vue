@@ -23,6 +23,9 @@
 <script setup>
 import {onMounted, ref} from "vue";
 import {getRemainDayOff, getRemainRefresh} from "@/features/approvals/api.js";
+import {useToast} from "vue-toastification";
+
+const toast = useToast();
 
 /* 잔여 휴가 수 */
 const remainDayOff = ref(null);
@@ -43,9 +46,8 @@ async function fetchRemainingVacation() {
 
     remainDayOff.value = dayOff.data.data.remainingDayoffHours/8 + '일';
     remainRefresh.value = refresh.data.data.remainingRefreshDays + '일';
-
   } catch (err) {
-    console.error("잔여 연차 불러오기 실패:", err);
+    toast.error("잔여 휴가 불러오기 실패");
   }
 }
 
