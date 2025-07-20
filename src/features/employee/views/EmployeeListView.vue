@@ -356,16 +356,12 @@ function computeRefreshDays(joinYear, targetYear) {
   }
 }
 
-/* TODO: 프론트 검증 로직 작성 */
 const handleRegisterSubmit = async (req) => {
   if (isSubmitting.value) return;
 
   isSubmitting.value = true;
   try {
-    if (!req.deptId) {
-      toast.error('부서를 선택해주세요.')
-      return
-    }
+    validateReq()
     const resp = await createEmployee(req);
     closeModal();
     toast.success('사원 등록 완료');
@@ -377,6 +373,40 @@ const handleRegisterSubmit = async (req) => {
     isSubmitting.value = false;
   }
 };
+
+const validateReq = () => {
+  if (!req.name) {
+    throw new Error('이름을 입력하세요.')
+  }
+  if (!req.gender) {
+    throw new Error('성별을 선택하세요.')
+  }
+  if (!req.birthDate) {
+    throw new Error('생년월일을 입력하세요.')
+  }
+  if (!req.email) {
+    throw new Error('이메일 주소를 입력하세요.')
+  }
+  if (!req.contact) {
+    throw new Error('연락처를 입력하세요.')
+  }
+  if (!req.address) {
+    throw new Error('주소를 입력하세요.')
+  }
+  if (!req.deptId) {
+    throw new Error('부서를 선택하세요.')
+  }
+  if (!req.positionId) {
+    throw new Error('직위를 선택하세요.')
+  }
+  if (!req.joinDate) {
+    throw new Error('입사일을 입력하세요.')
+  }
+  if (req.remainingDayoffHours < 0 || req.remainingRefreshDays < 0) {
+    throw new Error('부여 휴가 시간/일수는 0 이상이어야 합니다.')
+  }
+
+}
 </script>
 
 <template>
