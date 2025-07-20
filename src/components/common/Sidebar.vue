@@ -464,13 +464,13 @@ onUnmounted(() => {
   padding 0.3s ease;
 }
 
+/* ================= 헤더 ================= */
 .header-icons {
   display: flex;
   gap: 1.75rem;
   align-items: center;
 }
 
-/* ================= 헤더 ================= */
 .sidebar-header {
   display: flex;
   justify-content: space-between;
