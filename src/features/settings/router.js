@@ -11,6 +11,7 @@ export const settingsRoutes = [
         name: 'SettingView',
         component: SettingView,
         redirect: '/setting/company',
+        meta: { requiresMaster: true },
         children:[
             {
             path:'company',
