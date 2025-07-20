@@ -117,7 +117,7 @@ const fetchDetail = async () => {
     const res = await getAnnouncementDetail(route.params.announcementId);
     detail.value = res.data?.data?.announcement;
   } catch (err) {
-    console.error('공지사항 상세 조회 실패:', err);
+    toast.error('공지사항 상세 조회 실패:', err);
   }
 };
 
@@ -154,7 +154,6 @@ const handleDownload = async (file) => {
 
     URL.revokeObjectURL(blobUrl);
   } catch (err) {
-    console.error('파일 다운로드 실패:', err);
     toast.error('파일 다운로드 중 오류가 발생했습니다.');
   }
 };
@@ -166,7 +165,6 @@ const handleDelete = async () => {
       toast.success('공지사항이 삭제되었습니다.');
       router.push('/announcement');
     } catch (err) {
-      console.error('공지 삭제 실패:', err);
       toast.error('공지사항 삭제 중 오류가 발생했습니다.');
     }
   }

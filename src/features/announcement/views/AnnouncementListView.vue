@@ -43,6 +43,7 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue';
 import { useRouter } from 'vue-router';
+import {useToast} from "vue-toastification";
 
 import Filter from '@/components/common/Filter.vue';
 import BaseTable from '@/components/common/BaseTable.vue';
@@ -59,6 +60,7 @@ const pagination = ref({ currentPage: 1, totalPage: 1 });
 
 const departmentTree = ref([]);
 const filterOptions = ref([]);
+const toast = useToast()
 
 // 날짜 포맷 함수
 function formatDateTime(isoString) {
@@ -157,7 +159,7 @@ const handleSearch = async (values, page = pagination.value.currentPage) => {
       totalPage: responseData.pagination?.totalPage || 1,
     };
   } catch (err) {
-    console.error('공지사항 목록 조회 실패:', err);
+    toast.error('공지사항 목록 조회 실패:');
     tableData.value = [];
     pagination.value = { currentPage: 1, totalPage: 1 };
   }
@@ -184,7 +186,7 @@ onMounted(async () => {
     filterValues.value = {};
     await handleSearch({});
   } catch (e) {
-    console.error('필터 초기화 실패:', e);
+    toast.error('필터 초기화 실패:', e);
   }
 });
 

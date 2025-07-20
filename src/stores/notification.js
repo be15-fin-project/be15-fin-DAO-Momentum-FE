@@ -35,7 +35,7 @@ export const useNotificationStore = defineStore('notification', () => {
             const { data } = await notificationApi.get(`/api/notifications`)
             notifications.value = data
         } catch (err) {
-            console.error('[알림 조회 실패]', err)
+            toast.error('알림 목록을 가져오는 데 실패했습니다.')
         }
     }
 
@@ -46,7 +46,7 @@ export const useNotificationStore = defineStore('notification', () => {
             const target = notifications.value.find(n => n.notificationId === id)
             if (target) target.isRead = 'Y'
         } catch (err) {
-            console.error(`[알림 ${id} 읽음 처리 실패]`, err)
+            toast.error('알림 읽음 처리에 실패했습니다.')
         }
     }
 
@@ -59,7 +59,7 @@ export const useNotificationStore = defineStore('notification', () => {
         try {
             await notificationApi.patch(`/api/notifications/read/all`)
         } catch (err) {
-            console.error('[모두 읽음 처리 실패]', err)
+            toast.error('모든 알림 읽음 처리에 실패했습니다.')
         }
     }
 
@@ -77,7 +77,6 @@ export const useNotificationStore = defineStore('notification', () => {
         })
 
         eventSource.onopen = () => {
-            console.log('[SSE] 연결 성공')
             fetchNotifications()
         }
 
@@ -88,7 +87,7 @@ export const useNotificationStore = defineStore('notification', () => {
         })
 
         eventSource.onerror = (err) => {
-            console.error('[SSE] 오류 발생, 5초 후 재연결 시도:', err)
+            toast.error('알림 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.')
             disconnectSSE()
 
             // 재연결 시도
@@ -103,7 +102,6 @@ export const useNotificationStore = defineStore('notification', () => {
         if (eventSource) {
             eventSource.close()
             eventSource = null
-            console.log('[SSE] 연결 해제')
         }
     }
 

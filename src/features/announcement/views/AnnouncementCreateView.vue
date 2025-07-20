@@ -164,7 +164,6 @@ const uploadFiles = async (files) => {
         size: file.size,
       })
     } catch (err) {
-      console.error('파일 업로드 실패:', file.name, err)
       toast.error(`"${file.name}" 파일 업로드에 실패했습니다. 전체 등록이 중단됩니다.`)
     }
   }
@@ -205,7 +204,6 @@ const handleSubmit = async () => {
     toast.success('공지사항이 등록되었습니다.')
     router.push(`/announcement/${createdId}`)
   } catch (err) {
-    console.error('공지사항 등록 실패:', err)
     toast.error('공지사항 등록에 실패했습니다.')
   } finally {
     isSubmitting.value = false
