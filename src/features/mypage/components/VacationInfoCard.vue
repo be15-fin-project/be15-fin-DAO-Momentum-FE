@@ -47,7 +47,7 @@ async function fetchRemainingVacation() {
     remainDayOff.value = dayOff.data.data.remainingDayoffHours/8 + '일';
     remainRefresh.value = refresh.data.data.remainingRefreshDays + '일';
   } catch (err) {
-    toast.error("잔여 연차 불러오기 실패");
+    toast.error("잔여 휴가 불러오기 실패");
   }
 }
 
