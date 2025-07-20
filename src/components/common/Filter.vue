@@ -16,6 +16,7 @@
         class="filter-box"
         v-for="(filter, index) in filters"
         :key="index"
+        :class="[filter.class, `filter-${filter.key}`]"
     >
       <button class="filter-btn" @click.stop="toggleDropdown(index)">
         <i :class="['fas', filter.icon, 'icon']"></i>
@@ -234,19 +235,24 @@ function handleResetClick() {
     });
   }
 
-  // 상위에서 전달된 유지 key 보존
+  // 필터 유지 값 처리 (이게 빠졌던 부분)
+  const preservedFilterValues = {};
   props.preserveKeys.forEach(key => {
     if (key in localValues.value) {
-      preservedValues[key] = localValues.value[key]
+      preservedFilterValues[key] = localValues.value[key];
     }
-  })
+  });
 
-  // 초기화하면서 탭 값은 유지
-  localValues.value = { ...preservedTabValues };
+  // 초기화하면서 탭/필터 값은 유지
+  localValues.value = {
+    ...preservedTabValues,
+    ...preservedFilterValues
+  };
 
   emit('update:modelValue', { ...localValues.value });
   emit('search', { ...localValues.value });
 }
+
 
 
 onMounted(() => {
@@ -422,5 +428,9 @@ onUnmounted(() => {
   padding: 8px 12px;
 }
 
+/* 회차 필터 드롭다운만 넓게 */
+.filter-roundId .dropdown {
+  min-width: 200px; /* 기본은 160px이었음 */
+}
 
 </style>

@@ -42,7 +42,7 @@
 
     <SideModal
         :visible="isOpen"
-        title="조직 평가 상세 정보"
+        title="자가 진단 상세 정보"
         icon="fa-chart-line"
         :sections="formSections"
         :showSubmit="false"
@@ -305,6 +305,12 @@ const handleDownload = async () => {
   try {
     toast.success('엑셀 다운로드가 시작되었습니다.');
     const normalized = normalizeFilterParams(filterValues.value);
+
+    if (normalized.roundNo) {
+      const match = roundList.value.find(r => r.roundNo === normalized.roundNo);
+      normalized.roundId = match?.roundId ?? null;
+    }
+    delete normalized.roundNo;
     const blob = await getSelfExcelDownload({ ...normalized });
 
     const url = window.URL.createObjectURL(new Blob([blob]));

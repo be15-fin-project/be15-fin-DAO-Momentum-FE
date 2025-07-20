@@ -203,13 +203,7 @@ const openDetail = async (row) => {
 
     // 안정성 유형이 detail 응답에 없다면 테이블 row에서 가져오기
     const stabilityType = detail.stabilityType ?? row.stabilityType;
-    const retentionGrade = detail.retentionGrade ?? row.retentionGrade;
-    const retentionScore = detail.retentionScore ?? row.retentionScore;
-    console.log('상세 열기:', {
-      retentionScore,
-      retentionGrade,
-      stabilityType,
-    });
+    const retentionScore = detail.retentionScore ?? row.retentionScore ?? 0;
 
     formSections.value = [
       {
@@ -232,6 +226,7 @@ const openDetail = async (row) => {
             label: '',
             type: 'radarChart',
             editable: false,
+            showTooltip: true,
             value: {
               labels: ['직무', '보상', '관계', '성장', '워라밸', '근속연수'],
               scores: [
@@ -256,7 +251,6 @@ const openDetail = async (row) => {
             editable: false,
             value: {
               retentionScore,
-              retentionGrade,
               stabilityType,
               factorGrades: {
                 job: detail.jobGrade,

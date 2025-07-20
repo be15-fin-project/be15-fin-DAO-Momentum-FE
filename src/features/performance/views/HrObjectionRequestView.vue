@@ -112,9 +112,11 @@ const tableColumns = [
   { key: 'action', label: '상세' },
 ];
 
-const isPending = computed(() =>
-    selectedRow.value?.statusType === '대기 중' || selectedRow.value?.statusType === 'PENDING'
-);
+const isPending = computed(() => {
+  const status = selectedRow.value?.statusType ?? '';
+  return status === '대기 중' || status === 'PENDING' || status === getStatusLabel('PENDING');
+});
+
 
 /* ========== Computed ========== */
 const mappedTableData = computed(() =>
@@ -145,12 +147,15 @@ const normalizeFilterParams = (values) => {
   switch (normalized.status) {
     case 'ACCEPTED':
       normalized.statusId = 2;
+      normalized.isDeleted = 'N';
       break;
     case 'REJECTED':
       normalized.statusId = 3;
+      normalized.isDeleted = 'N';
       break;
     default:
       normalized.statusId = 1;
+      normalized.isDeleted = 'N';
   }
   delete normalized.status;
 
@@ -192,6 +197,11 @@ const handleSearch = async (values) => {
 const openModalHandler = async (row) => {
   try {
     const { itemDto: content, factorScores, weightInfo, rateInfo } = await getHrObjectionRequestDetail(row.objectionId);
+
+    isSubmit.value = false;
+    isEditing.value = false;
+    isApproval.value = false;
+    isRejecting.value = false;
 
     selectedRow.value = row;
     isOpen.value = true;
@@ -470,7 +480,7 @@ onMounted(async () => {
     initFilters();
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('초기 로딩 실패:', e);
+    toast.error('초기 로딩에 실패했습니다.');
   }
 });
 </script>

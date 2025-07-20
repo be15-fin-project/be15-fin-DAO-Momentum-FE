@@ -119,16 +119,19 @@ watch(() => props.distribution, renderChart);
 }
 
 .chart-content {
-  margin: auto auto;
   padding: 0;
   display: flex;
   justify-content: center;
   height: auto;
 }
+.chart-content.donut {
+  margin: auto;
+  width: 80%;
+}
 .chart-content canvas {
   max-width: 100%;
   max-height: 100%;
-  width: 100%;
-  height: auto;
+  width: 100% !important;
+  height: auto !important;
 }
 </style>

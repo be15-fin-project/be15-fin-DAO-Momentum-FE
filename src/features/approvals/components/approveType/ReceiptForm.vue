@@ -35,7 +35,12 @@ const isReceiptTypeDropdownOpen  = ref(false);
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: false },
-  approveFileDTO: { type: Array, default: () => [] }
+  approveFileDTO: { type: Array, default: () => [] },
+  uploadedFiles: { type: Array, default: () => [] }
+});
+
+const visibleFiles = computed(() => {
+  return props.isReadOnly ? props.approveFileDTO : props.uploadedFiles;
 });
 
 /* 영수증 종류 */
@@ -57,7 +62,7 @@ const errors = ref({
 });
 
 /* 비용 처리 유효성 검사 */
-function validateReceiptForm() {
+function validateForm() {
   errors.value = {
     receiptType: '',
     storeName: '',
@@ -104,27 +109,32 @@ watch(
     props.formData.attachments
   ],
   () => {
-    validateReceiptForm();
+    validateForm();
   },
   { immediate: true }
 );
 
 /* 비용 처리 이미지를 가져오는 api */
 async function fetchReceiptImage() {
-  if (props.isReadOnly && props.approveFileDTO.length > 0) {
-    const file = props.approveFileDTO[0];
+  let file = null;
 
+  if (props.isReadOnly && props.approveFileDTO.length > 0) {
+    file = props.approveFileDTO[0];
+  } else if (!props.isReadOnly && props.uploadedFiles.length > 0) {
+    file = props.uploadedFiles[0];
+  }
+
+  if (file?.s3Key) {
     try {
       const resp = await getFileUrl({
         key: file.s3Key,
         fileName: file.name
       });
 
-      console.log(resp.data.data);
       imageUrl.value = resp.data.data.signedUrl;
       fileName.value = resp.data.data.fileName;
     } catch (err) {
-      console.error('파일 이미지 URL 불러오기 실패:', err);
+      toast.error('파일 이미지 URL 불러오기에 실패했습니다.');
       imageUrl.value = null;
     }
   } else {
@@ -135,9 +145,13 @@ async function fetchReceiptImage() {
 watchEffect(() => {
   const file = props.isReadOnly
     ? (props.approveFileDTO?.[0] || props.formData?.attachments?.[0])
-    : null;
+    : props.uploadedFiles?.[0];
 
-  if (props.isReadOnly && file && file.s3Key) {
+  if (!props.isReadOnly && props.uploadedFiles.length > 0) {
+    props.formData.attachments = [...props.uploadedFiles];
+  }
+
+  if (file && file.s3Key) {
     fetchReceiptImage();
   }
 });
@@ -199,7 +213,6 @@ async function handleFileUpload(event) {
     props.formData.amount = data.amount || '';
 
   } catch (err) {
-    console.error("파일 업로드 실패:", err);
     toast.error('파일 업로드 중 오류가 발생했습니다.');
   } finally {
     isOcrLoading.value = false;
@@ -212,6 +225,7 @@ function removeFile() {
   previewUrl.value = null;
   imageUrl.value = null;
   props.formData.file = null;
+  props.formData.attachments = [];
 }
 
 /* 다른 영역을 클릭 시 드롭 다운 없애기 */
@@ -241,6 +255,10 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
+defineExpose({
+  validateForm
+});
 </script>
 
 <template>
@@ -252,10 +270,18 @@ onBeforeUnmount(() => {
       <!-- 1. 영수증 이미지 -->
       <div class="image-wrapper" v-if="previewUrl || imageUrl">
         <img :src="previewUrl || imageUrl" alt="영수증 미리보기" />
+        <button
+          v-if="!isReadOnly"
+          class="remove-image-btn"
+          @click="removeFile"
+          type="button"
+        >
+          삭제 <i class="fas fa-times remove-icon" @click="removeFile"></i>
+        </button>
       </div>
 
       <div class="form-group receipt-file">
-        <div v-if="!isReadOnly && !previewUrl" class="upload-wrapper">
+        <div v-if="!isReadOnly && !previewUrl && !imageUrl" class="upload-wrapper">
           <label class="upload-box">
             <i class="fas fa-upload"></i>
             <span class="upload-text">
@@ -553,5 +579,13 @@ select.form-input:focus {
 .dropdown button.active {
   background-color: var(--blue-100);
   font-weight: 600;
+}
+
+.remove-image-btn {
+  margin-top: 8px;
+  background: transparent;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
 }
 </style>

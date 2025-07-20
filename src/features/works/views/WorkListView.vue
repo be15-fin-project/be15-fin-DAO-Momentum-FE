@@ -13,6 +13,7 @@ import {
   getWorks,
   getWorkTypes
 } from "@/features/works/api.js";
+import {toastError} from "@/util/toastError.js";
 
 const currentPage = ref(1);
 const pagination = ref({currentPage: 1, totalPage: 1});
@@ -72,7 +73,7 @@ const columns = computed(() => {
 });
 
 const tabOptions = [
-  { key: 'isNormalWork', label: '전체', value: '' },
+  { key: 'isNormalWork', label: '전체', value: null },
   { key: 'isNormalWork', label: '정상', value: 'Y' },
   { key: 'isNormalWork', label: '이상', value: 'N' },
 ];
@@ -130,17 +131,17 @@ const fetchSummary = async (values) => {
   };
 
   try {
-    console.log(params);
     const resp = await getWorks(params);
-    console.log(resp);
 
     works.value = resp.works || [];
     const current = resp.pagination?.currentPage || 1;
     const total = resp.pagination?.totalPage > 0 ? resp.pagination.totalPage : 1;
     pagination.value = {currentPage: current, totalPage: total};
-  } catch (err) {
+  } catch (e) {
     works.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
+
+    toast.error('근태 내역 조회 실패')
   }
 }
 
@@ -165,6 +166,7 @@ const additionalWorkMap = {
 };
 
 onMounted(async () => {
+  filterValues.value = { isNormalWork: null };
   const depts = await getDepartments();
   departmentTree.value = depts.data?.departmentInfoDTOList || [];
 
@@ -191,7 +193,6 @@ onMounted(async () => {
   }))];
 
   handleSearch();
-  filterValues.value = {};
 });
 
 watch(currentPage, () => fetchSummary(filterValues.value));
@@ -204,8 +205,9 @@ const openDetailsModal = async (work) => {
 
   try {
     workDetails.value = await getWorkDetails(workId);
-  } catch (error) {
+  } catch (e) {
     workDetails.value = null;
+    toast.error('출퇴근 상세 내용 조회 실패')
   } finally {
     loadingDetails.value = false;
   }

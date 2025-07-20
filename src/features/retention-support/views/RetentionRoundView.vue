@@ -37,6 +37,18 @@
         @submit="handleCreate"
         v-model:form="createForm"
     />
+
+    <!-- 로딩 오버레이 -->
+    <div v-if="isLoading" class="overlay">
+      <div class="dot-spinner">
+        <div class="dot"></div>
+        <div class="dot"></div>
+        <div class="dot"></div>
+      </div>
+      <h3>회차를 등록 중입니다...</h3>
+    </div>
+
+
   </main>
 </template>
 
@@ -62,6 +74,7 @@ const currentPage = ref(1);
 const pagination = ref({ currentPage: 1, totalPage: 1 });
 const tableData = ref([]);
 const isOpen = ref(false);
+const isLoading = ref(false);
 
 // 회차 등록 폼 섹션
 const formSections = ref([
@@ -141,19 +154,28 @@ const tableColumns = [
 ];
 
 const openCreateModal = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const prevMonth = today.getMonth() === 0 ? 12 : today.getMonth(); // 1월이면 작년 12월
+  const targetYear = today.getMonth() === 0 ? year - 1 : year;
+
   isOpen.value = true;
   formSections.value[0].fields.forEach(field => {
-    createForm.value[field.key] = field.key === 'year'
-        ? new Date().getFullYear()
-        : (field.key === 'month' ? new Date().getMonth() : '');
+    if (field.key === 'year') {
+      createForm.value.year = targetYear;
+    } else if (field.key === 'month') {
+      createForm.value.month = prevMonth;
+    } else if (field.key === 'roundNo') {
+      createForm.value.roundNo = Number(`${targetYear}${String(prevMonth).padStart(2, '0')}`);
+    }
   });
 };
 
 const handleCreate = async () => {
+  isLoading.value = true;
   try {
     const { roundNo, year, month } = createForm.value;
 
-    // 유효성 검사
     if (!year || isNaN(year) || year < 0) {
       toast.error('유효한 연도를 입력하세요.');
       return;
@@ -169,11 +191,10 @@ const handleCreate = async () => {
       return;
     }
 
-    // payload 구성
     const payload = {
       year: Number(year),
       month: Number(month),
-      ...(roundNo ? { roundNo: Number(roundNo) } : {})  // optional 필드 처리
+      ...(roundNo ? { roundNo: Number(roundNo) } : {})
     };
 
     await createRetentionForecastRound(payload);
@@ -182,6 +203,61 @@ const handleCreate = async () => {
     await handleSearch();
   } catch (err) {
     toast.error('근속 전망 회차 등록에 실패했습니다.');
+  } finally {
+    isLoading.value = false;
   }
 };
+
 </script>
+
+<style scoped>
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  background: rgba(255, 255, 255, 0.7);
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.dot-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--blue-400);
+  animation: pulse 0.8s infinite ease-in-out;
+}
+
+.dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pulse {
+  0%, 80%, 100% {
+    transform: scale(0.8);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}
+
+</style>

@@ -46,7 +46,6 @@ onMounted(async () => {
   const parentId = props.parentApproveDTO.approveId;
   const response = await getApprovalDetail(parentId);
   parentApprove.value = response.data.data;
-  console.log(parentApprove.value);
 });
 </script>
 
@@ -75,7 +74,10 @@ onMounted(async () => {
     <div class="form-grid">
       <div class="form-group full-width">
         <label class="form-label required">취소 사유</label>
-        <input v-model="formData.cancelReason" class="form-textarea" readonly></input>
+        <textarea
+          v-model="formData.cancelReason"
+          :readonly="isReadOnly"
+          class="form-textarea"/>
       </div>
     </div>
   </div>

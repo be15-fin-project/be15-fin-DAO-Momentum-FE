@@ -7,11 +7,13 @@ import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
 import SideModal from "@/components/common/SideModal.vue";
 import {getDepartments, getPositions} from "@/features/works/api.js";
 import {createEmployee, getEmployees} from "@/features/employee/api.js";
-import {useRouter} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {useToast} from "vue-toastification";
 import dayjs from "dayjs";
+import {toastError} from "@/util/toastError.js";
 
 const toast = useToast();
+const route = useRoute()
 const router = useRouter();
 
 const isSubmitting = ref(false);
@@ -100,17 +102,17 @@ const fetchSummary = async (values) => {
   };
 
   try {
-    console.log(params);
     const resp = await getEmployees(params);
-    console.log(resp);
 
     employees.value = resp.employees || [];
     const current = resp.pagination?.currentPage || 1;
     const total = resp.pagination?.totalPage > 0 ? resp.pagination.totalPage : 1;
     pagination.value = {currentPage: current, totalPage: total};
-  } catch (err) {
+  } catch (e) {
     employees.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
+
+    toast.error('사원 목록 조회 실패')
   }
 }
 
@@ -123,7 +125,7 @@ const handleSearch = () => {
 const roleMap = {
   MASTER: '최고 관리자',
   HR_MANAGER: '인사 관리자',
-  MANAGER: '팀장',
+  MANAGER: '부서 관리자',
   EMPLOYEE: '일반',
   BOOKKEEPING: '경리 관리자',
 };
@@ -138,16 +140,23 @@ roleOptions.value = [
 ];
 
 onMounted(async () => {
+  filterValues.value = {}
+  if (route.query.order) {
+    filterValues.value.order = route.query.order
+  }
+
   const depts = await getDepartments()
   const raw = depts.data?.departmentInfoDTOList || [];
   departmentTree.value = raw;
   deptOptions.value = raw;
 
   const positions = await getPositions();
-  positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({label: p.name, value: p.positionId}))];
+  positionFilterOptions.value = [{label: '전체', value: null}, ...positions.map(p => ({
+    label: p.name,
+    value: p.positionId
+  }))];
   positionOptions.value = [...positions.map(p => ({label: p.name, value: p.positionId}))];
   handleSearch();
-  filterValues.value = {};
 });
 
 watch(currentPage, () => fetchSummary(filterValues.value));
@@ -163,7 +172,7 @@ const req = reactive({
   name: '',
   birthDate: null,
   email: '',
-  contact: '',
+  contact: null,
   address: '',
   deptId: null,
   positionId: null,
@@ -179,7 +188,7 @@ const resetReq = () => {
   req.name = '';
   req.birthDate = null;
   req.email = '';
-  req.contact = '';
+  req.contact = null;
   req.address = '';
   req.deptId = null;
   req.positionId = null;
@@ -224,19 +233,43 @@ const modalSections = computed(() => [
     icon: 'fa-briefcase',
     layout: 'two-column',
     fields: [
-      { key: 'deptId', label: '부서', type: 'deptList', editable: true, list: deptOptions.value || [] },
-      { key: 'positionId', label: '직위', type: 'select', editable: true, required: true, options: positionOptions.value || [] },
+      {
+        key: 'deptId',
+        label: '부서',
+        type: 'deptList',
+        editable: true,
+        required: true,
+        list: deptOptions.value || [],
+        showNull: false,
+        nullLabel: '',
+        defaultLabel: '선택'
+      },
+      {
+        key: 'positionId',
+        label: '직위',
+        type: 'select',
+        editable: true,
+        required: true,
+        options: positionOptions.value || []
+      },
       {
         key: 'status', label: '재직 상태', type: 'select', editable: true, required: true,
         options: [
-          { label: '재직', value: 'EMPLOYED' },
-          { label: '휴직', value: 'ON_LEAVE' },
-          { label: '퇴사', value: 'RESIGNED' }
+          {label: '재직', value: 'EMPLOYED'},
+          {label: '휴직', value: 'ON_LEAVE'},
+          {label: '퇴사', value: 'RESIGNED'}
         ]
       },
-      { key: 'joinDate', label: '입사일', type: 'date', editable: true, required: true },
-      { key: 'remainingDayoffHours', label: '부여 연차 시간 (예: 15일 -> 120)', type: 'number', editable: true, required: true, placeholder: '120' },
-      { key: 'remainingRefreshDays', label: '부여 리프레시 휴가 일수', type: 'number', editable: true, required: true },
+      {key: 'joinDate', label: '입사일', type: 'date', editable: true, required: true},
+      {
+        key: 'remainingDayoffHours',
+        label: '부여 연차 시간 (예: 15일 -> 120)',
+        type: 'number',
+        editable: true,
+        required: true,
+        placeholder: '120'
+      },
+      {key: 'remainingRefreshDays', label: '부여 리프레시 휴가 일수', type: 'number', editable: true, required: true},
     ]
   },
   // {
@@ -323,22 +356,57 @@ function computeRefreshDays(joinYear, targetYear) {
   }
 }
 
-/* TODO: 프론트 검증 로직 작성 */
 const handleRegisterSubmit = async (req) => {
   if (isSubmitting.value) return;
 
   isSubmitting.value = true;
   try {
+    validateReq()
     const resp = await createEmployee(req);
     closeModal();
     toast.success('사원 등록 완료');
+    filterValues.value = {order: "DESC"}
     handleSearch(); // 목록 새로고침
   } catch (e) {
-    toast.error('사원 등록 실패');
+    toastError(e, '사원 등록 실패')
   } finally {
     isSubmitting.value = false;
   }
 };
+
+const validateReq = () => {
+  if (!req.name) {
+    throw new Error('이름을 입력하세요.')
+  }
+  if (!req.gender) {
+    throw new Error('성별을 선택하세요.')
+  }
+  if (!req.birthDate) {
+    throw new Error('생년월일을 입력하세요.')
+  }
+  if (!req.email) {
+    throw new Error('이메일 주소를 입력하세요.')
+  }
+  if (!req.contact) {
+    throw new Error('연락처를 입력하세요.')
+  }
+  if (!req.address) {
+    throw new Error('주소를 입력하세요.')
+  }
+  if (!req.deptId) {
+    throw new Error('부서를 선택하세요.')
+  }
+  if (!req.positionId) {
+    throw new Error('직위를 선택하세요.')
+  }
+  if (!req.joinDate) {
+    throw new Error('입사일을 입력하세요.')
+  }
+  if (req.remainingDayoffHours < 0 || req.remainingRefreshDays < 0) {
+    throw new Error('부여 휴가 시간/일수는 0 이상이어야 합니다.')
+  }
+
+}
 </script>
 
 <template>

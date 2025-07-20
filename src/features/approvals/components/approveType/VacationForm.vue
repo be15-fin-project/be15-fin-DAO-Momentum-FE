@@ -17,7 +17,8 @@ const toast = useToast();
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: false },
-  approveFileDTO: { type: Array, default: () => [] }
+  approveFileDTO: { type: Array, default: () => [] },
+  uploadedFiles: { type: Array, default: () => [] }
 });
 
 /* 휴가 종류 매핑하기 위한 부분 */
@@ -154,12 +155,11 @@ async function fetchRemainVacation() {
     const dayOff = await getRemainDayOff();
     const refresh = await getRemainRefresh();
 
-    console.log(dayOff.data.data);
     remainDayOff.value = dayOff.data.data.remainingDayoffHours/8 + '일';
     remainRefresh.value = refresh.data.data.remainingRefreshDays +'일';
 
   } catch (err) {
-    console.error("잔여 휴가 불러오기 실패:", err);
+    toast.error("잔여 휴가 수 조회에 실패했습니다.")
   }
 }
 
@@ -169,7 +169,6 @@ async function fetchVacationFile() {
 
   /* 문서는 하나이기 때문에 하나만 가져오게 설정함 */
   file.value = props.approveFileDTO[0];
-  console.log(file.value.fileName)
 
   try {
     const resp = await getFileUrl({
@@ -181,7 +180,7 @@ async function fetchVacationFile() {
     fileName.value = resp.data.data.fileName;
 
   } catch (err) {
-    console.error("파일 서명 URL 불러오기 실패:", err);
+    toast.error("파일 URL 불러오기에 실패했습니다.")
     signedUrl.value = null;
   }
 }
@@ -205,7 +204,6 @@ async function handleFileClick() {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error("파일 다운로드 실패:", err);
     toast.error('파일 다운로드 중 오류가 발생했습니다.');
   }
 }
@@ -244,7 +242,6 @@ async function handleFileUpload(event) {
     }];
 
   } catch (err) {
-    console.error("파일 업로드 실패:", err);
     toast.error('파일 업로드 중 오류가 발생했습니다.');
   }
 }
@@ -253,6 +250,7 @@ async function handleFileUpload(event) {
 function removeFile() {
   uploadedFile.value = null;
   props.formData.file = null;
+  props.formData.attachments = [];
 }
 
 /* 드롭 다운 관련 요소 */
@@ -274,7 +272,48 @@ const selectedVacationLabel = computed(() => {
 onMounted(() => {
   fetchVacationFile();
   fetchRemainVacation();
+
+  if (props.formData.vacationType && !props.formData.vacationTypeId) {
+    const matched = vacationTypeOptions.find(opt => opt.enum === props.formData.vacationType);
+    if (matched) {
+      props.formData.vacationTypeId = matched.value;
+    }
+  }
+
+  if (!props.isReadOnly && props.uploadedFiles.length > 0) {
+    uploadedFile.value = {
+      name: props.uploadedFiles[0].name
+    };
+  }
 });
+
+function validateForm() {
+  // 초기화
+  vacationTypeError.value = !props.formData.vacationTypeId ? '※ 휴가 유형을 선택해주세요.' : '';
+  startDateError.value = !props.formData.startDate ? '※ 시작일을 입력해주세요.' : '';
+  endDateError.value = !props.formData.endDate ? '※ 종료일을 입력해주세요.' : '';
+
+  if (props.formData.startDate && props.formData.endDate &&
+    props.formData.endDate < props.formData.startDate) {
+    endDateError.value = '※ 종료일은 시작일보다 빠를 수 없습니다.';
+  }
+
+  // 연차나 리프레시 초과 검사
+  if (exceedVacationLimit.value) {
+    return false;
+  }
+
+  // 필수 항목 누락 검사
+  const hasError =
+    vacationTypeError.value || startDateError.value || endDateError.value;
+
+  return !hasError;
+}
+
+defineExpose({
+  validateForm
+});
+
 </script>
 
 <template>
@@ -366,7 +405,7 @@ onMounted(() => {
               {{ fileName }}
           </span>
         </div>
-        <div class="readonly-box" v-if="isReadOnly">첨부파일 없음</div>
+        <div class="readonly-box" v-else-if="isReadOnly">첨부파일 없음</div>
 
         <div v-if="!isReadOnly" class="upload-wrapper">
           <label class="upload-box">

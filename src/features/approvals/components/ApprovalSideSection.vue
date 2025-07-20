@@ -2,8 +2,11 @@
 import {ref, computed, onMounted, watch, onBeforeUnmount} from 'vue'
 import EmployeeModal from "@/features/approvals/components/EmployeeModal.vue";
 import {getEmployeeLeader} from "@/features/approvals/api.js";
+import {cssClasses as selectedApprovalLine} from "nouislider/src/nouislider.js";
+import {useToast} from "vue-toastification";
 
 const targetStepIndex = ref(null);
+const toast = useToast();
 
 /* 모달과 관련된 속성 */
 // 모달을 열기 or 닫기
@@ -18,7 +21,8 @@ const props = defineProps({
   approveRefDTO: { type: Array, default: () => [] },
   modelValueApprovalLines: { type: Array, default: () => [] },
   modelValueReferenceList: { type: Array, default: () => [] },
-  approveType : {type : String}
+  approveType : {type : String},
+  isEditing: { type: Boolean, default: false },
 })
 
 const activeDropdownIndex = ref(null);
@@ -92,7 +96,9 @@ function openReferenceModal() {
 function handleApproverSelect(selectedApprovers) {
   if (targetStepIndex.value === null) {
     // 참조자 처리
-    writableReferenceList.value.push(...selectedApprovers)
+    const existingIds = writableReferenceList.value.map(r => r.empId)
+    const uniqueRefs = selectedApprovers.filter(ref => !existingIds.includes(ref.empId))
+    writableReferenceList.value.push(...uniqueRefs)
   } else {
     // 결재선 처리
     const targetLine = writableApprovalLines.value[targetStepIndex.value]
@@ -137,8 +143,8 @@ function removeReference(index) {
 watch(
   () => props.approveType,
   async (newType) => {
-    if (!props.readOnly) {
-      if (newType === 'RECEIPT') { // 비용 처리 결재자는 따로 api가 없으므로, 하드코딩으로 지정
+    if (!props.readOnly && !props.isEditing) {
+      if (newType === 'RECEIPT') {
         writableApprovalLines.value = [
           {
             step: 1,
@@ -146,33 +152,62 @@ watch(
             approvers: [
               {
                 empId: 21,
-                name: '이서윤 과장님',
+                name: '이서윤 과장',
                 deptName: '재무팀'
               }
             ]
           }
-        ]
-      } else {
-        const res = await getEmployeeLeader();
-        const leader = res.data.data;
-        writableApprovalLines.value = [
-          {
-            step: 1,
-            requiredType: '필수',
-            approvers: [
-              {
-                empId: leader.teamLeaderId,
-                name: leader.teamLeaderName,
-                deptName: leader.leaderDeptName
-              }
-            ]
-          }
-        ]
+        ];
+        return;
+      }
+    }
+
+    if (
+      !props.readOnly &&
+      !props.isEditing &&
+      writableApprovalLines.value.length === 0 &&
+      props.approveLineGroupDTO.length === 0
+    ) {
+      try {
+        if (newType === 'RECEIPT') {
+          writableApprovalLines.value = [
+            {
+              step: 1,
+              requiredType: '필수',
+              approvers: [
+                {
+                  empId: 21,
+                  name: '이서윤 과장',
+                  deptName: '재무팀'
+                }
+              ]
+            }
+          ];
+        } else {
+          const res = await getEmployeeLeader();
+          const leader = res.data.data;
+
+          writableApprovalLines.value = [
+            {
+              step: 1,
+              requiredType: '필수',
+              approvers: [
+                {
+                  empId: leader.teamLeaderId,
+                  name: leader.teamLeaderName,
+                  deptName: leader.leaderDeptName
+                }
+              ]
+            }
+          ];
+        }
+      } catch (e) {
+        toast.error('결재자 정보 설정에 실패했습니다.')
       }
     }
   },
   { immediate: true }
-)
+);
 
 function toggleDropdown(index) {
   activeDropdownIndex.value = activeDropdownIndex.value === index ? null : index;

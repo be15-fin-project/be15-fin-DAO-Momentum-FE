@@ -5,6 +5,7 @@ import {deletePosition, getPositions, postPosition, putPosition} from "@/feature
 import {useToast} from "vue-toastification";
 import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
 import SideModal from "@/components/common/SideModal.vue";
+import NoticeItem from "@/features/employee/components/NoticeItem.vue";
 
 const toast = useToast();
 
@@ -77,7 +78,7 @@ function handleRowAction({action, row}) {
 const handleCreateSubmit = async(req) => {
   try{
     await postPosition(req);
-    toast.success('직위 추가에 성공했습니다.');
+    toast.success('직위 생성에 성공했습니다.');
     await getPositionList();
     createModalVisible.value = false;
     Object.assign(createReq, initialReq);
@@ -145,15 +146,16 @@ onMounted(async () => {
   <div class="header">
     <!-- Additional Info -->
     <div class = "header-info">
-        <i class="fas fa-info-circle card-icon"></i>
-        <h3 class="font-semibold text-blue-900 mb-2">숫자가 작을수록 높은 직위 입니다.</h3>
-        <div>
-        </div>
+      <NoticeItem
+      icon="fa-info-circle"
+      text="숫자가 작을수록 높은 직위입니다."
+      color="blue"
+      />
     </div>
     <div class="header-buttons">
       <button class="create-button" @click="createModalVisible=true">
         <i class="fas fa-plus"></i>
-        <span>직위 추가</span>
+        <span>직위 생성</span>
       </button>
     </div>
   </div>
@@ -164,7 +166,7 @@ onMounted(async () => {
   <SideModal
       :visible="createModalVisible"
       @close="createModalVisible=false"
-      title="직위 추가"
+      title="직위 생성"
       icon="fas fa-info-circle card-icon"
       v-model:form="createReq"
       :sections = "createModalSections"
@@ -201,6 +203,10 @@ onMounted(async () => {
   gap: 10px;
   flex-direction: row;
   justify-items: center;
+}
+
+.create-button i {
+  margin-right: 8px;
 }
 
 .card-icon {

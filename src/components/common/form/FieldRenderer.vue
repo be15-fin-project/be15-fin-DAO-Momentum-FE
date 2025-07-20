@@ -25,6 +25,7 @@
 
     <LikertScale
         v-else-if="field.type === 'likert'"
+        ref="likertEl"
         v-model="field.value"
         labelClass="text-lg text-blue-600 mb-2"
         :min="field.min ?? 1"
@@ -33,11 +34,14 @@
         :readonly="readonly || !field.editable"
     />
 
+
     <RadarChart
         v-if="field.type === 'radarChart'"
         :labels="field.value.labels"
         :values="field.value.scores"
         :editable="isEditMode"
+        :readonly="readonly"
+        :showTooltip="field.showTooltip ?? false"
     />
 
     <MemberPickerField
@@ -117,6 +121,7 @@
           class="form-textarea"
           v-model="model[field.key]"
           :placeholder="field.placeholder || field.label"
+          :ref="field.key === 'reason' ? 'reasonInput' : null"
       />
       <template v-else-if="field.type === 'checkbox-group'">
         <div v-if="field.style === 'permission'" class="permission-group">
@@ -148,18 +153,36 @@
           </div>
         </div>
       </template>
-      <select
+      <div
           v-else-if="field.type === 'select'"
-          class="form-select"
-          v-model="model[field.key]"
+          class="form-select custom-dropdown"
+          :class="{ active: openDropdown === field.key }"
+          @click.stop="toggleDropdown(field.key)"
+          tabindex="0"
       >
-        <option v-for="opt in field.options" :key="opt.value" :value="opt.value">
-          {{ opt.label }}
-        </option>
-      </select>
+        <div class="selected-option">
+          {{ selectedOptionLabel(field.key) }}
+          <i class="fas fa-chevron-down icon"></i>
+        </div>
+
+        <div v-if="openDropdown === field.key" class="dropdown">
+          <div
+              v-for="opt in field.options"
+              :key="opt.value"
+              :class="{ active: String(model[field.key]) === String(opt.value) }"
+              @click.stop="selectOption(field.key, opt.value)"
+              class="dropdown-item"
+          >
+            {{ opt.label }}
+          </div>
+        </div>
+      </div>
       <DeptList
           v-else-if="field.type === 'deptList'"
           :list="field.list"
+          :showNull="field.showNull ?? true"
+          :nullLabel="field.nullLabel ?? '부서 없음'"
+          :defaultLabel="field.defaultLabel ?? '부서 선택'"
           v-model="model[field.key]"
       />
     </template>
@@ -167,7 +190,7 @@
 </template>
 
 <script setup>
-import {computed} from 'vue';
+import {computed, ref, onMounted, onBeforeUnmount} from 'vue';
 import SliderGroup from "@/components/common/form/SliderGroup.vue";
 import LikertScale from "@/components/common/form/LikertScale.vue";
 import RadarChart from "@/components/common/form/RadarChart.vue";
@@ -177,11 +200,13 @@ import MemberPickerField from "@/components/common/form/MemberPickerField.vue";
 import DeptList from "@/components/common/form/DeptList.vue";
 import RetentionScoreCard from "@/components/common/form/RetentionScoreCard.vue";
 import FormNotice from "@/components/common/form/FormNotice.vue";
+const reasonInput = ref(null);
 
 const props = defineProps({
   field: Object,
   model: Object,
-  readonly: Boolean
+  readonly: Boolean,
+  setFieldRef: Function
 });
 
 const emit = defineEmits(['update:model', 'file-change']);
@@ -206,7 +231,6 @@ const onPositiveIntegerInput = (key) => {
 
 const onFileChange = (e) => {
   const file = e.target.files[0];
-  console.log('FieldRenderer: selected file:', file);
   if (!file) return;
   emit('file-change', { fieldKey: props.field.key, file });
 };
@@ -265,7 +289,43 @@ function onCheckboxChange(e, value) {
   model[field.key] = [...arr]; // 새 배열 대입하여 반응성 보장
   emit('update:model', { ...model });
 }
+const likertEl = ref(null);
 
+onMounted(() => {
+  if (props.field.type === 'likert' && props.setFieldRef) {
+    props.setFieldRef(props.field.key, likertEl.value);
+  }
+
+  if (props.field.key === 'reason' && props.setFieldRef) {
+    props.setFieldRef('reasonInput', reasonInput.value);
+  }
+});
+
+const openDropdown = ref(null);
+
+function toggleDropdown(key) {
+  openDropdown.value = openDropdown.value === key ? null : key;
+}
+
+function selectOption(key, value) {
+  props.model[key] = value;
+  openDropdown.value = null;
+}
+
+function selectedOptionLabel(key) {
+  const value = props.model[key];
+  const option = props.field.options?.find(opt => String(opt.value) === String(value));
+  return option?.label || '선택';
+}
+
+// 외부 클릭 시 닫기
+function handleClickOutside(e) {
+  if (!e.target.closest('.custom-dropdown')) {
+    openDropdown.value = null;
+  }
+}
+onMounted(() => document.addEventListener('click', handleClickOutside));
+onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside));
 </script>
 
 <style scoped>
@@ -458,5 +518,69 @@ function onCheckboxChange(e, value) {
 
 .toggle-switch input:checked + .toggle-slider::before {
   transform: translateX(18px);
+}
+
+.custom-dropdown {
+  position: relative;
+  cursor: pointer;
+  padding: 14px 16px;
+  border: 2px solid var(--color-muted);
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  background: var(--color-surface);
+  color: var(--color-text-main);
+}
+
+.custom-dropdown:focus,
+.custom-dropdown:focus-within {
+  outline: none;
+  border-color: var(--purple-50);
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.selected-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  z-index: 1000;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--dropdown-shadow);
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.dropdown::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: var(--color-text-sub);
+}
+
+.dropdown-item.active {
+  background-color: var(--blue-100);
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+.dropdown-item:hover {
+  background-color: var(--gray-100);
+}
+
+.custom-dropdown.active {
+  position: relative;
+  z-index: 9999;
 }
 </style>

@@ -57,6 +57,7 @@ import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue"
 import {createEmployees, getCSVTemplate} from '@/features/employee/api'
 import {useToast} from "vue-toastification";
 import {useRouter} from "vue-router";
+import {toastError} from "@/util/toastError.js";
 
 const router = useRouter()
 
@@ -71,6 +72,7 @@ const requiredFields = [
   {key: 'name', icon: 'fa-user', type: 'input', label: '이름', placeholder: '사원 이름', required: true},
   {key: 'email', icon: 'fa-envelope', label: '이메일', placeholder: 'gildong@example.com', required: true},
   {key: 'position', icon: 'fa-star', label: '직위', placeholder: '시스템에 등록된 직위명', required: true},
+  {key: 'department', icon: 'fa-building', label: '부서', placeholder: '시스템에 등록된 부서명', required: true},
   {key: 'birthDate', icon: 'fa-birthday-cake', label: '생년월일', placeholder: 'YYYY-MM-DD', required: true},
   {key: 'phone', icon: 'fa-phone', label: '연락처', placeholder: '010-0000-0000', required: true},
   {key: 'address', icon: 'fa-map-marker-alt', label: '주소', placeholder: '거주지 주소 (도로명 주소)', required: true},
@@ -78,7 +80,6 @@ const requiredFields = [
 ]
 
 const optionalFields = [
-  {key: 'department', icon: 'fa-building', label: '부서', placeholder: '시스템에 등록된 부서명'},
   {key: 'status', icon: 'fa-building', label: '재직 상태', placeholder: '재직, 휴직, 퇴사 중 하나'},
   {key: 'hireDate', icon: 'fa-calendar', label: '입사일', placeholder: 'YYYY-MM-DD'},
   {key: 'dayoff', icon: 'fa-clock', label: '부여 연차 시간 (예: 15일 -> 120)', placeholder: '숫자 입력'},
@@ -86,7 +87,6 @@ const optionalFields = [
 ]
 
 const csvDefaults = [
-  {icon: 'fa-info-circle', color: 'blue', text: '부서: 없음'},
   {icon: 'fa-info-circle', color: 'blue', text: '재직 상태: 재직'},
   {icon: 'fa-info-circle', color: 'blue', text: '입사일: CSV 등록일'},
   {icon: 'fa-info-circle', color: 'blue', text: '부여 연차 시간: 입사일에 따른 자동 계산값 (근로기준법 상 최솟값)'},
@@ -130,9 +130,9 @@ async function uploadCSV() {
     await createEmployees(formData)
     toast.success('CSV 파일이 성공적으로 업로드되었습니다!')
     removeFile()
-    router.push('/employees')
-  } catch (err) {
-    toast.error('업로드 중 오류가 발생했습니다.')
+    router.push({ path: '/employees', query: { order: 'DESC' } })
+  } catch (e) {
+    toastError(e, '업로드 중 오류가 발생했습니다.')
   } finally {
     uploading.value = false
   }
@@ -156,8 +156,42 @@ async function downloadTemplate() {
     link.download = fileName
     link.click()
   } catch (e) {
-    toast.error('CSV 템플릿 다운로드에 실패했습니다.')
-    console.error(e)
+    try {
+      const headers = [
+        "이름",
+        "이메일 주소",
+        "부서명",
+        "직위명",
+        "성별",
+        "주소",
+        "연락처",
+        "입사일",
+        "재직 상태",
+        "생년월일",
+        "부여 연차 시간",
+        "부여 리프레시 휴가 일수"
+      ]
+
+      // 따옴표 포함된 CSV 문자열 만들기
+      const quotedHeaders = headers.map(h => `"${h.replace(/"/g, '""')}"`)
+      const csvContent = quotedHeaders.join(',') + '\n'
+
+      // UTF-8 BOM 포함 (엑셀 호환용)
+      const blob = new Blob(["\uFEFF" + csvContent], {type: 'text/csv;charset=utf-8;'})
+
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.href = url
+      link.setAttribute('download', 'employees_template.csv')
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      // 메모리 누수 방지용 URL 해제
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (e) {
+      toast.error("CSV 템플릿 다운로드 실패")
+    }
   }
 }
 

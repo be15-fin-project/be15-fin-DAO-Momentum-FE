@@ -7,7 +7,7 @@ import SideModal from "@/components/common/SideModal.vue";
 import {useToast} from "vue-toastification";
 import {deleteDepartment, postDepartment, putDepartment} from "@/features/settings/api.js";
 import MemberList from "@/features/company/components/MemberList.vue";
-import CommonModal from "@/components/common/CommonModal.vue";
+import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
 
 const toast = useToast()
 
@@ -21,7 +21,6 @@ const department = ref({
 const members = ref([]);
 const deptCreateModalVisible = ref(false);
 const deptUpdateModalVisible = ref(false);
-const deptDeleteModalVisible = ref(false);
 const createReq = reactive({
   name: '',
   parentDeptId: '',
@@ -100,13 +99,6 @@ const handleUpdateModal = () => {
     deptUpdateModalVisible.value = true;
 }
 
-const handleDeleteModal = () => {
- if(selectedDeptId.value===null)
-   toast.error('부서를 선택해주세요')
-  else
-  deptDeleteModalVisible.value = true;
-}
-
 //부서 등록 처리
 const handleRegisterSubmit = async (form) => {
   try{
@@ -144,14 +136,31 @@ const handleAfterUpdate = async () => {
 
 //부서 삭제 처리
 const handleDelete = async () => {
+  if(selectedDeptId.value===null){
+    toast.error('부서를 선택해주세요')
+    return;
+  }
   try{
+    const result = await new Promise((resolve) => {
+      toast(
+          {
+            component: DeleteConfirmToast,
+            props: {resolve},
+          },
+          {
+            timeout: false,
+            closeOnClick: false,
+            showCloseButtonOnHover: false,
+          }
+      );
+    });
+    if (!result) return;
     await deleteDepartment(selectedDeptId.value);
-    toast.success('부서를 삭제했습니다.')
+    toast.success('부서를 삭제했습니다.');
     await handleAfterDelete();
   }catch(e){
-    toast.error('부서 삭제에 실패했습니다.');
+    toast.error('부서 삭제에 실패했습니다.')
   }
-  deptDeleteModalVisible.value=false;
 }
 
 const handleAfterDelete = async () => {
@@ -213,7 +222,7 @@ onMounted(async () => {
                           :members="members"
                           :editable="true"
                           @edit="handleUpdateModal"
-                          @delete="handleDeleteModal"/>
+                          @delete="handleDelete"/>
 
       <MemberList :members="members"/>
     </div>
@@ -237,33 +246,22 @@ onMounted(async () => {
         :showEdit="true"
         :showSubmit="false"
     />
-    <CommonModal
-        :visible="deptDeleteModalVisible"
-        :confirmVisible="true"
-        @cancel="deptDeleteModalVisible = false"
-        @confirm="handleDelete"
-        :confirmText="'삭제'"
-        :cancelText="'취소'"
-    >
-      <template #default>
-        <p><strong>이 부서를 삭제하시겠습니까?</strong></p>
-        <p style="margin-top: 8px; font-size: 0.9rem;">
-          삭제된 부서는 복구할 수 없습니다.
-        </p>
-      </template>
-    </CommonModal>
 
   </div>
 </template>
 
 <style scoped>
 .dept-card{
+  display:flex;
+  flex-direction: column;
   height:100%;
+  margin-left:40px;
+  margin-right:40px;
 }
 
 .main-grid {
   display: grid;
-  grid-template-columns: 350px 1fr 350px;
+  grid-template-columns: 1fr 2fr 1fr;
   gap: 24px;
   height:100%;
 }

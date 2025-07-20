@@ -1,7 +1,7 @@
 <template>
   <main>
     <HeaderWithTabs
-        :headerItems="[{ label: 'KPI 요청 관리', href: '#', active: true }]"
+        :headerItems="[{ label: 'KPI 요청 관리', to: '/kpi/requests', active: true }]"
         :showTabs="false"
     />
 
@@ -117,7 +117,9 @@ const tabOptions = [
 // ───────── computed ─────────
 const canProgress = computed(() => {
   const detail = createForm.value;
-  return detail.statusType === 'PENDING' && new Date(detail.deadline) > new Date();
+  const isPendingRequest = detail.statusType === 'PENDING' && new Date(detail.deadline) > new Date();
+  const isCancelRequest = detail.statusType === 'PENDING' && detail.isDeleted === 'Y';
+  return isPendingRequest || isCancelRequest;
 });
 
 // ───────── 필터 정규화 함수 ─────────
@@ -247,13 +249,13 @@ async function openModalHandler(kpiId) {
           {
             label: '처리 사유',
             key: 'reason',
-            editable: true,
+            editable: canProgress.value,
             type: 'textarea'
           },
           ...(detail.cancelReason
               ? [
                 { label: '취소 신청 사유', key: 'cancelReason', editable: false, type: 'input' },
-                { label: '취소 처리 사유', key: 'cancelResponse', editable: true, type: 'input' }
+                { label: '취소 처리 사유', key: 'cancelResponse', editable: canProgress.value, type: 'input' }
               ]
               : [])
         ]

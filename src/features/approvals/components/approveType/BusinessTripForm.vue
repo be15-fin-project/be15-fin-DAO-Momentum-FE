@@ -19,7 +19,8 @@ const isDropdownOpen = ref(false);
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: true },
-  approveFileDTO: { type: Array, default: () => [] }
+  approveFileDTO: { type: Array, default: () => [] },
+  uploadedFiles: { type: Array, default: () => [] }
 });
 
 /* 출장 유형 옵션 */
@@ -52,7 +53,7 @@ const errors = ref({
 });
 
 /* 에러 유효성 검증 하기 */
-function validateBusinessTripForm() {
+function validateForm() {
   errors.value = {
     type: '',
     place: '',
@@ -107,7 +108,7 @@ watch(
     props.formData.cost
   ],
   () => {
-    validateBusinessTripForm();
+    validateForm();
   },
   { immediate: true }
 );
@@ -128,7 +129,7 @@ async function fetchBusinessTripFile() {
     fileName.value = resp.data.data.fileName;
 
   } catch (err) {
-    console.error("파일 서명 URL 불러오기 실패:", err);
+    toast.error("파일 서명 URL 불러오기 실패");
     signedUrl.value = null;
   }
 }
@@ -150,7 +151,6 @@ async function handleFileClick() {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error("파일 다운로드 실패:", err);
     toast.error('파일 다운로드 중 오류가 발생했습니다.');
   }
 }
@@ -189,7 +189,6 @@ async function handleFileUpload(event) {
     }];
 
   } catch (err) {
-    console.error("파일 업로드 실패:", err);
     toast.error("파일 업로드 중 오류가 발생했습니다.");
   }
 }
@@ -198,6 +197,7 @@ async function handleFileUpload(event) {
 function removeFile() {
   uploadedFile.value = null;
   props.formData.file = null;
+  props.formData.attachments = [];
 }
 
 /* 바깥 영역 클릭 시 드롭다운이 사라지게 하기 */
@@ -205,12 +205,23 @@ function handleClickOutside() {
   isDropdownOpen.value = false;
 }
 
+defineExpose({
+  validateForm
+});
+
+
 onMounted(() => {
   fetchBusinessTripFile();
   document.addEventListener('click', handleClickOutside);
-  validateBusinessTripForm();
+  validateForm();
   if (props.formData.cost == null) { // 비용 기본값은 0원으로 설정
     props.formData.cost = 0;
+  }
+
+  if (!props.isReadOnly && props.uploadedFiles.length > 0) {
+    uploadedFile.value = {
+      name: props.uploadedFiles[0].name
+    };
   }
 })
 
@@ -308,7 +319,7 @@ onBeforeUnmount(() => {
       <div class="form-group full-width">
         <label class="form-label">첨부파일</label>
         <div class="readonly-box" v-if="file && signedUrl&&isReadOnly">
-<span class="file-link" @click.stop.prevent="handleFileClick">
+          <span class="file-link" @click.stop.prevent="handleFileClick">
             <i class="fas fa-download file-icon"></i>
               {{ fileName }}
           </span>
@@ -381,7 +392,7 @@ select.form-input {
 
 .form-textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 250px;
 }
 
 .form-input:focus,

@@ -70,9 +70,10 @@ const fetchSummary = async (values) => {
     const current = resp.pagination?.currentPage || 1;
     const total = resp.pagination?.totalPage > 0 ? resp.pagination.totalPage : 1;
     pagination.value = {currentPage: current, totalPage: total};
-  } catch (err) {
+  } catch (e) {
     contracts.value = [];
     pagination.value = {currentPage: 1, totalPage: 1};
+    toast.error('계약서 목록 조회 실패')
   }
 };
 
@@ -115,9 +116,9 @@ const downloadFile = async (row) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(blobUrl);
-  } catch (err) {
-    toast.error('다운로드 중 오류 발생');
-    console.error(err);
+  } catch (e) {
+    const message = e?.response?.data?.message;
+    toast.error(message || '다운로드 중 오류 발생')
   }
 };
 

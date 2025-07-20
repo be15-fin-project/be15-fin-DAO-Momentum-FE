@@ -1,5 +1,5 @@
 // useAttendance.js
-import {reactive, ref} from "vue";
+import {computed, reactive, ref} from "vue";
 import {fetchCompanyInfo} from "@/features/company/api.js";
 import {getMyTodaysAttendance} from "@/features/works/api.js";
 import {useToast} from "vue-toastification";
@@ -18,6 +18,10 @@ export function useAttendance() {
     const toast = useToast()
 
     const isLoading = ref(false)
+
+    const workAlreadyEnded = computed(() => {
+        return !!(todaysWork.value?.endPushedAt)
+    })
 
     const clockInfo = reactive({
         now: null,
@@ -50,7 +54,7 @@ export function useAttendance() {
             isWeekend.value = resp.weekend
             isHoliday.value = resp.holiday
         } catch (e) {
-            console.error('출근 상태 조회 실패', e)
+            toast.error('출근 상태 조회 실패')
         }
     }
 
@@ -97,8 +101,45 @@ export function useAttendance() {
         })
     }
 
+    const attendanceStatus = computed(() => {
+        // 1. 휴일이나 주말
+        if (isWeekend.value || isHoliday.value) {
+            return 'DONE'
+        }
+
+        // 2. 승인된 근무/휴가
+        if (hasDayoff.value || hasVacation.value || hasApprovedWork.value) {
+            return 'DONE'
+        }
+
+        if (!isAttended.value) {
+            return 'NEED_START' // 출근 등록 필요
+        } else if (isAttended.value && !workAlreadyEnded.value) {
+            return 'NEED_END' // 퇴근 등록 필요
+        } else {
+            return 'DONE' // 퇴근 완료
+        }
+    })
+
+    const attendanceIconClass = computed(() => {
+        let baseClass = ''
+
+        if (attendanceStatus.value === 'NEED_END') {
+            baseClass = 'fas fa-hourglass-end'
+        } else if (attendanceStatus.value === 'NEED_START') {
+            baseClass = 'fas fa-briefcase'
+        } else {
+            baseClass = 'fas fa-home'
+        }
+
+        const pulse = attendanceStatus.value === 'NEED_START'
+        const shake = attendanceStatus.value === 'NEED_END'
+        return [baseClass, {'pulse-icon': pulse }, {'shake-icon': shake}]
+    })
+
     const handleCreateAttendance = async () => {
         isLoading.value = true;
+        const hasTwoHalfDayoffs = !!hasAmHalfDayoff.value && !!hasPmHalfDayoff.value;
         if (isWeekend.value) {
             toast.error("승인 없는 주말 근무는 불가능합니다.")
             isLoading.value = false;
@@ -110,8 +151,14 @@ export function useAttendance() {
 
             return
         }
-        if (hasDayoff.value || hasVacation.value || hasApprovedWork.value) {
+        if (hasDayoff.value || hasVacation.value || hasApprovedWork.value || hasTwoHalfDayoffs) {
             toast.error("이미 승인된 근무 또는 휴가가 존재합니다.")
+            isLoading.value = false;
+
+            return
+        }
+        if (workAlreadyEnded.value) {
+            toast.error("이미 퇴근 등록된 근무일입니다.")
             isLoading.value = false;
 
             return
@@ -175,6 +222,9 @@ export function useAttendance() {
         isLoading,
         showAttendanceModal,
         clockInfo,
+        workAlreadyEnded,
+        attendanceStatus,
+        attendanceIconClass,
         handleCreateAttendance,
         closeAttendanceModal,
         fetchTodayAttendance,

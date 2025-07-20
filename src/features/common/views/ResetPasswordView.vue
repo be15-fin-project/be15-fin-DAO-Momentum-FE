@@ -1,18 +1,17 @@
 <script setup>
-import {ref, onUnmounted} from 'vue'
+import {ref, onUnmounted, watch, onMounted} from 'vue'
 import {useRoute, useRouter} from 'vue-router'
 import {useAuthStore} from "@/stores/auth.js"
 import PasswordResetForm from "@/features/common/components/PasswordResetForm.vue";
 import {useToast} from "vue-toastification";
+import {checkToken} from "@/features/common/api.js";
 
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const token = route.query.token
-const modalVisible = ref(false)
-const modalMessage = ref('')
-const resetSuccess = ref(false)
+const fetchError = ref(true);
+const token = ref(null);
 const toast =  useToast();
 
 const handleResetCompleted = ({ success, message }) => {
@@ -22,10 +21,26 @@ const handleResetCompleted = ({ success, message }) => {
    router.push('/login')
  }
  else{
-   toast.error('올바르지 않은 입력입니다. 다시 입력해주세요');
+   toast.error(message);
  }
 
 }
+
+watch(() => token.value, (token) => {
+  if (typeof token === 'string') {
+    authStore.setResetToken(token)
+  }
+}, { immediate: true })
+
+onMounted(async () => {
+  token.value = route.query.token;
+  try {
+    const response = await checkToken();
+    fetchError.value = false;
+  }catch(e){
+    fetchError.value = true;
+  }
+})
 
 onUnmounted(() => {
   authStore.clearAuth()
@@ -34,7 +49,12 @@ onUnmounted(() => {
 
 <template>
   <div class="reset-container">
-    <PasswordResetForm :token="token" @completed="handleResetCompleted" />
+    <!-- 3. 에러 표시 (유효하지 않은 토큰인 경우)  -->
+    <div v-if="fetchError" class="error-message">
+      <i class="fas fa-exclamation-triangle"></i>
+      유효하지 않은 페이지입니다.
+    </div>
+    <PasswordResetForm v-else :token="token" @completed="handleResetCompleted" />
   </div>
 </template>
 
@@ -104,11 +124,6 @@ body {
   color: var(--blue-400);
 }
 
-.form-footer {
-  text-align: center;
-  margin-top: 1.5rem;
-  font-size: 0.875rem;
-}
 
 .form-footer a {
   color: var(--main-color);
@@ -138,5 +153,23 @@ body {
 
 .login-btn-gradient i {
   margin-right: 7px;
+}
+
+.error-message {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  font-size: 1.2rem;
+  color: var(--gray-400);
+  text-align: center;
+  gap: 16px;
+}
+
+.error-message i {
+  font-size: 2rem;
+  margin-bottom: 16px;
+  display: block;
 }
 </style>

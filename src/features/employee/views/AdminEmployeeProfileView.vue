@@ -10,6 +10,8 @@ import {getEmployeeDetails, updateEmpInfo, updateEmpRecords} from "@/features/em
 import {useRoute, useRouter} from "vue-router";
 import HistoryInfoEditable from "@/features/employee/components/profile/HistoryInfoEditable.vue";
 import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue";
+import DeleteConfirmToast from "@/components/common/DeleteConfirmToast.vue";
+import {toastError} from "@/util/toastError.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -84,25 +86,34 @@ const getEmpInfo = async () => {
     const response = await getEmployeeDetails(empId);
     employeeDetails.value = response.employeeDetails;
     employeeRecords.value = response.employeeRecords;
-  }catch(error){
-    console.log("에러 ",error)
+  } catch (e) {
+    toast.error('사원 정보 조회 실패')
   }
 
 }
 
 const handleRegisterSubmit = async(req) => {
-  try{
+  try {
+    if (!req.empNo) {
+      toast.error('사번을 입력하세요.')
+      return
+    }
+    if (!req.email) {
+      toast.error('이메일을 입력하세요.')
+      return
+    }
     await updateEmpInfo(req, empId);
-    toast.success('개인정보를 수정했습니다!')
+    toast.success('개인 정보를 수정했습니다.')
     modalVisible.value = false;
     await getEmpInfo();
-  } catch(e) {
-    toast.error('문제가 발생했습니다.')
+  } catch (e) {
+    toastError(e, '개인 정보 수정에 실패했습니다.')
   }
 }
 
 const handleHistorySubmit = async (formData, idsToDelete) => {
   try {
+    validateHistory(formData)
     const insertItems = [];
     // const updateItems = [];
 
@@ -128,13 +139,13 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
             record.endDate = item['졸업일'];
             break;
           case 'CERTIFICATE':
-            record.organization = item['발급기관'];
+            record.organization = item['발급 기관'];
             record.name = item['자격증명'];
             record.startDate = item['취득일'];
             record.endDate = null;
             break;
           case 'AWARD':
-            record.organization = item['수상기관'];
+            record.organization = item['수상 기관'];
             record.name = item['수상명'];
             record.startDate = item['수상일'];
             record.endDate = null;
@@ -157,16 +168,70 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
     }
     await updateEmpRecords({ insertItems, idsToDelete }, empId);
 
-    toast.success('이력 정보를 수정했습니다!');
+    toast.success('인사 정보를 수정했습니다.');
     await getEmpInfo();
+    isEditing.value = false;
   } catch (e) {
-    toast.error('문제가 발생했습니다.');
+    toastError(e, '인사 정보 수정 실패')
   }
 };
 
+function validateHistory(formData) {
+  for (const sectionKey in formData) {
+    const items = formData[sectionKey];
+    for (const item of items) {
+      switch (sectionKey) {
+        case 'EDUCATION':
+          if (!item['학교명']) throw new Error('학교명은 필수입니다.');
+          if (!item['학과명']) throw new Error('학과명은 필수입니다.');
+          if (!item['입학일']) throw new Error('입학일은 필수입니다.');
+          break;
+        case 'CERTIFICATE':
+          if (!item['자격증명']) throw new Error('자격증명은 필수입니다.');
+          if (!item['발급 기관']) throw new Error('발급 기관은 필수입니다.');
+          if (!item['취득일']) throw new Error('취득일은 필수입니다.');
+          break;
+        case 'AWARD':
+          if (!item['수상명']) throw new Error('수상명은 필수입니다.');
+          if (!item['수상 기관']) throw new Error('수상 기관은 필수입니다.');
+          if (!item['수상일']) throw new Error('수상일은 필수입니다.');
+          break;
+        case 'CAREER':
+          if (!item['직장명']) throw new Error('직장명은 필수입니다.');
+          if (!item['시작일']) throw new Error('시작일은 필수입니다.');
+          break;
+        default:
+          break;
+      }
+    }
+  }
+}
+
+const isEditing = ref(false)
+
 const handleHistoryCancel = async () => {
+  const result = await new Promise((resolve) => {
+    toast(
+        {
+          component: DeleteConfirmToast,
+          props: {
+            resolve,
+            message: "수정을 취소하시겠습니까?"
+          },
+        },
+        {
+          timeout: false,
+          closeOnClick: false,
+          showCloseButtonOnHover: false,
+        }
+    );
+  });
+
+  if (result) {
+    isEditing.value = false
   await getEmpInfo()
   toast.info('수정이 취소되었습니다.')
+  }
 }
 
 watch(
@@ -193,7 +258,7 @@ function handleClick(event) {
 <template>
   <section>
       <HeaderWithTabs :headerItems="[
-        { label: '사원 프로필 조회', event: 'click', active: true },
+        { label: '사원 프로필 조회', to: route.path, event: 'click', active: true },
     ]"
                       :submitButtons="[{ label: '뒤로 가기', icon: 'fa-arrow-left', event:'click', value: 'back', variant: 'white' }]"
                       :showTabs="false"
@@ -227,14 +292,14 @@ function handleClick(event) {
               :class="{ 'tab-active': currentTab === 'basic' }"
               @click="currentTab = 'basic'"
           >
-            <i class="fas fa-user-circle"></i>기본정보
+            <i class="fas fa-user-circle"></i>기본 정보
           </button>
           <button
               class="tab-button"
               :class="{ 'tab-active': currentTab === 'history' }"
               @click="currentTab = 'history'"
           >
-            <i class="fas fa-history"></i>이력정보
+            <i class="fas fa-history"></i>인사 정보
           </button>
           </div>
 
@@ -245,7 +310,7 @@ function handleClick(event) {
 
           <!-- History Info Tab -->
           <div class="tab-content" id="history-tab" v-else>
-            <HistoryInfoEditable :records="employeeRecords" @submit="handleHistorySubmit" @cancel="handleHistoryCancel"/>
+            <HistoryInfoEditable v-model:isEditing="isEditing" :records="employeeRecords" @submit="handleHistorySubmit" @cancel="handleHistoryCancel"/>
           </div>
         </div>
       </div>

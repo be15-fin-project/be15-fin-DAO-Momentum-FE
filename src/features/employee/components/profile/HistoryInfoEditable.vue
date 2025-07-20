@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, reactive, ref, watch} from 'vue'
+import {computed, reactive, watch} from 'vue'
 import BaseButton from '@/components/common/BaseButton.vue'
 import SectionHeader from '@/features/mypage/components/profile/SectionHeader.vue'
 
@@ -7,12 +7,20 @@ const props = defineProps({
   records: {
     type: Array,
     default: () => []
-  }
+  },
+  isEditing: Boolean
 });
 
-const emit = defineEmits(['submit', 'cancel'])
+const isEditing = computed({
+  get() {
+    return props.isEditing
+  },
+  set(value) {
+    emit('update:isEditing', value)
+  }
+})
 
-const isEditing = ref(false)
+const emit = defineEmits(['submit', 'cancel', 'update:isEditing'])
 
 const sections = [
   {
@@ -25,13 +33,13 @@ const sections = [
     key: 'CERTIFICATE',
     title: '자격증',
     icon: 'fas fa-certificate',
-    fields: ['자격증명', '발급기관', '취득일']
+    fields: ['자격증명', '발급 기관', '취득일']
   },
   {
     key: 'AWARD',
-    title: '수상이력',
+    title: '수상 이력',
     icon: 'fas fa-award',
-    fields: ['수상명', '수상기관', '수상일']
+    fields: ['수상명', '수상 기관', '수상일']
   },
   {
     key: 'CAREER',
@@ -43,8 +51,8 @@ const sections = [
 
 const headersMap = {
   EDUCATION: ['학교명', '학과명', '입학일', '졸업일'],
-  CERTIFICATE: ['자격증명', '발급기관', '취득일'],
-  AWARD: ['수상명', '수상기관', '수상일'],
+  CERTIFICATE: ['자격증명', '발급 기관', '취득일'],
+  AWARD: ['수상명', '수상 기관', '수상일'],
   CAREER: ['직장명', '시작일', '종료일']
 }
 
@@ -74,12 +82,10 @@ const removeItem = (sectionKey, index) => {
 
 const handleSave = () => {
   emit('submit', formData, Array.from(idsToDelete))
-  isEditing.value = false
 }
 
 const handleCancel = () => {
   emit('cancel')
-  isEditing.value = false
 }
 
 watch(
@@ -107,7 +113,7 @@ watch(
             formData.CERTIFICATE.push({
               recordId: item.recordId,
               자격증명: item.name,
-              발급기관: item.organization,
+              "발급 기관": item.organization,
               취득일: item.startDate
             })
             break
@@ -115,7 +121,7 @@ watch(
             formData.AWARD.push({
               recordId: item.recordId,
               수상명: item.name,
-              수상기관: item.organization,
+              "수상 기관": item.organization,
               수상일: item.startDate
             })
             break
@@ -143,8 +149,8 @@ watch(
           <BaseButton
               icon="fas fa-edit"
               variant="edit"
-              @click="isEditing = true"
-          >이력 정보 수정</BaseButton>
+              @click="emit('update:isEditing', true)"
+          >인사 정보 수정</BaseButton>
         </template>
 
         <template v-if="isEditing">
@@ -153,7 +159,6 @@ watch(
           </button>
         </template>
       </div>
-
       <table class="info-table">
         <thead>
         <tr>
@@ -163,7 +168,7 @@ watch(
         </thead>
         <tbody>
         <tr v-for="(item, index) in formData[section.key]" :key="index">
-          <td v-for="field in section.fields" :key="field">
+          <td v-for="field in section.fields" :key="field" :class="!isEditing ? 'table-value' : ''">
             <template v-if="isEditing">
               <input
                   v-model="item[field]"
@@ -209,7 +214,6 @@ watch(
 
 .info-table th,
 .info-table td {
-  border: 1px solid #e5e7eb;
   padding: 10px;
   text-align: left;
 }

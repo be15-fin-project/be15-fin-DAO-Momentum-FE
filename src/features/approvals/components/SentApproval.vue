@@ -7,6 +7,7 @@ import TabNav from '@/components/common/NavigationTab.vue'
 import {getSentApprovals} from "@/features/approvals/api.js";
 import NotExistApproval from "@/features/approvals/components/NotExistApproval.vue";
 import {useRouter} from "vue-router";
+import {toastError} from "@/util/toastError.js";
 
 /* 경로 이동을 의한 부분 */
 const router = useRouter();
@@ -255,7 +256,7 @@ async function fetchSentApprovals() {
     pagination.value.totalPage = res.data.data.pagination.totalPage;
 
   } catch (e) {
-    console.error('결재 내역 불러오기 실패:', e)
+    toast.error('결재 내역 불어오기에 실패했습니다.');
   }
 }
 

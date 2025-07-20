@@ -309,6 +309,11 @@ const handleDownload = async () => {
   try {
     toast.success('엑셀 다운로드가 시작되었습니다.');
     const normalized = normalizeFilterParams(filterValues.value);
+    if (normalized.roundNo) {
+      const match = roundList.value.find(r => r.roundNo === normalized.roundNo);
+      normalized.roundId = match?.roundId ?? null;
+    }
+    delete normalized.roundNo;
     const blob = await getOrgExcelDownload({ ...normalized });
 
     const url = window.URL.createObjectURL(new Blob([blob]));

@@ -43,7 +43,7 @@ const req = reactive({
 
 const modalSections = computed(() => {
   return [{
-  title: '개인정보 수정',
+  title: '개인 정보 수정',
   icon: 'fa-info-circle',
   layout: 'one-column',
   fields:[
@@ -149,14 +149,14 @@ onMounted(async () => {
               :class="{ 'tab-active': currentTab === 'basic' }"
               @click="currentTab = 'basic'"
           >
-            <i class="fas fa-user-circle"></i>기본정보
+            <i class="fas fa-user-circle"></i>기본 정보
           </button>
           <button
               class="tab-button"
               :class="{ 'tab-active': currentTab === 'history' }"
               @click="currentTab = 'history'"
           >
-            <i class="fas fa-history"></i>이력정보
+            <i class="fas fa-history"></i>인사 정보
           </button>
           </div>
 
@@ -175,7 +175,7 @@ onMounted(async () => {
     <SideModal
         :visible="modalVisible"
         @close="modalVisible=false"
-        title="개인정보 수정"
+        title="개인 정보 수정"
         icon="fas fa-id-card"
         v-model:form="req"
         :sections = "modalSections"
@@ -215,9 +215,9 @@ onMounted(async () => {
 }
 
 .header-title {
-  font-size: 2.1rem;
+  font-size: 2rem;
   font-weight: 700;
-  color: #334155;
+  color: var(--font-main);
   margin: 0 0 0.2rem 0;
 }
 

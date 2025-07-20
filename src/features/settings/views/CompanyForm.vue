@@ -1,5 +1,5 @@
 <script setup>
-import {onMounted, reactive, ref, watch} from "vue";
+import {onMounted, ref} from "vue";
 import {putCompany} from "@/features/settings/api.js";
 import {fetchCompanyInfo} from "@/features/company/api.js";
 import {useToast} from "vue-toastification";
@@ -48,7 +48,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="form-card">
+  <div class="form-card fadeIn">
     <form class="form-container" @submit.prevent="submitCompany">
       <div class="form-grid form-grid-two">
         <div class="form-field">
@@ -152,6 +152,8 @@ onMounted(async () => {
   box-shadow: 0 8px 32px rgba(56, 104, 185, 0.10);
   transition: box-shadow 0.3s;
   animation: fadeIn 0.7s cubic-bezier(0.33,1,0.68,1);
+  margin-left:40px;
+  margin-right:40px;
 }
 
 .form-container {
@@ -201,5 +203,10 @@ onMounted(async () => {
   .form-grid-two {
     grid-template-columns: 1fr;
   }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(22px);}
+  to { opacity: 1; transform: translateY(0);}
 }
 </style>

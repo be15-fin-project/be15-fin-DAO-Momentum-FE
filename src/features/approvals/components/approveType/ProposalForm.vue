@@ -9,7 +9,8 @@ import {useToast} from "vue-toastification";
 const props = defineProps({
   formData: { type: Object, required: true },
   isReadOnly: { type: Boolean, default: true },
-  approveFileDTO: { type: Array, default: () => [] }
+  approveFileDTO: { type: Array, default: () => [] },
+  uploadedFiles: { type: Array, default: () => [] }
 });
 
 const toast = useToast();
@@ -30,7 +31,6 @@ async function fetchProposalFile() {
   if (!props.isReadOnly || props.approveFileDTO.length === 0) return;
 
   file.value = props.approveFileDTO[0];
-  console.log(file.value.fileName)
 
   try {
     const resp = await getFileUrl({
@@ -42,7 +42,7 @@ async function fetchProposalFile() {
     fileName.value = resp.data.data.fileName;
 
   } catch (err) {
-    console.error("파일 서명 URL 불러오기 실패:", err);
+    toast.error("파일 서명 URL 불러오기 실패:", err);
     signedUrl.value = null;
   }
 }
@@ -66,7 +66,6 @@ async function handleFileClick() {
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   } catch (err) {
-    console.error("파일 다운로드 실패:", err);
     toast.error('파일 다운로드 중 오류가 발생했습니다.');
   }
 }
@@ -105,7 +104,6 @@ async function handleFileUpload(event) {
     }];
 
   } catch (err) {
-    console.error("파일 업로드 실패:", err);
     toast.error('파일 업로드 중 오류가 발생했습니다.');
   }
 }
@@ -114,10 +112,11 @@ async function handleFileUpload(event) {
 function removeFile() {
   uploadedFile.value = null;
   props.formData.file = null;
+  props.formData.attachments = [];
 }
 
 /* 시간과 관련된 validation */
-function validateReason() {
+function validateForm() {
   errors.value = {
     reason: ''
   };
@@ -138,14 +137,25 @@ watch(
   [
     () => props.formData.content
   ], () => {
-    validateReason();}
+    validateForm();}
   , { immediate: true }
 );
 
 onMounted(() => {
   fetchProposalFile();
-  validateReason();
+  validateForm();
+
+  if (!props.isReadOnly && props.uploadedFiles.length > 0) {
+    uploadedFile.value = {
+      name: props.uploadedFiles[0].name
+    };
+  }
 });
+
+defineExpose({
+  validateForm
+});
+
 </script>
 
 <template>
@@ -292,7 +302,7 @@ onMounted(() => {
 
 .form-textarea {
   resize: vertical;
-  min-height: 100px;
+  min-height: 500px;
 }
 
 .asterisk {

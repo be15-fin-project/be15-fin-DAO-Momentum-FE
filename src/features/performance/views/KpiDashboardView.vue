@@ -236,15 +236,17 @@ async function loadTableData() {
 
     tableData.value = (res.content ?? []).map(item => {
       const now = new Date();
-      const deadline = new Date(item.deadline);
+      const deadline = new Date(item.deadline + 'T23:59:59'); // 마감일 끝까지 인정
       const progress = item.kpiProgress;
 
       let statusName = '진행중';
 
-      if (deadline >= now) {
+      if (progress === 100) {
+        statusName = '달성';
+      } else if (deadline >= now) {
         statusName = progress === 0 ? '준비 중' : '수행 중';
       } else {
-        statusName = progress === 100 ? '달성' : '기한 초과';
+        statusName = '기한 초과';
       }
 
       return {
@@ -374,24 +376,43 @@ const handleDownload = async () => {
 };
 
 // ────────── Chart 렌더링 ──────────
+import dayjs from 'dayjs';
+
+function getReferenceYearMonth(values) {
+  if (values.date_start) {
+    const date = dayjs(values.date_start);
+    return { year: date.year(), month: date.month() + 1 }; // dayjs는 0-based month
+  }
+  const now = dayjs();
+  return { year: now.year(), month: now.month() + 1 };
+}
+
 async function loadChartData() {
   try {
-    const params = normalizeFilterParams(filterValues.value, positionList.value);
-
     const rootStyle = getComputedStyle(document.documentElement);
     const blue200 = rootStyle.getPropertyValue('--blue-200').trim();
     const blue400 = rootStyle.getPropertyValue('--blue-400').trim();
     const blue500 = rootStyle.getPropertyValue('--blue-500').trim();
 
+    const params = normalizeFilterParams(filterValues.value, positionList.value);
+    const { year, month } = getReferenceYearMonth(filterValues.value);
+
+    // 도넛 차트용 연/월 지정
+    const statParams = {
+      ...params,
+      year,
+      month
+    };
+
     // ─ 도넛 차트 데이터
-    const stats = await getKpiStatistics(params);
+    const stats = await getKpiStatistics(statParams);
     donutChartData.value = {
       labels: ['진행중', '완료'],
       data: [stats.totalKpiCount - stats.completedKpiCount, stats.completedKpiCount],
       colors: [blue200, blue400],
     };
 
-    // ─ 선형 차트 데이터
+    // ─ 선형 차트 데이터 (전체 월별 추이 → 기존처럼)
     const { monthlyStats } = await getKpiTimeseries(params);
     const fullMonths = Array.from({ length: 12 }, (_, i) => i + 1);
     const monthlyMap = Object.fromEntries(monthlyStats.map(d => [d.month, d]));
@@ -423,11 +444,11 @@ async function loadChartData() {
         },
       ],
     };
-
   } catch (e) {
-    console.warn('차트 데이터 로드 실패:', e);
+    toast.error('차트 데이터 로드에 실패했습니다.');
   }
 }
+
 
 // ────────── Watchers ──────────
 watch(currentPage, () => {

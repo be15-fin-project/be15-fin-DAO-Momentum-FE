@@ -1,11 +1,11 @@
 <script setup>
 import OrgTree from "@/features/company/components/OrgTree.vue";
-import { onMounted, reactive, ref, watch} from "vue";
+import { onMounted, ref, watch} from "vue";
 import {fetchDepartmentInfo, fetchDepartments} from "@/features/company/api.js";
 import {useToast} from "vue-toastification";
 import MemberList from "@/features/company/components/MemberList.vue";
 import RoleOptionCard from "@/features/settings/components/RoleOptionCard.vue";
-import {getEmpRoles, getRoles, putEmpRoles} from "@/features/settings/api.js";
+import {getEmpRoles, putEmpRoles} from "@/features/settings/api.js";
 
 const toast = useToast()
 
@@ -28,7 +28,7 @@ const field = {
     { id: 1, label: '최고 관리자' },
     { id: 2, label: '인사 관리자' },
     { id: 3, label: '경리 관리자' },
-    { id: 4, label: '팀장' },
+    { id: 4, label: '부서 관리자' },
   ]
 }
 
@@ -50,7 +50,6 @@ const handleSelectMember = async(empId) => {
   formModel.value = {
     roles: response.data.data.userRolesIds
   };
-  console.log(formModel.value.roles)
 }
 
 //화면 구성 처리
@@ -71,10 +70,10 @@ const handleUpdateRoles = async() => {
       empId: selectedEmpId.value,
       userRoleIds:formModel.value.roles
     }
-    console.log(req);
     await putEmpRoles(req);
     toast.success('권한 수정에 성공했습니다.')
     selectedEmpId.value = null;
+    formModel.value=null;
   }catch(e){
     toast.error('권한 수정에 실패했습니다.')
   }
@@ -105,7 +104,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class = "dept-card">
+  <div class = "role-card">
     <div class="main-grid">
       <!-- Organization Tree -->
       <OrgTree :dtoList = "departmentInfoDTOList" @selectDept = "selectDepartment" />
@@ -121,13 +120,15 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.dept-card{
+.role-card{
   height:100%;
+  margin-left:40px;
+  margin-right:40px;
 }
 
 .main-grid {
   display: grid;
-  grid-template-columns: 500px 1fr 500px;
+  grid-template-columns: 1fr 2fr 1fr;
   gap: 24px;
   height:100%;
 }

@@ -4,7 +4,7 @@
       <div :class="['metric-icon', bgClass]">
         <i :class="icon"></i>
       </div>
-      <div>
+      <div class="card-content">
         <p class="metric-label">{{ label }}</p>
         <p :class="['metric-value', colorClass]">{{ value }}</p>
       </div>
@@ -29,7 +29,7 @@ defineProps({
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--card-shadow);
-  padding: 24px 24px;
+  padding: 3rem 2rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .metric-card:hover {
@@ -38,24 +38,30 @@ defineProps({
 }
 .metric-content {
   display: flex;
-  justify-content: space-between;
+  width: 100%;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 2rem;
+}
+.card-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .metric-label {
-  font-size: 13px;
+  font-size: 15px;
   color: var(--font-sub);
   margin-bottom: 4px;
 }
 .metric-value {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: bold;
   color: var(--label-color);
 }
 .metric-icon {
   padding: 12px;
   border-radius: var(--radius-full);
-  font-size: 20px;
+  font-size: 40px;
 }
 .bg-blue { background-color: #dbeafe; color: var(--blue-450); }
 .bg-green { background-color: #d1fae5; color: var(--green-250); }

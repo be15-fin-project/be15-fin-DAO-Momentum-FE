@@ -1,6 +1,6 @@
 <template>
   <div class="chart-box">
-    <h3 class="chart-title"><i class="fas fa-pie-chart icon-blue" /> 월별 KPI 현황</h3>
+    <h3 class="chart-title"><i class="fas fa-pie-chart icon-blue" />  KPI 진행 현황</h3>
     <div class="chart-content donut">
       <canvas ref="canvasRef"></canvas>
     </div>

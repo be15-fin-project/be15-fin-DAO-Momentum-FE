@@ -5,9 +5,9 @@
       <div class="info-text">
         <div class="grade-label">
           <i :class="gradeIconClass" class="mr-1"></i>
-          {{ retentionGrade }}
+          {{ stabilityType }}
         </div>
-        <div class="status-badge">{{ stabilityType }}</div>
+        <div class="status-badge">{{ retentionGrade }}</div>
       </div>
       <div class="score-circle">
         {{ retentionScore }}
@@ -44,30 +44,43 @@
 import { computed } from 'vue';
 
 const props = defineProps({
-  retentionScore: Number,
-  retentionGrade: String,        // 예: '우수'
+  retentionScore: Number,        // 예: 87
   stabilityType: String,         // 예: 'SEVERE', 'GOOD', etc.
-  factorGrades: Object,          // { job: '탁월', comp: '양호', ... }
+  factorGrades: Object,          // 예: { job: '탁월', comp: '양호', ... }
 });
 
 const highlightTag = '교육 기회';
 
+// 점수 기반 등급 계산
+const retentionGrade = computed(() => {
+  const score = props.retentionScore ?? 0;
+  if (score >= 95) return '탁월';
+  if (score >= 85) return '우수';
+  if (score >= 70) return '양호';
+  if (score >= 60) return '주의';
+  return '위험';
+});
+
+// 등급별 아이콘
 const gradeIconClass = computed(() => {
   const iconMap = {
     '탁월': 'fas fa-trophy',
     '우수': 'fas fa-star',
     '양호': 'fas fa-chart-line',
-    '미흡': 'fas fa-triangle-exclamation',
+    '주의': 'fas fa-circle-exclamation',
+    '위험': 'fas fa-triangle-exclamation',
   };
-  return iconMap[props.retentionGrade] || 'fas fa-circle';
+  return iconMap[retentionGrade.value] || 'fas fa-circle';
 });
 
+// 등급별 섹션
 const gradeSections = computed(() => {
   const rawMap = {
-    '탁월': { icon: 'fas fa-trophy', range: '90점 이상', items: [] },
-    '우수': { icon: 'fas fa-star', range: '70–89점', items: [] },
-    '양호': { icon: 'fas fa-chart-line', range: '50–69점', items: [] },
-    '미흡': { icon: 'fas fa-triangle-exclamation', range: '50점 미만', items: [] },
+    '탁월': { icon: 'fas fa-trophy', range: '95점 이상', items: [] },
+    '우수': { icon: 'fas fa-star', range: '85~94점', items: [] },
+    '양호': { icon: 'fas fa-chart-line', range: '70~84점', items: [] },
+    '주의': { icon: 'fas fa-circle-exclamation', range: '60~69점', items: [] },
+    '위험': { icon: 'fas fa-triangle-exclamation', range: '60점 미만', items: [] },
   };
 
   const labelMap = {
@@ -84,13 +97,11 @@ const gradeSections = computed(() => {
     rawMap[grade]?.items.push(label);
   }
 
-  // 라벨 포함해서 변환
   return Object.entries(rawMap).map(([label, value]) => ({
     label,
     ...value,
   }));
 });
-
 </script>
 
 <style scoped>

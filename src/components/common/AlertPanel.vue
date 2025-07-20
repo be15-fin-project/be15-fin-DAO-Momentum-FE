@@ -23,14 +23,11 @@
           전체 <span class="badge">{{ totalCount }}</span>
         </button>
       </div>
-
     </div>
-
     <div class="alert-list scrollbar-hide">
       <div class="alert-section" v-for="(alert, idx) in alerts" :key="idx" @click="goTo(alert.url, alert.notificationId)">
         <div class="section-title">
           <div class="notification-dot" v-if="alert.isRead === 'N'"></div>
-          <span>알림</span>
         </div>
         <div class="alert-item">
           <div class="alert-icon blue">
@@ -45,28 +42,24 @@
           </div>
         </div>
       </div>
-
     </div>
-
     <div class="alert-footer">
       <button @click="markAllRead">모두 읽음 처리</button>
     </div>
   </div>
 </template>
-
 <script setup>
 import {computed, ref} from 'vue'
 import {useNotificationStore} from "@/stores/notification.js";
-
+import {useRouter} from "vue-router";
 defineProps({ visible: Boolean })
-defineEmits(['close'])
-
+const emit = defineEmits(['close'])
 const store = useNotificationStore()
+const router = useRouter()
 const selectedTab = ref('new')
 const unreadCount = computed(() => store.unreadCount)
 const readCount = computed(() => store.readCount)
 const totalCount = computed(() => store.totalCount)
-
 // 현재 탭에 따라 필터링된 알림 리스트
 const alerts = computed(() => {
   if (selectedTab.value === 'new') {
@@ -77,20 +70,25 @@ const alerts = computed(() => {
   }
   return store.notifications
 })
-
 function markAllRead() {
   store.markAllRead()
 }
-
 function getTitle(type) {
   switch (type) {
     case 'APPROVAL_REQUEST':
-      return '결재 요청'
+      return '결재 요청';
+    case 'APPROVAL_COMPLETED':
+      return '결재 완료';
+    case 'APPROVAL_REJECTED':
+      return '결재 반려';
+    case 'EVALUATION_START':
+      return '평가 시작';
+    case 'EVALUATION_END':
+      return '평가 종료';
     default:
-      return '알림'
+      return '알림';
   }
 }
-
 function timeSince(dateStr) {
   const diff = Date.now() - new Date(dateStr)
   const min = Math.floor(diff / 1000 / 60)
@@ -99,18 +97,19 @@ function timeSince(dateStr) {
   const hour = Math.floor(min / 60)
   return hour < 24 ? `${hour}시간 전` : new Date(dateStr).toLocaleDateString()
 }
-
 async function goTo(url, id) {
   try {
     await store.markAsRead(id)
   } catch (e) {
     console.error(`[알림 ${id} 읽음 처리 실패]`, e)
   } finally {
-    if (url) window.location.href = url
+    if (url) {
+      router.push(url)
+    }
+    emit('close') // 패널 닫기
   }
 }
 </script>
-
 <style scoped>
 @import url('https://fonts.googleapis.com/icon?family=Material+Icons');
 @import url('https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css');
@@ -126,7 +125,13 @@ async function goTo(url, id) {
   background-color: #ffffff;
   z-index: 9999;
   box-shadow: -2px 0 10px rgba(0,0,0,0.05);
+  transition: left 0.4s ease;
 }
+/* 사이드바가 접혔을 때 알림 패널도 왼쪽으로 이동 */
+.sidebar.collapsed .alert-modal {
+  left: 4.8rem;
+}
+
 .alert-header {
   border-bottom: 1px solid #e5e7eb;
   padding: 1rem;
@@ -178,7 +183,7 @@ async function goTo(url, id) {
   display: none;
 }
 .alert-section {
-  padding: 1rem;
+  padding: 0.25rem 1rem 0.75rem;
   border-bottom: 1px solid #e5e7eb;
 }
 .section-title {
@@ -203,12 +208,15 @@ async function goTo(url, id) {
   gap: 0.75rem;
   padding: 0.75rem;
   border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   background-color: #ffffff;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  cursor: pointer;
 }
 .alert-item:hover {
-  background-color: #f9fafb;
+  background-color: #f3f4f6;
+  transform: translateY(-1px); /* 살짝 뜨는 효과 */
 }
 .alert-icon {
   width: 2rem;
@@ -243,6 +251,8 @@ async function goTo(url, id) {
 .alert-content p {
   font-size: 0.875rem;
   color: #4b5563;
+  line-height: 1.4; /* 가독성을 위한 줄간격 */
+  margin-top: 0.25rem;
 }
 .alert-meta {
   font-size: 0.75rem;
