@@ -156,7 +156,7 @@ const roundStatus = ref({inProgress: false, roundId: null})
 const companyName = ref('')
 const empId = ref(null)
 
-/* ======================== 출퇴근 상태 ======================== */
+/* ======================== 프로필 ======================== */
 const profile = reactive({
   name: '',
   department: '',
@@ -173,7 +173,7 @@ const getProfile = async () => {
     profile.position = emp.positionName || '-'
     empId.value = emp.empId
   } catch (e) {
-    toast.error("사원 정보 불러오기 실패")
+    toast.error("프로필 조회 실패")
   }
 }
 
