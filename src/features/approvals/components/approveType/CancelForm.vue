@@ -46,7 +46,6 @@ onMounted(async () => {
   const parentId = props.parentApproveDTO.approveId;
   const response = await getApprovalDetail(parentId);
   parentApprove.value = response.data.data;
-  console.log(parentApprove.value);
 });
 </script>
 

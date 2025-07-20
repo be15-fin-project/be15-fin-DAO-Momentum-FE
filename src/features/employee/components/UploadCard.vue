@@ -19,7 +19,7 @@
     >
       <i class="fas fa-cloud-upload-alt upload-icon"></i>
       <p class="upload-text">파일을 드래그하거나 클릭해 선택하세요</p>
-      <p class="upload-subtext">CSV 파일만 등록 가능 (최대 10MB)</p>
+      <p class="upload-subtext">CSV 파일만 등록 가능</p>
       <input
           ref="fileInput"
           type="file"

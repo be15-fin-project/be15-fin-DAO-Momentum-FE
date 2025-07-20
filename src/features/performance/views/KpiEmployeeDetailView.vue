@@ -3,7 +3,7 @@
     <!-- 헤더 및 상단 버튼 -->
     <HeaderWithTabs
         :headerItems="[
-        { label: '사원 KPI 상세 조회', href: '/kpi/employee-detail', active: true },
+        { label: '사원 KPI 상세 조회', to: '/kpi/employee-detail', active: true },
       ]"
         :submitButtons="[{ label: '뒤로 가기', icon: 'fa-arrow-left', event: 'back', variant: 'white' }]"
         :showTabs="false"

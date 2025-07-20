@@ -269,9 +269,9 @@ const handleHeaderButton = (event) => {
   }
 }
 
-/* TODO: 프론트 예외 처리 */
 const handleRegisterSubmit = async (req) => {
   try {
+    validateReq()
     const resp = await createAppoint(req);
     closeModal();
     handleSearch(); // 목록 새로고침
@@ -280,6 +280,21 @@ const handleRegisterSubmit = async (req) => {
     toastError(e, '발령 등록 실패')
   }
 };
+
+const validateReq = () => {
+  if (!req.empId) {
+      throw new Error('사원을 선택하세요.')
+  }
+  if (!req.type) {
+    throw new Error('발령 유형을 선택하세요.')
+  }
+  if (!req.deptId) {
+    throw new Error('발령 부서를 선택하세요.')
+  }
+  if (!req.positionId) {
+    throw new Error('발령 직위를 선택하세요.')
+  }
+}
 </script>
 
 <template>

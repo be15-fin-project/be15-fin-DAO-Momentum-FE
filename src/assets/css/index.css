@@ -53,3 +53,8 @@ html, body, #app, .main {
     background: var(--icon-gradient);
     border-radius: 10px;
 }
+
+::selection {
+    background-color: var(--blue-100);
+    color: var(--main-color);
+}
