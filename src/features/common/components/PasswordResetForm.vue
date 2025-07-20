@@ -33,7 +33,6 @@ const handleSubmit = async () => {
     emit('completed', { success: true, message: '비밀번호가 변경되었습니다.' })
     authStore.clearAuth()
   } catch (error) {
-    console.log(error)
     const message = error.response?.data?.message || '알 수 없는 오류'
     emit('completed', { success: false, message })
   }

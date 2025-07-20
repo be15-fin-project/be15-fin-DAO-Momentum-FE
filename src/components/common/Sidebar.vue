@@ -156,7 +156,7 @@ const roundStatus = ref({inProgress: false, roundId: null})
 const companyName = ref('')
 const empId = ref(null)
 
-/* ======================== 출퇴근 상태 ======================== */
+/* ======================== 프로필 ======================== */
 const profile = reactive({
   name: '',
   department: '',
@@ -173,7 +173,7 @@ const getProfile = async () => {
     profile.position = emp.positionName || '-'
     empId.value = emp.empId
   } catch (e) {
-    console.error("사원 정보 불러오기 실패", e)
+    toast.error("프로필 조회 실패")
   }
 }
 
@@ -423,7 +423,7 @@ async function handleLogout() {
   try {
     await logoutUser()
   } catch (e) {
-    console.error('로그아웃 실패:', e)
+    toast.error('로그아웃 실패')
   }
   authStore.clearAuth()
   router.push('/login')
@@ -440,7 +440,7 @@ onMounted(async () => {
     const companyInfo = await fetchCompanyInfo();
     companyName.value = companyInfo.data.companyInfoDTO.name;
   } catch (e) {
-    console.error('초기 로딩 실패', e)
+    toast.error('정보 조회 실패')
   }
 })
 

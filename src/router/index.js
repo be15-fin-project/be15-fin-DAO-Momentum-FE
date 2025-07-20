@@ -11,6 +11,7 @@ import {companyRoutes} from "@/features/company/router.js";
 import {myPageRoutes} from "@/features/mypage/router.js";
 import {announcementRoutes} from "@/features/announcement/router.js";
 import {settingsRoutes} from "@/features/settings/router.js";
+import {storeToRefs} from "pinia";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -40,15 +41,24 @@ const router = createRouter({
     ]
 })
 
-//권한 없어도 되는 페이지들
+//권한별 처리
 router.beforeEach((to, from, next) => {
     const authStore = useAuthStore()
     const publicPages = ['/login', '/forgot-password', '/password/reset','/password/init', '/intro']
 
     const requiresAuth = !publicPages.includes(to.path)
+    const {userRole} = storeToRefs(authStore)
 
+    //권한 없을 때
     if (requiresAuth && !authStore.accessToken) {
         return next('/login')
+    }
+    
+    //최고 관리자 권한
+    if (to.matched.some(record => record.meta.requiresMaster)) {
+        if (!userRole.value.includes('MASTER')) {
+                return next('/not-authorized'); // 또는 '/' 등 허용된 페이지
+        }
     }
 
     next()

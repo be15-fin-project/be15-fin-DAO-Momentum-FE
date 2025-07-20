@@ -52,7 +52,11 @@
 import {computed, ref} from 'vue'
 import {useNotificationStore} from "@/stores/notification.js";
 import {useRouter} from "vue-router";
+import {useToast} from "vue-toastification";
+
 defineProps({ visible: Boolean })
+
+const toast = useToast();
 const emit = defineEmits(['close'])
 const store = useNotificationStore()
 const router = useRouter()
@@ -101,7 +105,7 @@ async function goTo(url, id) {
   try {
     await store.markAsRead(id)
   } catch (e) {
-    console.error(`[알림 ${id} 읽음 처리 실패]`, e)
+    toast.error('알림 읽음 처리 실패')
   } finally {
     if (url) {
       router.push(url)
