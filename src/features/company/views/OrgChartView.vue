@@ -37,6 +37,8 @@ import MemberList from "@/features/company/components/MemberList.vue";
 import DepartmentInfoCard from "@/features/company/components/DepartmentInfoCard.vue";
 import {useToast} from "vue-toastification";
 
+const toast = useToast();
+
 const departmentInfoDTOList = ref([])
 const selectedDeptId = ref(null);
 const department = ref({
@@ -45,7 +47,7 @@ const department = ref({
   createdAt:''
 });
 const members = ref([]);
-const toast = useToast();
+
 
 const selectDepartment = (deptId) => {
   selectedDeptId.value = deptId;
@@ -57,7 +59,7 @@ const getDepartments = async () =>{
     const response = await fetchDepartments();
     departmentInfoDTOList.value = response.data.departmentInfoDTOList;
   }catch(error){
-    toast.error("트리 에러 ",error)
+    toast.error('조직도 조회에 실패했습니다.');
   }
 }
 
@@ -67,7 +69,7 @@ const getDepartmentInfo = async () => {
     department.value = response.data.data.departmentDetailDTO;
     members.value = response.data.data.departmentMemberDTOList;
   }catch(error){
-    toast.error("부서 정보 조회 실패 : ", error);
+    toast.error("[부서 정보 조회 실패] ", error);
   }
 }
 
