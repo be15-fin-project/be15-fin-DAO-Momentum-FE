@@ -82,7 +82,6 @@ const removeItem = (sectionKey, index) => {
 
 const handleSave = () => {
   emit('submit', formData, Array.from(idsToDelete))
-  isEditing.value = false
 }
 
 const handleCancel = () => {

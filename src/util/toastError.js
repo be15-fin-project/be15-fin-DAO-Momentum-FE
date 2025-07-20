@@ -3,7 +3,11 @@ import { useToast } from "vue-toastification";
 
 export function toastError(e, defaultMessage) {
     const toast = useToast();
-    const raw = e?.response?.data?.message || '';
+
+    const serverMessage = e?.response?.data?.message;
+    const clientMessage = e?.message;
+
+    const raw = serverMessage || clientMessage || '';
 
     const isValidationError = raw.startsWith('입력 값 검증 오류입니다.') && raw.includes('[') && raw.includes(']');
     if (isValidationError) {
