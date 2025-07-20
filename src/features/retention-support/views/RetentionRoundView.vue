@@ -154,11 +154,20 @@ const tableColumns = [
 ];
 
 const openCreateModal = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const prevMonth = today.getMonth() === 0 ? 12 : today.getMonth(); // 1월이면 작년 12월
+  const targetYear = today.getMonth() === 0 ? year - 1 : year;
+
   isOpen.value = true;
   formSections.value[0].fields.forEach(field => {
-    createForm.value[field.key] = field.key === 'year'
-        ? new Date().getFullYear()
-        : (field.key === 'month' ? new Date().getMonth() : '');
+    if (field.key === 'year') {
+      createForm.value.year = targetYear;
+    } else if (field.key === 'month') {
+      createForm.value.month = prevMonth;
+    } else if (field.key === 'roundNo') {
+      createForm.value.roundNo = Number(`${targetYear}${String(prevMonth).padStart(2, '0')}`);
+    }
   });
 };
 

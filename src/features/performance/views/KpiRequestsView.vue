@@ -1,7 +1,7 @@
 <template>
   <main>
     <HeaderWithTabs
-        :headerItems="[{ label: 'KPI 요청 관리', href: '#', active: true }]"
+        :headerItems="[{ label: 'KPI 요청 관리', to: '/kpi/requests', active: true }]"
         :showTabs="false"
     />
 

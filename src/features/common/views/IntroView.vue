@@ -9,19 +9,37 @@
         <div class="hero-content">
           <div class="floating">
             <div class="hero-logo">
-              <img src="@/assets/icons/logo_light.png" alt="로고" />
+              <img src="@/assets/icons/logo_light.png" alt="로고"/>
             </div>
-            <h1 class="hero-title holographic-text">
-              하나의 플랫폼, 완전한 HR 생태계
-            </h1>
+            <p class="hero-name">
+              Momentum
+            </p>
+            <H3 class="hero-title">
+              인사 관리 플랫폼에서 근속 예측까지
+            </H3>
+            <p class="hero-subtitle">
+                구성원의 작은 변화 신호를 읽어내어 근속 가능성을 예측하는 통합 HR 솔루션
+            </p>
+            <div class="button-wrap">
+              <router-link to="/login" class="btn button-login">
+                <i class="fas fa-sign-in-alt"/> 로그인
+              </router-link>
+
+            </div>
           </div>
-          <p class="hero-subtitle">
-            사람을 숫자가 아닌 '신호'로 이해하는 차세대 HR 플랫폼
-          </p>
-          <div class="glass card neon-glow">
-            <div class="brand-title">Momentum</div>
-            <div class="brand-sub">머무는 힘은, 이해에서 시작된다</div>
-          </div>
+<!--          <div class="glass card neon-glow">-->
+<!--            <div class="card-grid">-->
+<!--              <div class="brand-sub">-->
+<!--                Momentum 워크스페이스 만들기-->
+<!--              </div>-->
+<!--              <div class="brand-sub">-->
+<!--                우리 조직만의 HR 관리 환경을 구성해보세요-->
+<!--              </div>-->
+<!--            </div>-->
+<!--            <div class="icon-grid">-->
+<!--              <i class="fas fa-sign-in-alt"/>-->
+<!--            </div>-->
+<!--          </div>-->
         </div>
       </section>
 
@@ -49,15 +67,9 @@
           </h2>
           <p class="cta-sub">Momentum과 함께 시작하세요</p>
           <div class="cta-buttons">
-            <button class="cta-button">
-              <i class="fas fa-phone"></i> 무료 상담 신청
-            </button>
-            <button class="cta-button">
-              <i class="fas fa-play"></i> 데모 체험 요청
-            </button>
-            <button class="cta-button">
-              <i class="fas fa-calculator"></i> ROI 계산기 사용
-            </button>
+            <router-link to="/login" class="cta-button">
+              <i class="fas fa-sign-in-alt"></i> 로그인
+            </router-link>
           </div>
         </div>
       </section>
@@ -86,7 +98,7 @@ export default {
           icon: 'fas fa-clock',
           title: '지능형 근태시스템',
           description: 'IP 기반 출퇴근 제한과 패턴 분석으로 <br>정확하고 스마트한 근태 관리를 제공합니다',
-          points: ['IP 기반 출퇴근 제한', '자동 근태 집계', '이상 패턴 감지'],
+          points: ['출퇴근 기능 제공', '자동 근태 집계', '이상 패턴 감지'],
           vizType: 'pattern',
         },
         {
@@ -133,9 +145,7 @@ export default {
   padding: 0;
   font-family: 'Inter', sans-serif;
   background: radial-gradient(ellipse at center,
-  #15161f 0%,       /* 중심: 아주 짙은 네이비 */
-  #1a1b2b 40%,      /* 중간: 약간 보라 섞인 남색 */
-  #202136 100%);    /* 바깥: 부드러운 어두운 남색 */
+  #15161f 0%, /* 중심: 아주 짙은 네이비 */ #1a1b2b 40%, /* 중간: 약간 보라 섞인 남색 */ #202136 100%); /* 바깥: 부드러운 어두운 남색 */
   color: #ffffff;
   font-size: 1.2rem;
 }
@@ -187,8 +197,25 @@ export default {
 .hero-content {
   position: relative;
   z-index: 2;
-  max-width: 1000px;
+  max-width: 1200px;
 }
+
+.hero-content {
+  animation: fadeInUp 1.2s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 .hero-logo {
   margin-bottom: 1.2rem;
   display: flex;
@@ -202,6 +229,12 @@ export default {
   object-fit: contain;
 }
 
+.hero-name {
+  font-size: 2.7rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
 .hero-title {
   font-size: 3.6rem;
   font-weight: bold;
@@ -209,17 +242,66 @@ export default {
 }
 
 .hero-subtitle {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   font-size: 1.5rem;
   margin-bottom: 2.4rem;
   color: #cbd5e1;
+  gap: 1rem;
+}
+
+.button-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  padding-top: 3rem;
+}
+
+.btn {
+  font-size: 20px;
+  padding: 10px 50px;
+  letter-spacing: 0px;
+}
+
+.button-login {
+  display: inline-flex;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  padding: 1.2rem 4rem;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+  transition: all 0.3s ease;
+  color: var(--color-surface);
+  gap: 0.6rem;
+}
+
+.button-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.6);
 }
 
 .card {
+  display: flex;
+  align-items: center;
   padding: 2.4rem;
   border-radius: 1.8rem;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.card-grid {
+  padding: 1rem 5rem;
+  border-radius: 1.8rem;
+}
+
+.icon-grid {
+  display: flex;
+  margin: auto;
+  font-size: 60px;
 }
 
 .brand-title {
@@ -304,7 +386,7 @@ export default {
 
 .cta-card {
   max-width: 840px;
-  padding: 3.6rem;
+  padding: 3.6rem 4.5rem;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 1.8rem;
   text-align: center;
@@ -332,8 +414,11 @@ export default {
 }
 
 .cta-button {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
   background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  color: var(--color-surface);
   border: none;
   border-radius: 2.4rem;
   padding: 0.9rem 1.8rem;

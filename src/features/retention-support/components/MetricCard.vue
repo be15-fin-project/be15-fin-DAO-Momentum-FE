@@ -29,7 +29,7 @@ defineProps({
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--card-shadow);
-  padding: 3rem 4rem;
+  padding: 3rem 2rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .metric-card:hover {
@@ -49,12 +49,12 @@ defineProps({
   align-items: center;
 }
 .metric-label {
-  font-size: 23px;
+  font-size: 15px;
   color: var(--font-sub);
   margin-bottom: 4px;
 }
 .metric-value {
-  font-size: 38px;
+  font-size: 30px;
   font-weight: bold;
   color: var(--label-color);
 }

@@ -6,11 +6,15 @@ import HeaderWithTabs from "@/components/common/HeaderWithTabs.vue"
 import Filter from "@/components/common/Filter.vue"
 import TabNav from '@/components/common/NavigationTab.vue'
 import {getApprovals} from "@/features/approvals/api.js";
-import { useRouter } from 'vue-router'
+import {useRoute, useRouter} from 'vue-router'
 import {getDepartments} from "@/features/works/api.js";
+import {useToast} from "vue-toastification";
+
+const toast = useToast();
 
 /* 경로 이동을 의한 부분 */
 const router = useRouter();
+const route = useRoute();
 
 /* 결재 목록 데이터 */
 const approvals = ref([]);
@@ -285,7 +289,7 @@ async function fetchApprovals() {
     pagination.value.totalPage = res.data.data.pagination.totalPage;
 
   } catch (e) {
-    console.error('결재 내역 불러오기 실패:', e)
+    toast.error('결재 내역 불러오기 실패');
   }
 }
 
@@ -298,9 +302,8 @@ onMounted(async () => {
   try {
     const deptRes = await getDepartments();
     departmentTree.value =  deptRes.data?.departmentInfoDTOList || [];
-    console.log(departmentTree.value);
   } catch (err) {
-    console.error('부서 불러오기 실패:', err);
+    toast.error('부서 불러오기에 실패했습니다.');
   }
 
   filterValues.value = {};
@@ -316,7 +319,7 @@ function handleDetailClick(row) {
     path: `/approval/detail/${row.approveId}`,
     state: { source: 'approvals' },
     query: { from: 'approvals' }
-  }).catch(err => console.error('라우팅 실패:', err))
+  }).catch(err => toast.error('결재 내역 상세보기 이동 실패:', err))
 }
 
 </script>
@@ -325,7 +328,7 @@ function handleDetailClick(row) {
   <section>
     <!-- 1. 전체 결재 내역 헤더 -->
     <HeaderWithTabs
-      :headerItems="[{ label: '전체 결재', active: true }]"
+      :headerItems="[{ label: '전체 결재', to: route.path, active: true }]"
       :showTabs="false"
     />
 

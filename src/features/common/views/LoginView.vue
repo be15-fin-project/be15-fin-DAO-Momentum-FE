@@ -7,8 +7,8 @@ import CommonModal from "@/components/common/CommonModal.vue";
 import {useToast} from "vue-toastification";
 
 
-const email = ref('employee1@example.com')
-const password = ref('Test1234!')
+const email = ref('')
+const password = ref('')
 const modalMessage = ref('');
 const showPassword = ref(false)
 const isSubmitting = ref(false)
@@ -21,7 +21,6 @@ function togglePassword() {
 }
 
 const handleSubmit = async () => {
-  console.log('로그인 시도:', email.value, password.value)
   isSubmitting.value = true
   try {
     const response = await loginUser({

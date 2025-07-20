@@ -11,6 +11,7 @@ const router = useRouter();
 const route = useRoute();
 const toast = useToast();
 
+const writeFormRef = ref(null);
 
 /* 생성 모드인지 수정 모드인지 생성 */
 const isEditMode = computed(() => !!route.params.documentId);
@@ -56,6 +57,13 @@ function goBack() {
 
 /* 결재 문서 제출하기 */
 async function submitForm() {
+  const result = writeFormRef.value?.validate?.();
+
+  if (result !== true) {
+    toast.error(result || '입력값을 다시 확인해주세요.');
+    return;
+  }
+
   if (!form.value.approveTitle) {
     toast.error('제목을 입력해주세요.');
     return;
@@ -190,6 +198,7 @@ onMounted(() => {
     <div class="approval-page">
       <div class="page-body">
         <WriteFormSection
+          ref="writeFormRef"
           v-model:title="form.approveTitle"
           v-model:approve-type="form.approveType"
           v-model:form-data="formDetail"
@@ -223,7 +232,7 @@ onMounted(() => {
 
   <div v-if="isSubmitting" class="overlay">
     <div class="spinner"></div>
-    <p>결재 문서를 제출 중입니다...</p>
+    <p>결재 문서를 제출 중입니다.</p>
   </div>
 </template>
 

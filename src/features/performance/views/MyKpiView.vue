@@ -3,7 +3,7 @@
     <!-- 헤더 및 상단 버튼 -->
     <HeaderWithTabs
         :headerItems="[
-        { label: 'KPI 조회', href: '#', active: true },
+        { label: 'KPI 조회', to: '/kpi/kpi-list', active: true },
       ]"
         :submitButtons="[{ label: 'KPI 제출', icon: 'fa-paper-plane', event: 'openModal', variant: 'blue' }]"
         :showTabs="false"

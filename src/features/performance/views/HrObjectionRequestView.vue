@@ -480,7 +480,7 @@ onMounted(async () => {
     initFilters();
     await handleSearch(filterValues.value);
   } catch (e) {
-    console.error('초기 로딩 실패:', e);
+    toast.error('초기 로딩에 실패했습니다.');
   }
 });
 </script>

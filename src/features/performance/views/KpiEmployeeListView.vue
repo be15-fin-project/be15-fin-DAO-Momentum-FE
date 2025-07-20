@@ -2,8 +2,8 @@
   <main>
     <HeaderWithTabs
         :headerItems="[
-        { label: '대시보드', to: '../kpi/statics', active: false },
-        { label: '사원별 KPI', to: '../kpi/employee-kpis', active: true }
+        { label: '대시보드', to: '/kpi/statics', active: false },
+        { label: '사원별 KPI', to: '/kpi/employee-kpis', active: true }
       ]"
         :showTabs="false"
     />
