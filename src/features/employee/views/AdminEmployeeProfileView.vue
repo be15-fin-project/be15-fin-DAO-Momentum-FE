@@ -93,7 +93,15 @@ const getEmpInfo = async () => {
 }
 
 const handleRegisterSubmit = async(req) => {
-  try{
+  try {
+    if (!req.empNo) {
+      toast.error('사번을 입력하세요.')
+      return
+    }
+    if (!req.email) {
+      toast.error('이메일을 입력하세요.')
+      return
+    }
     await updateEmpInfo(req, empId);
     toast.success('개인 정보를 수정했습니다.')
     modalVisible.value = false;
@@ -105,6 +113,7 @@ const handleRegisterSubmit = async(req) => {
 
 const handleHistorySubmit = async (formData, idsToDelete) => {
   try {
+    validateHistory(formData)
     const insertItems = [];
     // const updateItems = [];
 
@@ -161,10 +170,42 @@ const handleHistorySubmit = async (formData, idsToDelete) => {
 
     toast.success('인사 정보를 수정했습니다.');
     await getEmpInfo();
+    isEditing.value = false;
   } catch (e) {
     toastError(e, '인사 정보 수정 실패')
   }
 };
+
+function validateHistory(formData) {
+  for (const sectionKey in formData) {
+    const items = formData[sectionKey];
+    for (const item of items) {
+      switch (sectionKey) {
+        case 'EDUCATION':
+          if (!item['학교명']) throw new Error('학교명은 필수입니다.');
+          if (!item['학과명']) throw new Error('학과명은 필수입니다.');
+          if (!item['입학일']) throw new Error('입학일은 필수입니다.');
+          break;
+        case 'CERTIFICATE':
+          if (!item['자격증명']) throw new Error('자격증명은 필수입니다.');
+          if (!item['발급 기관']) throw new Error('발급 기관은 필수입니다.');
+          if (!item['취득일']) throw new Error('취득일은 필수입니다.');
+          break;
+        case 'AWARD':
+          if (!item['수상명']) throw new Error('수상명은 필수입니다.');
+          if (!item['수상 기관']) throw new Error('수상 기관은 필수입니다.');
+          if (!item['수상일']) throw new Error('수상일은 필수입니다.');
+          break;
+        case 'CAREER':
+          if (!item['직장명']) throw new Error('직장명은 필수입니다.');
+          if (!item['시작일']) throw new Error('시작일은 필수입니다.');
+          break;
+        default:
+          break;
+      }
+    }
+  }
+}
 
 const isEditing = ref(false)
 

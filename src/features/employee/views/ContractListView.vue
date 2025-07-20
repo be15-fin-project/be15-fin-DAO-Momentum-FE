@@ -149,7 +149,7 @@ function initializeRequest(type = null) {
   });
 }
 
-const req = reactive(initializeRequest());
+const req = initializeRequest();
 
 // modalSections 함수
 function getModalSections(type) {
@@ -335,6 +335,23 @@ const handleFileChange = async ({fieldKey, file}) => {
 
 const handleRegisterSubmit = async () => {
   try {
+    if (!req.empId) {
+      toast.error('사원을 선택하세요.')
+      return
+    }
+    if (!req.type) {
+      toast.error('계약서 종류를 선택하세요.')
+      return
+    }
+    if (!req.attachment.s3Key) {
+      toast.error('계약서 파일을 첨부하세요.')
+      return
+    }
+    if (req.type === 'SALARY_AGREEMENT' && !req.salary) {
+      toast.error('연봉을 입력하세요.')
+      return
+    }
+
     await createContract(req);
     closeModal();
     handleSearch();
