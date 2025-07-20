@@ -16,18 +16,17 @@
           <h2 class="sidebar-title"> {{ profile.name }} </h2>
           <span class="profile-label">{{ profile.department }} / {{ profile.position }}</span>
         </div>
-        <span class="top-icons">
+      </div>
+      <div class="header-icons">
+        <!-- 알림 아이콘 -->
         <button class="sidebar-toggle" @click="toggleAlertPanel">
           <i class="fas fa-bell notification-icon"></i>
         </button>
-      </span>
+        <!-- 사이드바 토글 버튼 -->
+        <button class="sidebar-toggle" @click="toggleSidebar">
+          <i class="fas fa-bars" :class="{ 'rotate-icon': collapsed }"></i>
+        </button>
       </div>
-      <button class="sidebar-toggle" @click="toggleSidebar">
-        <i
-            class="fas fa-bars"
-            :class="{ 'rotate-icon': collapsed }"
-        ></i>
-      </button>
     </div>
 
     <!-- Alert Panel -->
@@ -463,6 +462,12 @@ onUnmounted(() => {
   transition: width 0.4s ease,
   transform 0.6s ease,
   padding 0.3s ease;
+}
+
+.header-icons {
+  display: flex;
+  gap: 1.75rem;
+  align-items: center;
 }
 
 /* ================= 헤더 ================= */
