@@ -18,8 +18,11 @@
         </div>
       </div>
       <div class="header-icons">
-        <!-- 알림 아이콘 -->
-        <button class="sidebar-toggle" @click="toggleAlertPanel">
+        <!-- 알림 아이콘: collapsed 상태면 렌더링 안 함 -->
+        <button
+            class="sidebar-toggle"
+            @click="toggleAlertPanel"
+            v-if="!collapsed">
           <i class="fas fa-bell notification-icon"></i>
         </button>
         <!-- 사이드바 토글 버튼 -->
