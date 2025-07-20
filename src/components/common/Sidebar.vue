@@ -152,6 +152,7 @@ const openSubmenu = ref(null)
 const showAlertPanel = ref(false)
 const roundStatus = ref({inProgress: false, roundId: null})
 const companyName = ref('')
+const empId = ref(null)
 
 /* ======================== 출퇴근 상태 ======================== */
 const profile = reactive({
@@ -168,6 +169,7 @@ const getProfile = async () => {
     profile.name = emp.name
     profile.department = emp.deptName || '-'
     profile.position = emp.positionName || '-'
+    empId.value = emp.empId
   } catch (e) {
     console.error("사원 정보 불러오기 실패", e)
   }
@@ -302,6 +304,9 @@ const menuItems = [
 function isAllowed(item) {
   if (!item) return false
   if (typeof item.required === 'function' && !item.required()) return false
+  if (item.label === '인사 평가 조회' && empId.value === 1) {
+    return false
+  }
   if (!item.requireRole || item.requireRole.length === 0) return true
   return item.requireRole.some(role => userRole.value.includes(role))
 }

@@ -247,13 +247,13 @@ async function openModalHandler(kpiId) {
           {
             label: '처리 사유',
             key: 'reason',
-            editable: true,
+            editable: canProgress.value,
             type: 'textarea'
           },
           ...(detail.cancelReason
               ? [
                 { label: '취소 신청 사유', key: 'cancelReason', editable: false, type: 'input' },
-                { label: '취소 처리 사유', key: 'cancelResponse', editable: true, type: 'input' }
+                { label: '취소 처리 사유', key: 'cancelResponse', editable: canProgress.value, type: 'input' }
               ]
               : [])
         ]
