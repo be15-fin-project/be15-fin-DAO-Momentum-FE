@@ -117,7 +117,9 @@ const tabOptions = [
 // ───────── computed ─────────
 const canProgress = computed(() => {
   const detail = createForm.value;
-  return detail.statusType === 'PENDING' && new Date(detail.deadline) > new Date();
+  const isPendingRequest = detail.statusType === 'PENDING' && new Date(detail.deadline) > new Date();
+  const isCancelRequest = detail.statusType === 'PENDING' && detail.isDeleted === 'Y';
+  return isPendingRequest || isCancelRequest;
 });
 
 // ───────── 필터 정규화 함수 ─────────
