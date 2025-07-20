@@ -143,7 +143,6 @@ const fetchDetail = async () => {
       }
     }
   } catch (e) {
-    console.error('공지 불러오기 실패:', e)
     toast.error('공지 정보를 불러오는 데 실패했습니다.')
     router.push('/announcement')
   }
@@ -201,7 +200,6 @@ const uploadFiles = async (files) => {
 
       form.value.files.push(file)
     } catch (err) {
-      console.error('파일 업로드 실패:', file.name, err)
       toast.error(`"${file.name}" 파일 업로드에 실패했습니다. 전체 등록이 중단됩니다.`)
     }
   }
@@ -250,7 +248,6 @@ const handleSubmit = async () => {
     toast.success('공지사항이 수정되었습니다.')
     router.push(`/announcement/${editId}`)
   } catch (err) {
-    console.error('공지사항 수정 실패:', err)
     toast.error('공지사항 수정에 실패했습니다.')
   } finally {
     isSubmitting.value = false

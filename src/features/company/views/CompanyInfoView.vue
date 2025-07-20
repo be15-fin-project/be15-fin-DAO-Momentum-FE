@@ -2,7 +2,10 @@
 import {ref, onMounted} from 'vue'
 import '@/assets/css/index.css'
 import {fetchCompanyInfo} from "@/features/company/api.js";
+import {useToast} from "vue-toastification";
 
+
+const toast = useToast()
 const company = ref({})
 
 const getCompanyInfo = async () => {
@@ -10,7 +13,7 @@ const getCompanyInfo = async () => {
     const response = await fetchCompanyInfo();
     company.value = response.data.companyInfoDTO;
   }catch (error){
-    console.error('회사 정보 불러오기 실패:', error);
+    toast.error('회사 정보 불러오기 실패:', error);
   }
 }
 

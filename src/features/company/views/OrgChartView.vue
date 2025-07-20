@@ -35,7 +35,7 @@ import "vue3-treeview/dist/style.css";
 import OrgTree from "@/features/company/components/OrgTree.vue";
 import MemberList from "@/features/company/components/MemberList.vue";
 import DepartmentInfoCard from "@/features/company/components/DepartmentInfoCard.vue";
-
+import {useToast} from "vue-toastification";
 
 const departmentInfoDTOList = ref([])
 const selectedDeptId = ref(null);
@@ -45,7 +45,7 @@ const department = ref({
   createdAt:''
 });
 const members = ref([]);
-
+const toast = useToast();
 
 const selectDepartment = (deptId) => {
   selectedDeptId.value = deptId;
@@ -57,7 +57,7 @@ const getDepartments = async () =>{
     const response = await fetchDepartments();
     departmentInfoDTOList.value = response.data.departmentInfoDTOList;
   }catch(error){
-    console.error("트리 에러 ",error)
+    toast.error("트리 에러 ",error)
   }
 }
 
@@ -67,7 +67,7 @@ const getDepartmentInfo = async () => {
     department.value = response.data.data.departmentDetailDTO;
     members.value = response.data.data.departmentMemberDTOList;
   }catch(error){
-    console.error("부서 정보 조회 실패 : ", error);
+    toast.error("부서 정보 조회 실패 : ", error);
   }
 }
 
