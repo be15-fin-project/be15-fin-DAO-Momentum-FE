@@ -95,7 +95,6 @@ const initialized = ref(false);
 const fieldRefs = ref({})
 
 function setFieldRef(key, el) {
-  console.log('[ref 등록됨]', key, el)
   if (el) fieldRefs.value[key] = el
 }
 

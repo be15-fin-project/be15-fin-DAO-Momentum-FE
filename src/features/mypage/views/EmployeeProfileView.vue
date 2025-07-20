@@ -79,7 +79,7 @@ const getEmpInfo = async () => {
     employeeDetails.value = response.data.data.employeeDetails;
     employeeRecords.value = response.data.data.employeeRecords;
   }catch(error){
-    console.log("에러 ",error)
+    toast.error('내 정보 조회 실패')
   }
 
 }
