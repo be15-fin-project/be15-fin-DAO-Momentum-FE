@@ -456,10 +456,32 @@ const handleCreateContact = async () => {
 watch(currentPage, () => handleSearch(filterValues.value));
 
 /* ===== 상단 탭 ===== */
-const headerTabs = computed(() => [
-  {label: '면담 요청 내역', to: '/retention/my-contacts', active: route.path === '/retention/my-contacts'},
-  {label: '면담 내역', to: '/retention/contact-list', active: route.path === '/retention/contact-list'}
-]);
+const headerTabs = computed(() => {
+  const tabs = [];
+
+  const roles = userRole.value;
+  const isManager = roles.includes('MANAGER');
+  const isHr = roles.includes('HR_MANAGER') || roles.includes('MASTER');
+
+  if (isManager) {
+    tabs.push({
+      label: '면담 요청 내역',
+      to: '/retention/my-contacts',
+      active: route.path === '/retention/my-contacts'
+    });
+  }
+
+  if (isHr) {
+    tabs.push({
+      label: '면담 내역',
+      to: '/retention/contact-list',
+      active: route.path === '/retention/contact-list'
+    });
+  }
+
+  return tabs;
+});
+
 
 onMounted(() => {
   const { targetId, managerId, targetDeptId, managerDeptId } = history.state || {};
