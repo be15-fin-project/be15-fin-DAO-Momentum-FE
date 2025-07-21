@@ -289,7 +289,15 @@ const menuItems = [
       },
       {
         label: '면담 기록',
-        hrefs: ['/retention/my-contacts', '/retention/contact-list'],
+        hrefs: () => {
+          const roles = userRole.value
+          const isManager = roles.includes('MANAGER')
+          const isHr = roles.includes('HR_MANAGER') || roles.includes('MASTER')
+
+          if (isManager) return ['/retention/my-contacts']
+          if (isHr) return ['/retention/contact-list']
+          return []
+        },
         requireRole: ['MASTER', 'HR_MANAGER', 'MANAGER']
       }
     ],
