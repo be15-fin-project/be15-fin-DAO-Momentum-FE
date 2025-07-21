@@ -87,7 +87,6 @@ export const useNotificationStore = defineStore('notification', () => {
         })
 
         eventSource.onerror = (err) => {
-            toast.error('알림 서버와 연결이 끊어졌습니다. 재연결을 시도합니다.')
             disconnectSSE()
 
             // 재연결 시도
