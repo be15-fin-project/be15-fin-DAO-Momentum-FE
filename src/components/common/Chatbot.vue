@@ -20,7 +20,7 @@ const selectedType = computed(() => chatbotStore.selectedType);
 const roleMap = {
   MASTER: '최고 관리자',
   HR_MANAGER: '인사 관리자',
-  MANAGER: '부서 관리자',
+  MANAGER: '팀장',
   BOOKKEEPING: '경리 관리자'
 };
 
@@ -79,9 +79,9 @@ const sendUserMessage = async () => {
   try {
     let response;
     if (chatbotStore.selectedType === 'system') {
-      const roleList = Array.isArray(userRole)
+      const roleList = userRole.length > 0
           ? userRole.map(r => roleMap[r] || r)
-          : [roleMap[userRole] || userRole];
+          : ['사원'];
 
       response = await chatbotApi.post('/ask', {
         query: message,
