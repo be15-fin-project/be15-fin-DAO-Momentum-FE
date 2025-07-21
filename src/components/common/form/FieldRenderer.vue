@@ -217,12 +217,12 @@ const displayValue = computed(() => {
   return raw !== null && raw !== undefined && raw !== '' ? raw : '-';
 });
 const onPositiveIntegerInput = (key) => {
-  const value = model[key];
+  const value = props.model[key];
 
   // 숫자 아닌 것 제거 + 0 이상 정수만 유지
   if (typeof value === 'string') {
     const cleaned = value.replace(/[^\d]/g, ''); // 숫자만 남김
-    model[key] = cleaned;
+    props.model[key] = cleaned;
   }
 
   // 혹시 string -> number 변환 필요 시
