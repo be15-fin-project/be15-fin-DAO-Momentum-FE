@@ -48,7 +48,7 @@ const updateModalSections = computed(() => [{
   fields:[{
     key: 'name', type: 'input', label: '직위명', editable: true, required: true
   }, {
-    key: 'level', type: 'input', label: '직위 단계', editable: true, required: true
+    key: 'level', type: 'number', label: '직위 단계', editable: true, required: true
   }]
 }]);
 
